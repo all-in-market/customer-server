@@ -1,0 +1,37 @@
+spring:
+  sql:
+    init:
+      mode: never  # 테스트 시 SQL 초기화 스크립트 실행 안 함
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1  # 인메모리 H2 DB, MySQL 호환 모드
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
+    listener:
+      auto-startup: false  # 테스트 시 Kafka 리스너 자동 시작 안 함
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 테스트 시작 시 테이블 생성, 종료 시 삭제
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect  # H2 DB에 맞는 방언 설정
+    defer-datasource-initialization: false
+
+  autoconfigure:
+    exclude:
+      # 테스트 환경에서는 Redis/Kafka를 사용하지 않으므로 관련 자동설정 전부 비활성화
+      # 실제 서버 연결을 시도하지 않아 테스트가 외부 인프라 없이 독립적으로 실행됨
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
+      - org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+      - org.redisson.spring.starter.RedissonAutoConfigurationV4
+
+jwt:
+  secret: VtHcoEqCTwJ981b7wHL5yb57mwhlE8UjzYhFu3vd5M1 # 테스트 전용 고정값 사용
+  expiration: 86400000  # 토큰 만료 시간 (단위: ms, 86400000 = 24시간)

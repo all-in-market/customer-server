@@ -58,5 +58,4 @@ public class Product {
         this.description = description;
     }
 
-
 }

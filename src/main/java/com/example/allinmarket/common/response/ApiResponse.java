@@ -21,4 +21,8 @@ public record ApiResponse<T>(
     public static ApiResponse<Void> fail(ErrorEnum errorEnum) {
         return new ApiResponse<>(false, errorEnum.getStatus(), errorEnum.getMessage(), LocalDateTime.now(), null);
     }
+
+    public static ApiResponse<Void> fail(ErrorEnum errorEnum, String message) {
+        return new ApiResponse<>(false, errorEnum.getStatus(), message, LocalDateTime.now(), null);
+    }
 }

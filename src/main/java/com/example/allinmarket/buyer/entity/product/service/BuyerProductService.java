@@ -2,6 +2,7 @@ package com.example.allinmarket.buyer.entity.product.service;
 
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.entity.Product;
+import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,7 +18,7 @@ public class BuyerProductService {
 
     @Transactional(readOnly = true)
     public Page<ProductDetailResponse> findAllProducts(Pageable pageable) {
-        Page<Product> products = productRepository.findAllProducts(pageable);
+        Page<Product> products = productRepository.findAllByStatusNot(pageable);
 
         return products.map(ProductDetailResponse::from);
     }

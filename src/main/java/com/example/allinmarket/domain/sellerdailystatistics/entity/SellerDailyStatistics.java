@@ -1,4 +1,4 @@
-package com.example.allinmarket.domain.sellerDashboard.entity;
+package com.example.allinmarket.domain.sellerdailystatistics.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,9 +7,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "seller_dashboard")
+@Table(name = "seller_daily_statistics")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SellerDashboard {
+public class SellerDailyStatistics {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

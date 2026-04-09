@@ -18,7 +18,7 @@ public class BuyerProductService {
 
     @Transactional(readOnly = true)
     public Page<ProductDetailResponse> findAllProducts(Pageable pageable) {
-        Page<Product> products = productRepository.findAllByStatusNot(pageable);
+        Page<Product> products = productRepository.findAllVisibleProducts(pageable);
 
         return products.map(ProductDetailResponse::from);
     }

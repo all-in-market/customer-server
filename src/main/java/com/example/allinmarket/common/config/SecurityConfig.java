@@ -1,12 +1,9 @@
 package com.example.allinmarket.common.config;
 
-package com.example.gigacoffee.common.config;
-
-import com.example.gigacoffee.common.security.JwtAuthenticationFilter;
+import com.example.allinmarket.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;

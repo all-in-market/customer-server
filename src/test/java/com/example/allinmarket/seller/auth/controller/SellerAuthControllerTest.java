@@ -68,7 +68,7 @@ public class SellerAuthControllerTest {
                         }
                         """)
                 .exchange()
-                .expectStatus().isOk()
+                .expectStatus().isCreated()
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.status").isEqualTo(201)

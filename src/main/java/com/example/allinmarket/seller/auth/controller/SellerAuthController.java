@@ -9,6 +9,7 @@ import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
 import com.example.allinmarket.seller.auth.service.SellerAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,7 +27,7 @@ public class SellerAuthController {
     public ResponseEntity<ApiResponse<SellerCreateResponse>> signup(
             @Valid @RequestBody SellerCreateRequest request
     ) {
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.CREATED).body(
                 ApiResponse.success(SuccessEnum.CREATE_SUCCESS, sellerAuthService.signup(request))
         );
     }

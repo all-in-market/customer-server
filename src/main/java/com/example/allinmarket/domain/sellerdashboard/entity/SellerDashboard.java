@@ -1,17 +1,76 @@
 package com.example.allinmarket.domain.sellerdashboard.entity;
 
+import com.example.allinmarket.common.entity.BaseEntity;
+import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Getter
 @Entity
 @Table(name = "seller_dashboard")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SellerDashboard {
+public class SellerDashboard extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "seller_id", nullable = false)
+    private Seller seller;
+
+    @Column(name = "stat_date", nullable = false)
+    private LocalDate statDate;
+
+    @Column(name = "total_orders", nullable = false)
+    private int totalOrders;
+
+    @Column(name = "total_sales", nullable = false, precision = 12, scale = 2)
+    private BigDecimal totalSales;
+
+    @Column(name = "total_products_sold", nullable = false)
+    private int totalProductsSold;
+
+    @Column(name = "total_refunds", nullable = false)
+    private int totalRefunds;
+
+    @Column(name = "refund_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal refundAmount;
+
+    @Column(name = "settlement_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal settlementAmount;
+
+    @Column(name = "fee_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal feeAmount;
+
+    public static SellerDashboard of(
+            Seller seller,
+            LocalDate statDate,
+            Integer totalOrders,
+            BigDecimal totalSales,
+            Integer totalProductsSold,
+            Integer totalRefunds,
+            BigDecimal refundAmount,
+            BigDecimal settlementAmount,
+            BigDecimal feeAmount
+    ) {
+        SellerDashboard dashboard = new SellerDashboard();
+
+        dashboard.seller = seller;
+        dashboard.statDate = statDate;
+        dashboard.totalOrders = totalOrders != null ? totalOrders : 0;
+        dashboard.totalSales = totalSales != null ? totalSales : BigDecimal.ZERO;
+        dashboard.totalProductsSold = totalProductsSold != null ? totalProductsSold : 0;
+        dashboard.totalRefunds = totalRefunds != null ? totalRefunds : 0;
+        dashboard.refundAmount = refundAmount != null ? refundAmount : BigDecimal.ZERO;
+        dashboard.settlementAmount = settlementAmount != null ? settlementAmount : BigDecimal.ZERO;
+        dashboard.feeAmount = feeAmount != null ? feeAmount : BigDecimal.ZERO;
+        return dashboard;
+    }
 }

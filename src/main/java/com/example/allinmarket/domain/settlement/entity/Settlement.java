@@ -1,4 +1,72 @@
 package com.example.allinmarket.domain.settlement.entity;
 
-public class Settlement {
+import com.example.allinmarket.common.entity.BaseEntity;
+
+import com.example.allinmarket.domain.settlement.enums.SettlementStatus;
+import com.example.allinmarket.domain.settlement.enums.SettlementType;
+import com.example.allinmarket.seller.entity.Seller;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Getter
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "settlements")
+public class Settlement extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "seller_id", nullable = false)
+    private Seller seller;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal amount;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal fee;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private SettlementStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private SettlementType type;
+
+    @Column(name = "period_start", nullable = false)
+    private LocalDate periodStart;
+
+    @Column(name = "period_end", nullable = false)
+    private LocalDate periodEnd;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    public static Settlement of(
+            Seller seller,
+            BigDecimal amount,
+            BigDecimal fee,
+            SettlementType type,
+            LocalDate periodStart,
+            LocalDate periodEnd
+    ) {
+        Settlement settlement = new Settlement();
+        settlement.seller = seller;
+        settlement.amount = amount;
+        settlement.fee = fee != null ? fee : BigDecimal.ZERO;
+        settlement.status = SettlementStatus.COMPLETED;
+        settlement.type = type;
+        settlement.periodStart = periodStart;
+        settlement.periodEnd = periodEnd;
+        return settlement;
+    }
 }

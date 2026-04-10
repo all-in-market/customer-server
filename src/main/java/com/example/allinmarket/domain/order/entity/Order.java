@@ -5,7 +5,6 @@ import com.example.allinmarket.common.entity.BaseEntity;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;

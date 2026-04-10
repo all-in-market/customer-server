@@ -37,7 +37,7 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    @NotBlank
+
     @Length(max = 50)
     private String trackingNumber;
 

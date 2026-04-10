@@ -20,6 +20,7 @@ public class Category extends BaseEntity {
 
     @NotBlank
     @Length(max = 50)
+    @Column(unique = true)
     private String name;
 
     @PositiveOrZero

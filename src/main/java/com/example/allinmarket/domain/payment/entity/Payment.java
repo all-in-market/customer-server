@@ -30,7 +30,7 @@ public class Payment extends BaseEntity {
 
     @PositiveOrZero
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal amount;
+    private BigDecimal amount = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

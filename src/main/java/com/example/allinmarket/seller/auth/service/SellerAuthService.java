@@ -1,5 +1,7 @@
 package com.example.allinmarket.seller.auth.service;
 
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.security.JwtProvider;
 import com.example.allinmarket.seller.auth.dto.SellerCreateRequest;
@@ -23,6 +25,12 @@ public class SellerAuthService {
     private final JwtProvider jwtProvider;
 
     public SellerCreateResponse signup(SellerCreateRequest request) {
+
+        // 중복 이메일 검사
+        if (sellerRepository.existsByEmail(request.email())) {
+            throw new BaseException(ErrorEnum.EMAIL_ALREADY_EXISTS);
+        }
+
         Seller seller = Seller.of(
                 request.email(),
                 passwordEncoder.encode(request.password()),
@@ -35,6 +43,4 @@ public class SellerAuthService {
         sellerRepository.save(seller);
         return SellerCreateResponse.from(seller);
     }
-
-
 }

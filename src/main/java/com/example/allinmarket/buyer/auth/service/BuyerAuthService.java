@@ -13,12 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class BuyerAuthService {
     private final BuyerRepository buyerRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional
     public BuyerAuthResponse signup(BuyerSignupRequest request) {
         boolean existence = buyerRepository.existsByEmail(request.email());
 

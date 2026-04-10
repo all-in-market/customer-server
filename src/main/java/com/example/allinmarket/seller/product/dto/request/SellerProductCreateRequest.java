@@ -1,9 +1,5 @@
 package com.example.allinmarket.seller.product.dto.request;
 
-import com.example.allinmarket.domain.category.entity.Category;
-import com.example.allinmarket.domain.product.enums.ProductStatus;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;

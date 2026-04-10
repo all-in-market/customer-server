@@ -5,7 +5,6 @@ import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.entity.Product;
-import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import com.example.allinmarket.seller.entity.Seller;
 import org.junit.jupiter.api.Test;

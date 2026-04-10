@@ -3,7 +3,7 @@ package com.example.allinmarket.domain.payment.entity;
 import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
-import com.example.allinmarket.domain.payment.enums.PaymentStatus;
+import com.example.allinmarket.domain.transactionhistory.enums.TransactionEnums;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -41,7 +41,7 @@ public class Payment extends ModifiableEntity {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    private PaymentStatus status = PaymentStatus.PENDING;
+    private TransactionEnums status = TransactionEnums.PENDING;
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
@@ -52,14 +52,22 @@ public class Payment extends ModifiableEntity {
         payment.impUid = null;
         payment.amount = amount != null ? amount : BigDecimal.ZERO;
         payment.method = method;
-        payment.status = PaymentStatus.PENDING;
+        payment.status = TransactionEnums.PENDING;
         payment.paidAt = null;
         return payment;
     }
 
-    public void complete(String impUid, LocalDateTime paidAt) {
+    public void complete(String impUid) {
         this.impUid = impUid;
-        this.status = PaymentStatus.SUCCESS;
-        this.paidAt = paidAt;
+        this.status = TransactionEnums.SUCCESS;
+        this.paidAt = LocalDateTime.now();
+    }
+
+    public void fail() {
+        this.status = TransactionEnums.FAILED;
+    }
+
+    public void cancel() {
+        this.status = TransactionEnums.REFUNDED;
     }
 }

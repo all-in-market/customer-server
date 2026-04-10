@@ -46,13 +46,13 @@ public class Refund extends BaseEntity {
     @Column(name = "processed_at", nullable = false)
     private LocalDateTime processedAt;
 
-    public static Refund of(Buyer buyer, Payment payment, ReasonEnum reasonEnum, String description, RefundStatus status) {
+    public static Refund of(Buyer buyer, Payment payment, ReasonEnum reasonEnum, String description) {
         Refund refund = new Refund();
         refund.buyer = buyer;
         refund.payment = payment;
         refund.reason = reasonEnum;
         refund.description = description;
-        refund.status = status;
+        refund.status = RefundStatus.REQUESTED;
         refund.processedAt = null;
         return refund;
     }

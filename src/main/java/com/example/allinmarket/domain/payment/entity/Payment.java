@@ -48,7 +48,7 @@ public class Payment extends BaseEntity {
         payment.order = order;
         payment.amount = amount != null ? amount : BigDecimal.ZERO;
         payment.method = method;
-        payment.status = status;
+        payment.status = PaymentStatus.PENDING;
         payment.paidAt = null;
         return payment;
     }

@@ -1,5 +1,6 @@
 package com.example.allinmarket.domain.product.entity;
 
+import com.example.allinmarket.common.entity.DeletableEntity;
 import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.seller.entity.Seller;
@@ -15,7 +16,7 @@ import java.math.BigDecimal;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "products")
-public class Product {
+public class Product extends DeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

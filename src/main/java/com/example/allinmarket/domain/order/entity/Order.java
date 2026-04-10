@@ -1,7 +1,7 @@
 package com.example.allinmarket.domain.order.entity;
 
 import com.example.allinmarket.buyer.entity.Buyer;
-import com.example.allinmarket.common.entity.BaseEntity;
+import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "orders")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Order extends BaseEntity {
+public class Order extends ModifiableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

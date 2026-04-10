@@ -1,6 +1,6 @@
 package com.example.allinmarket.domain.orderitem.entity;
 
-import com.example.allinmarket.common.entity.BaseEntity;
+import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.seller.entity.Seller;
@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "order_items")
-public class OrderItem extends BaseEntity {
+public class OrderItem extends ModifiableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

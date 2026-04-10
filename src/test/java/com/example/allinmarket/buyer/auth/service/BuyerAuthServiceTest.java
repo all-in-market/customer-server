@@ -4,6 +4,8 @@ import com.example.allinmarket.buyer.auth.dto.request.BuyerSignupRequest;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
@@ -58,6 +61,19 @@ public class BuyerAuthServiceTest {
 
     @Test
     void 회원_가입_실패_테스트() {
+        // given
+        BuyerSignupRequest request = new BuyerSignupRequest(
+                "테스트@테스트.com",
+                "12345678",
+                "테스트",
+                "010-1234-1234"
+        );
 
+        given(buyerRepository.existsByEmail("테스트@테스트.com")).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> buyerAuthService.signup(request))
+                .isInstanceOf(BaseException.class)
+                .hasMessage(ErrorEnum.EMAIL_ALREADY_EXISTS.getMessage());
     }
 }

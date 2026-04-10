@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BuyerAuthController {
     private final BuyerAuthService buyerAuthService;
 
-    @PostMapping
+    @PostMapping("/signup")
     public ResponseEntity<ApiResponse<BuyerAuthResponse>> signup(@Valid @RequestBody BuyerSignupRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ApiResponse.success(SuccessEnum.REGISTER_SUCCESS, buyerAuthService.signup(request))

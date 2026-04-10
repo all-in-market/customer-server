@@ -2,8 +2,10 @@ package com.example.allinmarket.seller.auth.controller;
 
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
-import com.example.allinmarket.seller.auth.dto.SellerCreateRequest;
-import com.example.allinmarket.seller.auth.dto.SellerCreateResponse;
+import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
+import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
+import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
+import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
 import com.example.allinmarket.seller.auth.service.SellerAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,17 @@ public class SellerAuthController {
         return ResponseEntity.ok(
                 ApiResponse.success(SuccessEnum.CREATE_SUCCESS, sellerAuthService.signup(request))
         );
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<SellerLoginResponse>> login(
+            @Valid @RequestBody SellerLoginRequest request
+    ) {
+        SellerLoginResponse response = sellerAuthService.login(request);
+        String token = response.accessToken();
+        return ResponseEntity.ok()
+                .header("Authorization", "Bearer " + token)
+                .body(ApiResponse.success(SuccessEnum.LOGIN_SUCCESS, response));
     }
 
 }

@@ -2,11 +2,13 @@ package com.example.allinmarket.seller.auth.service;
 
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.security.JwtProvider;
-import com.example.allinmarket.seller.auth.dto.SellerCreateRequest;
-import com.example.allinmarket.seller.auth.dto.SellerCreateResponse;
+import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
+import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
+import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
+import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
 import com.example.allinmarket.seller.entity.Seller;
+import com.example.allinmarket.seller.enums.SellerStatus;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,5 +44,27 @@ public class SellerAuthService {
         );
         sellerRepository.save(seller);
         return SellerCreateResponse.from(seller);
+    }
+
+    public SellerLoginResponse login(SellerLoginRequest request) {
+        Seller seller = sellerRepository.findByEmail(request.email()).orElseThrow(
+                () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
+        );
+
+        if (seller.getStatus().equals(SellerStatus.PENDING)) {
+            throw new BaseException(ErrorEnum.FORBIDDEN);
+        }
+
+        if (seller.getDeletedAt() != null) {
+            throw new BaseException(ErrorEnum.SELLER_ALREADY_DELETED);
+        }
+
+        if (!passwordEncoder.matches(request.password(), seller.getPassword())) {
+            throw new BaseException(ErrorEnum.PASSWORD_MISMATCH);
+        }
+
+        String token = jwtProvider.generateToken(seller.getId(), seller.getRole());
+
+        return new SellerLoginResponse(token);
     }
 }

@@ -55,7 +55,7 @@ public class SellerAuthService {
             throw new BaseException(ErrorEnum.FORBIDDEN);
         }
 
-        if (seller.getDeletedAt() == null) {
+        if (seller.getDeletedAt() != null) {
             throw new BaseException(ErrorEnum.SELLER_ALREADY_DELETED);
         }
 

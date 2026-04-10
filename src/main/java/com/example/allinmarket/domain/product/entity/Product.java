@@ -4,12 +4,8 @@ import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,37 +21,42 @@ public class Product {
     @NotNull
     private Long id;
 
-    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", nullable = false)
     private Seller seller;
 
-    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     @NotBlank
-    @Min(value = 0)
     @Max(value = 200)
     private String name;
 
     @NotNull
+    @Positive
     private BigDecimal price;
 
     @NotNull
+    @PositiveOrZero
     private int stock;
 
     @NotNull
+    @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
+    @NotBlank
     private String description;
 
-    @Builder
-    public Product(Seller seller, Category category, String name, BigDecimal price, int stock, ProductStatus status, String description) {
-        this.seller = seller;
-        this.category = category;
-        this.name = name;
-        this.price = price;
-        this.stock = stock;
-        this.status = status;
-        this.description = description;
+    public static Product of(Seller seller, Category category, String name, BigDecimal price, int stock, ProductStatus status, String description) {
+        Product product = new Product();
+        product.seller = seller;
+        product.category = category;
+        product.name = name;
+        product.price = price;
+        product.stock = stock;
+        product.status = status;
+        product.description = description;
+        return product;
     }
-
 }

@@ -1,7 +1,6 @@
 package com.example.allinmarket.buyer.product.controller;
 
-import com.example.allinmarket.buyer.entity.product.controller.BuyerProductController;
-import com.example.allinmarket.buyer.entity.product.service.BuyerProductService;
+import com.example.allinmarket.buyer.product.service.BuyerProductService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;

@@ -7,7 +7,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 @Getter
 @Entity
@@ -19,11 +18,11 @@ public class Category extends BaseEntity {
     private Long id;
 
     @NotBlank
-    @Length(max = 50)
-    @Column(unique = true)
+    @Column(nullable = false, length = 50, unique = true)
     private String name;
 
     @PositiveOrZero
+    @Column(name = "sort_order")
     private int sortOrder;
 
     public static Category of(String name, int sortOrder) {

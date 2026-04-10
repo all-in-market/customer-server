@@ -6,19 +6,17 @@ import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 import java.math.BigDecimal;
 
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "orderitems")
+@Table(name = "order_items")
 public class OrderItem extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,12 +35,11 @@ public class OrderItem extends BaseEntity {
     private Seller seller;
 
     @NotBlank
-    @Length(max = 200)
+    @Column(name = "product_name", nullable = false, length = 200)
     private String productName;
 
-    @NotNull
     @PositiveOrZero
-    @Column(precision = 12, scale = 2)
+    @Column(name = "unit_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal unitPrice;
 
     @PositiveOrZero
@@ -54,7 +51,7 @@ public class OrderItem extends BaseEntity {
         orderItem.product = product;
         orderItem.seller = seller;
         orderItem.productName = productName;
-        orderItem.unitPrice = unitPrice;
+        orderItem.unitPrice = unitPrice != null ? unitPrice : BigDecimal.ZERO;
         orderItem.quantity = quantity;
         return orderItem;
     }

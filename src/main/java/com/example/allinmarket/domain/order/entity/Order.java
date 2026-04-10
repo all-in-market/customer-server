@@ -10,7 +10,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 import java.math.BigDecimal;
 
@@ -28,41 +27,39 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "buyer_id", nullable = false)
     private Buyer buyer;
 
-    @NotNull
     @PositiveOrZero
-    @Column(precision = 12, scale = 2)
+    @Column(name = "total_amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal totalAmount;
 
-    @NotNull
+
     @Enumerated(EnumType.STRING)
-    private OrderStatus status;
+    @Column(nullable = false, length = 20)
+    private OrderStatus status = OrderStatus.CREATED;
 
-
-    @Length(max = 50)
+    @Column(name = "tracking_number", length = 50)
     private String trackingNumber;
 
     @NotBlank
-    @Length(max = 50)
+    @Column(nullable = false, length = 50)
     private String recipient;
 
     @NotBlank
-    @Length(max = 20)
+    @Column(nullable = false, length = 20)
     private String phone;
 
     @NotBlank
-    @Length(max = 255)
+    @Column(nullable = false)
     private String address;
 
-    public static Order of(Buyer buyer, BigDecimal totalAmount, OrderStatus status, String trackingNumber, String recipient, String phone, String address) {
+    public static Order of(Buyer buyer, BigDecimal totalAmount, String trackingNumber, String recipient, String phone, String address) {
         Order order = new Order();
         order.buyer = buyer;
-        order.totalAmount = totalAmount;
-        order.status = status;
+        order.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
+        order.status = OrderStatus.CREATED;
         order.trackingNumber = trackingNumber;
         order.recipient = recipient;
         order.phone = phone;
         order.address = address;
         return order;
     }
-
 }

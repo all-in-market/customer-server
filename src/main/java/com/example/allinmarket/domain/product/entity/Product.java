@@ -8,7 +8,6 @@ import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 import java.math.BigDecimal;
 
@@ -30,22 +29,23 @@ public class Product {
     private Category category;
 
     @NotBlank
-    @Length(max = 200)
+    @Column(nullable = false, length = 200)
     private String name;
 
-    @NotNull
     @PositiveOrZero
-    @Column(precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
     @PositiveOrZero
     private int stock;
 
-    @NotNull
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private ProductStatus status;
 
     @NotBlank
+    @Column(nullable = false)
     private String description;
 
     public static Product of(Seller seller, Category category, String name, BigDecimal price, int stock, ProductStatus status, String description) {
@@ -53,7 +53,7 @@ public class Product {
         product.seller = seller;
         product.category = category;
         product.name = name;
-        product.price = price;
+        product.price = price != null ? price : BigDecimal.ZERO;
         product.stock = stock;
         product.status = status;
         product.description = description;

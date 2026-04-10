@@ -35,15 +35,15 @@ public class Settlement extends BaseEntity {
 
     @PositiveOrZero
     @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal fee;
+    private BigDecimal fee = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private SettlementStatus status;
+    private SettlementStatus status = SettlementStatus.COMPLETED;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private SettlementType type;
+    private SettlementType type = SettlementType.MID;
 
     @Column(name = "period_start", nullable = false)
     private LocalDate periodStart;

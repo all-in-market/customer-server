@@ -29,25 +29,25 @@ public class SellerDailyStatistics {
     private LocalDate statDate;
 
     @Column(name = "total_orders")
-    private int totalOrders;
+    private int totalOrders = 0;
 
     @Column(name = "total_items")
-    private int totalItems;
+    private int totalItems = 0;
 
     @PositiveOrZero
     @Column(name = "total_sales", nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalSales;
+    private BigDecimal totalSales = BigDecimal.ZERO;
 
     @Column(name = "total_refunds")
-    private int totalRefunds;
+    private int totalRefunds = 0;
 
     @PositiveOrZero
     @Column(name = "refund_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal refundAmount;
+    private BigDecimal refundAmount = BigDecimal.ZERO;
 
     @PositiveOrZero
     @Column(name = "net_sales", nullable = false, precision = 12, scale = 2)
-    private BigDecimal netSales;
+    private BigDecimal netSales = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

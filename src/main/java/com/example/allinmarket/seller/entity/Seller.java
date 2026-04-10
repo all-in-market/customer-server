@@ -47,11 +47,11 @@ public class Seller extends DeletableEntity {
 
     @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
-    private SellerStatus status;
+    private SellerStatus status = SellerStatus.PENDING;
 
     @Column(length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserRole role;
+    private UserRole role = UserRole.SELLER;
 
     public static Seller of(
             String email,

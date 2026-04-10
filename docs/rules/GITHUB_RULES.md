@@ -1,274 +1,78 @@
-## 시각화
-
-- 그래프 등의 시각화 자료는 **README** 에 바로 추가하는 것이 아닌 별도로 ***docs/improvement*** 디렉터리를 만들어 관리
+# GitHub Rules
 
 ---
 
-## 공통 응답 처리
+## Dev, Prod 전략
 
-### ApiResponse
+**main (prod)**
 
-```java
-@JsonPropertyOrder({"success", "status", "message", "data", "timestamp"})
-public record ApiResponse<T> (
-        boolean success,
-        String status,
-        String message,
-        LocalDateTime timestamp,
-        T data
-) {
-    public static <T> ApiResponse<T> success(SuccessEnum successEnum, T data) {
-        return new ApiResponse<>(true, successEnum.status, successEnum.message, LocalDateTime.now(), data);
-    }
-
-    public static ApiResponse<Void> fail(ErrorEnum errorEnum) {
-        return new ApiResponse<>(false, errorEnum.status, errorEnum.message, LocalDateTime.now(), null);
-    }
-}
-```
-
-```java
-@Getter
-@AllArgsConstructor
-public enum SuccessEnum {
-    REGISTER_SUCCESS(201, "회원가입에 성공하였습니다."),
-    LOGIN_SUCCESS(200, "로그인에 성공하였습니다."),
-    LOGOUT_SUCCESS(200, "로그아웃에 성공하였습니다."),
-    CREATE_SUCCESS(201, "데이터 생성에 성공하였습니다."),
-    READ_SUCCESS(200, "데이터 조회에 성공하였습니다."),
-    UPDATE_SUCCESS(200, "데이터 수정에 성공하였습니다."),
-    DELETE_SUCCESS(200, "데이터 삭제에 성공하였습니다."),
-    CHARGE_SUCCESS(200, "충전에 성공하였습니다.");
-
-    private final int httpStatus;
-    private final String message;
-}
-```
-
-```java
-@Getter
-@RequiredArgsConstructor
-public enum ErrorEnum {
-
-    // Common
-    INVALID_INPUT(400, "잘못된 입력값입니다."),
-    UNAUTHORIZED(401, "인증이 필요합니다."),
-    FORBIDDEN(403, "접근 권한이 없습니다."),
-    NOT_FOUND(404, "리소스를 찾을 수 없습니다."),
-    INTERNAL_SERVER_ERROR(500, "서버 내부 오류가 발생했습니다."),
-    LOCK_ACQUISITION_FAILED(500, "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
-    REDIS_UNAVAILABLE(503, "Redis 서버에 연결할 수 없습니다."),
-
-    // Menu
-    MENU_NOT_FOUND(404, "존재하지 않는 메뉴입니다."),
-    MENU_ALREADY_DELETED(400, "삭제된 메뉴입니다."),
-
-    // Order
-    ORDER_NOT_FOUND(404, "존재하지 않는 주문입니다."),
-    ORDER_ALREADY_COMPLETED(400, "이미 결제 완료된 주문입니다."),
-    ORDER_NOT_CANCELLABLE(400, "취소할 수 없는 주문 상태입니다."),
-
-    // Point
-    INSUFFICIENT_POINT(400, "포인트 잔액이 부족합니다."),
-    POINT_NOT_FOUND(404, "포인트 정보를 찾을 수 없습니다."),
-
-    //Payment
-    PAYMENT_ALREADY_EXISTS(400, "이미 결제된 주문입니다."),
-    PAYMENT_FAILED(500, "결제 처리 중 오류가 발생했습니다."),
-    PAYMENT_NOT_FOUND(404, "결제 내역이 없습니다."),
-
-    // User
-    USER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
-    USER_ALREADY_DELETED(400, "이미 탈퇴한 사용자입니다."),
-    EMAIL_ALREADY_EXISTS(400, "이미 사용 중인 이메일입니다."),
-    PASSWORD_MISMATCH(401, "이메일 또는 비밀번호가 올바르지 않습니다."),
-
-    // Token
-    TOKEN_EXPIRED(401, "만료된 토큰입니다."),
-    TOKEN_INVALID(401, "유효하지 않은 토큰입니다.");
-
-    private final int status;
-    private final String message;
-}
-```
+- 운영 단계 브랜치
+- dev에서만 merge
+- 팀 전원의 approve 필요
+- PR Conversation 전부 Resolve 필요
+- PR만 허용, 직접 push 불가능
 
 ---
 
-### PageResponse
+**dev**
 
-```java
-public record PageResponse<T>(
-        List<T> content,
-        int currentPage,
-        int totalPages,
-        long totalElements,
-        int size,
-        boolean isLast
-) {
-    public static <T> PageResponse<T> register(Page<T> page) {
-        return new PageResponse<>(
-                page.getContent(),
-                page.getNumber(),
-                page.getTotalPages(),
-                page.getTotalElements(),
-                page.getSize(),
-                page.isLast()
-        );
-    }
-}
-```
+- ***feature*** 가 통합되어 모이는 단계
+- 2명 이상의 approve 필요
+- PR만 허용, 직접 push 불가능
 
 ---
 
-## 공통 예외 처리
+**feature**
 
-- ***BaseException*** 을 만들어서 관리
-
-```java
-@Getter
-public class BaseException extends RuntimeException {
-
-    private final ErrorCode errorCode;
-
-    public BaseException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
-    }
-}
-```
-
-```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
-
-    @ExceptionHandler(BaseException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBaseException(BaseException e) {
-        ErrorCode errorCode = e.getErrorCode();
-        return ResponseEntity
-                .status(errorCode.getStatus())
-                .body(ApiResponse.fail(errorCode.getMessage()));
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
-                .findFirst()
-                .orElse(ErrorCode.INVALID_INPUT.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(message));
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
-    }
-}
-```
+- 각자 기능 개발하는 개인 브랜치
+- 기능 완성 후 삭제
+- ***{feature/도메인-메서드/기능} 형식으로 네이밍***
 
 ---
 
-## DTO 클래스
+## Commit Convention
 
-- ***정적 팩토리 패턴*** 을 사용
-- record 형태로 통일
-
-```java
-public record MenuResponse(
-	Long id,
-	String name,
-	Long price
-	) { 
-		public static MenuResponse from(Menu menu) {
-			return new MenuResponse(
-				menu.getId(),
-				menu.getName(),
-				menu.getPrice()
-				);
-		}
-}
-```
+| 작업 타입 | 작업 내용 |
+| --- | --- |
+| feat | 새로운 기능 추가 |
+| fix | 버그 수정 |
+| docs | 문서 수정 |
+| style | 코드 포맷팅, 세미콜론 누락 |
+| refactor | 기능 변경 없는 코드 개선 |
+| test | 테스트 코드 추가/수정 |
+| chore | 빌드 수정, 패키지 매니저 설정 외 기타 |
+| release | 배포 준비 |
 
 ---
 
-## 클래스 네이밍
+## Commit Message Rules
 
-```
-// 레이어별 suffix 필수
-VendorController
-VendorService         // 인터페이스
-VendorServiceImpl     // 구현체 (인터페이스 사용 시)
-VendorRepository
-Vendor          // Entity
+<aside>
 
-// 요청 dto
-MenuCreateRequest
-MenuUpdateRequest
+feat: 벤더 상품 등록 API 구현
 
-// 응답 dto 
-MenuDetailResponse -> 하나로 통일, 다건 조회는 List<>로 감싸기 
-```
+- 상품 기본 정보 및 옵션 등록
 
----
+- 벤더별 상품 상태 관리 (PENDING/APPROVED/REJECTED)
 
-## 메서드 네이밍
+- 이미지 업로드 S3 연동 Resolves: #42커밋 메시지 규칙:
 
-```
-// 조회: 동사 - 형용사 - 메인 - 조건
-findVendorById()
-findAllActiveVendors()
-existsByBusinessNumber()
+</aside>
 
-// 명령: 동사 - 도메인
-registerVendor()
-approveVendor()
-suspendVendor()
-
-// 이벤트 발행 (Kafka 등): 동사 - 도메인 - 형용사 - 이벤트
-publishVendorApprovedEvent()
-```
+- subject는 50자 이하, 동사 원형 시작 (한글은 명사형 종결)
+- body는 무엇을, 왜 변경했는지 기술 (어떻게는 코드로 설명)
+- 한 커밋에 하나의 논리적 변경만 포함
 
 ---
 
-## Const
+## Commit Unit
 
-- 상수의 경우 도메인별로 const 패키지를 두어 관리
-- 클래스를 ***final*** 로 선언하여 상속받지 아니함
-- Enum은 enum 패키지에서 관리
-
-```java
-public final class UserConstants { // 도메인-Constans
-
-    private UserConstants() {} // 인스턴스화 방지
-
-    public static final double PI = 3.14;
-    public static final double AVOGADROS_NUMBER = 6.022_140_857e23;
-
-}
-```
+- PR은 파일 10개 이하, diff 400줄 이하
+- 커밋은 기능 단위
 
 ---
 
-## Facade 패턴 도입 여부
+## Issue
 
-- 같은 계층의 클래스 간 의존성이 부득이 하게 생길 때 의존성의 정도에 따라 facade 패턴의 도입 여부를 결정한다 → Issue 생성
-
----
-
-## Validation
-
-```
-@NotNull
-@PositiveOrZero          // 또는 @DecimalMin(value = "0.0", inclusive = false)
-@Digits(integer = 10, fraction = 2)
-@Column(precision = 12, scale = 2)
-private BigDecimal amount;
-```
-
-- 금액의 경우 0을 허용하되, bean validation에는 `@PositiveOrZero` 어노테이션으로 검증한다
-- `@Column(precision = 12, scale = 2)`은 엔티티에 적용하고, `@Digits(integer = 10, fraction = 2)`는 dto에 적용한다. 역할이 다르다.
-- 문자열은 `@NotBlank` 사용 (Null + 공백 미허가)
-- `@Positive`, `@PositiveOrZero`, `@Negative`, `@Min`, `@Max`, `@DecimalMin`, `@DecimalMax` 은 @NotNull과 함께 사용한다.
+- 마일스톤 (체크리스트) 진행 상황 확인
+- 오류 시 담당자 지정 이슈 등록

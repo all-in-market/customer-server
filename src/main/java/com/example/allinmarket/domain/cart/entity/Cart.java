@@ -2,6 +2,7 @@ package com.example.allinmarket.domain.cart.entity;
 
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.common.entity.DeletableEntity;
+import com.example.allinmarket.common.entity.ModifiableEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "carts")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Cart extends DeletableEntity {
+public class Cart extends ModifiableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,12 +28,5 @@ public class Cart extends DeletableEntity {
         Cart cart = new Cart();
         cart.buyer = buyer;
         return cart;
-    }
-
-    public void softDelete() {
-        /**
-         * 삭제 전 검증 로직
-         */
-        delete();
     }
 }

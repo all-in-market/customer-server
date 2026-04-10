@@ -2,7 +2,9 @@ package com.example.allinmarket.domain.address.entity;
 
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.common.entity.DeletableEntity;
+import com.example.allinmarket.common.entity.ModifiableEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "addresses")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Address extends DeletableEntity {
+public class Address extends ModifiableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,12 +25,15 @@ public class Address extends DeletableEntity {
     @JoinColumn(name = "buyer_id", nullable = false)
     private Buyer buyer;
 
+    @NotBlank
     @Column(nullable = false, length = 50)
     private String recipient;
 
+    @NotBlank
     @Column(nullable = false, length = 20)
     private String phone;
 
+    @NotBlank
     @Column(nullable = false, length = 100)
     private String detail;
 
@@ -44,12 +49,5 @@ public class Address extends DeletableEntity {
         address.isDefault = false;
 
         return address;
-    }
-
-    public void softDelete() {
-        /**
-         * 삭제 전 검증 로직
-         */
-        delete();
     }
 }

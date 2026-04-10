@@ -1,7 +1,5 @@
 package com.example.allinmarket.domain.settlement.entity;
 
-import com.example.allinmarket.common.entity.BaseEntity;
-
 import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.settlement.enums.SettlementStatus;
 import com.example.allinmarket.domain.settlement.enums.SettlementType;

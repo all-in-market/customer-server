@@ -32,7 +32,7 @@ public class Address extends DeletableEntity {
     @Column(nullable = false, length = 100)
     private String detail;
 
-    @Column(nullable = false)
+    @Column(name = "is_default", nullable = false)
     private boolean isDefault = false;
 
     public static Address of(Buyer buyer, String recipient, String phone, String detail) {

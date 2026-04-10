@@ -16,7 +16,6 @@ public record SellerProductCreateRequest(
         @Size(max = 200)
         String name,
 
-        @NotNull
         @PositiveOrZero
         @Digits(integer = 10, fraction = 2)
         BigDecimal price,
@@ -27,7 +26,10 @@ public record SellerProductCreateRequest(
         @NotNull
         @Enumerated(EnumType.STRING)
         @Size(max = 20)
-        ProductStatus status
+        ProductStatus status,
 
+        @NotBlank
+        @Size(max = 255)
+        String description
 ) {
 }

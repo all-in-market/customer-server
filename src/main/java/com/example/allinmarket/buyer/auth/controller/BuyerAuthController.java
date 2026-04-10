@@ -37,4 +37,9 @@ public class BuyerAuthController {
                 .header("Authorization", "Bearer " + token)
                 .body(ApiResponse.success(SuccessEnum.LOGIN_SUCCESS, response));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout() {
+        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.LOGOUT_SUCCESS, null));
+    }
 }

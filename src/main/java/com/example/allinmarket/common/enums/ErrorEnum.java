@@ -36,7 +36,10 @@ public enum ErrorEnum {
 
     // Token
     TOKEN_EXPIRED(401, "만료된 토큰입니다."),
-    TOKEN_INVALID(401, "유효하지 않은 토큰입니다.");
+    TOKEN_INVALID(401, "유효하지 않은 토큰입니다."),
+
+    // Category
+    CATEGORY_NOT_FOUND(404, "존재하지 않는 카테고리입니다.");
 
     private final int status;
     private final String message;

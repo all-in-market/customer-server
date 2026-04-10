@@ -20,7 +20,7 @@ public class Cart extends DeletableEntity {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "buyer_id", nullable = false)
+    @JoinColumn(name = "buyer_id", nullable = false, unique = true)
     private Buyer buyer;
 
     public static Cart of(Buyer buyer) {

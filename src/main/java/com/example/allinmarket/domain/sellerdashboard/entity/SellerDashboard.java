@@ -1,6 +1,5 @@
 package com.example.allinmarket.domain.sellerdashboard.entity;
 
-import com.example.allinmarket.common.entity.BaseEntity;
 import com.example.allinmarket.common.entity.CreatableEntity;
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;

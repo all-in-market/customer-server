@@ -8,6 +8,7 @@ import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
 import java.math.BigDecimal;
 
@@ -18,7 +19,6 @@ import java.math.BigDecimal;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NotNull
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,14 +30,14 @@ public class Product {
     private Category category;
 
     @NotBlank
-    @Max(value = 200)
+    @Length(max = 200)
     private String name;
 
     @NotNull
-    @Positive
+    @PositiveOrZero
+    @Column(precision = 12, scale = 2)
     private BigDecimal price;
 
-    @NotNull
     @PositiveOrZero
     private int stock;
 

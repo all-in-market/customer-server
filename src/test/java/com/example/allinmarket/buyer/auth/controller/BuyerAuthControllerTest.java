@@ -1,7 +1,9 @@
 package com.example.allinmarket.buyer.auth.controller;
 
+import com.example.allinmarket.buyer.auth.dto.request.BuyerLoginRequest;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerSignupRequest;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
+import com.example.allinmarket.buyer.auth.dto.response.BuyerLoginResponse;
 import com.example.allinmarket.buyer.auth.service.BuyerAuthService;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.security.JwtProvider;
@@ -13,6 +15,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(BuyerAuthController.class)
@@ -73,6 +77,51 @@ public class BuyerAuthControllerTest {
         // when & then
         restTestClient.post()
                 .uri("/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.status").isEqualTo(400)
+                .jsonPath("$.message").exists();
+    }
+
+    @Test
+    void 로그인_성공_테스트() {
+        // given
+        BuyerLoginRequest request = new BuyerLoginRequest(
+                "테스트@테스트.com",
+                "12345678"
+        );
+
+        BuyerLoginResponse response = new BuyerLoginResponse("test-accessToken");
+
+        given(buyerAuthService.login(any(BuyerLoginRequest.class))).willReturn(response);
+
+        // when & then
+        restTestClient.post().uri("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.status").isEqualTo(200)
+                .jsonPath("$.message").isEqualTo(SuccessEnum.LOGIN_SUCCESS.getMessage());
+    }
+
+    @Test
+    void 로그인_실패_테스트() {
+        // given
+        BuyerLoginRequest request = new BuyerLoginRequest(
+                "테스트@테스트.com",
+                ""
+        );
+
+        // when & then
+        restTestClient.post()
+                .uri("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
                 .exchange()

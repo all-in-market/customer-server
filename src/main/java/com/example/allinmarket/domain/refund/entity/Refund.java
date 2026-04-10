@@ -41,7 +41,7 @@ public class Refund extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private RefundStatus status;
+    private RefundStatus status = RefundStatus.REQUESTED;
 
     @Column(name = "processed_at", nullable = false)
     private LocalDateTime processedAt;

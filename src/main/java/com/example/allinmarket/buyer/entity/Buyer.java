@@ -35,7 +35,7 @@ public class Buyer extends DeletableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private UserRole role;
+    private UserRole role = UserRole.BUYER;
 
     public static Buyer of(String email, String password, String name, String phone) {
         Buyer buyer = new Buyer();

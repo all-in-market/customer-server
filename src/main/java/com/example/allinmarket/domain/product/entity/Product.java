@@ -43,20 +43,20 @@ public class Product extends DeletableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private ProductStatus status;
+    private ProductStatus status = ProductStatus.ON_SALE;
 
     @NotBlank
     @Column(nullable = false)
     private String description;
 
-    public static Product of(Seller seller, Category category, String name, BigDecimal price, int stock, ProductStatus status, String description) {
+    public static Product of(Seller seller, Category category, String name, BigDecimal price, int stock, String description) {
         Product product = new Product();
         product.seller = seller;
         product.category = category;
         product.name = name;
         product.price = price != null ? price : BigDecimal.ZERO;
         product.stock = stock;
-        product.status = status;
+        product.status = ProductStatus.ON_SALE;
         product.description = description;
         return product;
     }

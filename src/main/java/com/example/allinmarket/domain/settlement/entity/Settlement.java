@@ -58,6 +58,7 @@ public class Settlement extends BaseEntity {
             Seller seller,
             BigDecimal amount,
             BigDecimal fee,
+            SettlementStatus status,
             SettlementType type,
             LocalDate periodStart,
             LocalDate periodEnd
@@ -66,7 +67,7 @@ public class Settlement extends BaseEntity {
         settlement.seller = seller;
         settlement.amount = amount != null ? amount : BigDecimal.ZERO;
         settlement.fee = fee != null ? fee : BigDecimal.ZERO;
-        settlement.status = SettlementStatus.COMPLETED;
+        settlement.status = status;
         settlement.type = type;
         settlement.periodStart = periodStart;
         settlement.periodEnd = periodEnd;

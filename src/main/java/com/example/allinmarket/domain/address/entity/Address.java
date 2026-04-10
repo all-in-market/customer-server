@@ -33,7 +33,7 @@ public class Address extends DeletableEntity {
     private String detail;
 
     @Column(nullable = false)
-    private boolean isDefault = true;
+    private boolean isDefault = false;
 
     public static Address of(Buyer buyer, String recipient, String phone, String detail) {
         Address address = new Address();
@@ -41,7 +41,7 @@ public class Address extends DeletableEntity {
         address.recipient = recipient;
         address.phone = phone;
         address.detail = detail;
-        address.isDefault = true;
+        address.isDefault = false;
 
         return address;
     }

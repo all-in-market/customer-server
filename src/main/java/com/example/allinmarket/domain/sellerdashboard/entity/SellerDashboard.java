@@ -1,6 +1,7 @@
 package com.example.allinmarket.domain.sellerdashboard.entity;
 
 import com.example.allinmarket.common.entity.BaseEntity;
+import com.example.allinmarket.common.entity.CreatableEntity;
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "seller_dashboard")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SellerDashboard extends BaseEntity {
+public class SellerDashboard extends CreatableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -2,10 +2,11 @@ package com.example.allinmarket.buyer.product.service;
 
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.entity.Product;
-import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
+import com.example.allinmarket.seller.entity.Seller;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 public class BuyerProductServiceTest {
@@ -36,13 +38,15 @@ public class BuyerProductServiceTest {
     @Test
     void 구매자_상품_목록_조회_성공_테스트() {
         // given
+        Seller seller = mock(Seller.class);
+        Category category = mock(Category.class);
+
         Product product = Product.of(
-                null,
-                null,
+                seller,
+                category,
                 "테스트",
                 BigDecimal.valueOf(10000),
                 50,
-                ProductStatus.ON_SALE,
                 "설명"
         );
 

@@ -117,7 +117,7 @@ public class SellerProductServiceTest {
                     () -> sellerProductService.create(request)
             );
 
-            assertEquals(ErrorEnum.USER_NOT_FOUND, exception.getErrorEnum());
+            assertEquals(ErrorEnum.SELLER_NOT_FOUND, exception.getErrorEnum());
         }
     }
 

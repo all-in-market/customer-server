@@ -25,7 +25,7 @@ public class SellerProductService {
     public ProductDetailResponse create(@Valid SellerProductCreateRequest request) {
         Long sellerId = SecurityUtils.getCurrentUserId();
         Seller seller = sellerRepository.findById(sellerId).orElseThrow(
-                () -> new BaseException(ErrorEnum.USER_NOT_FOUND)
+                () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
         );
         Category category = categoryRepository.findById(request.categoryId()).orElseThrow(
                 () -> new BaseException(ErrorEnum.CATEGORY_NOT_FOUND)

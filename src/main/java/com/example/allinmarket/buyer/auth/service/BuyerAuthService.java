@@ -56,6 +56,8 @@ public class BuyerAuthService {
             throw new BaseException(ErrorEnum.PASSWORD_MISMATCH);
         }
 
-        return new BuyerLoginResponse(jwtProvider.generateToken(buyer.getId(), buyer.getRole()));
+        String token = jwtProvider.generateToken(buyer.getId(), buyer.getRole());
+
+        return new BuyerLoginResponse(token);
     }
 }

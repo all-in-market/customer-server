@@ -1,7 +1,6 @@
 package com.example.allinmarket.domain.address.entity;
 
 import com.example.allinmarket.buyer.entity.Buyer;
-import com.example.allinmarket.common.entity.DeletableEntity;
 import com.example.allinmarket.common.entity.ModifiableEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

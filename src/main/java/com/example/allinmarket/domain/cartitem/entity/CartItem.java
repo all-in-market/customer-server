@@ -1,6 +1,5 @@
 package com.example.allinmarket.domain.cartitem.entity;
 
-import com.example.allinmarket.common.entity.DeletableEntity;
 import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.cart.entity.Cart;
 import com.example.allinmarket.domain.product.entity.Product;

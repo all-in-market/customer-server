@@ -57,10 +57,10 @@ public class SellerDashboard extends BaseEntity {
     public static SellerDashboard of(
             Seller seller,
             LocalDate statDate,
-            Integer totalOrders,
+            int totalOrders,
+            int totalProductsSold,
+            int totalRefunds,
             BigDecimal totalSales,
-            Integer totalProductsSold,
-            Integer totalRefunds,
             BigDecimal refundAmount,
             BigDecimal settlementAmount,
             BigDecimal feeAmount
@@ -69,10 +69,10 @@ public class SellerDashboard extends BaseEntity {
 
         dashboard.seller = seller;
         dashboard.statDate = statDate;
-        dashboard.totalOrders = totalOrders != null ? totalOrders : 0;
+        dashboard.totalOrders =  totalOrders;
+        dashboard.totalProductsSold = totalProductsSold;
+        dashboard.totalRefunds = totalRefunds;
         dashboard.totalSales = totalSales != null ? totalSales : BigDecimal.ZERO;
-        dashboard.totalProductsSold = totalProductsSold != null ? totalProductsSold : 0;
-        dashboard.totalRefunds = totalRefunds != null ? totalRefunds : 0;
         dashboard.refundAmount = refundAmount != null ? refundAmount : BigDecimal.ZERO;
         dashboard.settlementAmount = settlementAmount != null ? settlementAmount : BigDecimal.ZERO;
         dashboard.feeAmount = feeAmount != null ? feeAmount : BigDecimal.ZERO;

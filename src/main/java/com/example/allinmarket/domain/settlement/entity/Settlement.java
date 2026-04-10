@@ -64,7 +64,7 @@ public class Settlement extends BaseEntity {
     ) {
         Settlement settlement = new Settlement();
         settlement.seller = seller;
-        settlement.amount = amount;
+        settlement.amount = amount != null ? amount : BigDecimal.ZERO;
         settlement.fee = fee != null ? fee : BigDecimal.ZERO;
         settlement.status = SettlementStatus.COMPLETED;
         settlement.type = type;

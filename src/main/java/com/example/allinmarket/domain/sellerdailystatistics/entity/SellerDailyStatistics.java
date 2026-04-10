@@ -55,20 +55,20 @@ public class SellerDailyStatistics {
     public static SellerDailyStatistics of(
             Seller seller,
             LocalDate statDate,
-            Integer totalOrders,
-            Integer totalItems,
+            int totalOrders,
+            int totalItems,
+            int totalRefunds,
             BigDecimal totalSales,
-            Integer totalRefunds,
             BigDecimal refundAmount,
             BigDecimal netSales
     ) {
         SellerDailyStatistics statistics = new SellerDailyStatistics();
         statistics.seller = seller;
         statistics.statDate = statDate;
-        statistics.totalOrders = totalOrders != null ? totalOrders : 0;
-        statistics.totalItems = totalItems != null ? totalItems : 0;
+        statistics.totalOrders = totalOrders;
+        statistics.totalItems = totalItems;
+        statistics.totalRefunds = totalRefunds;
         statistics.totalSales = totalSales != null ? totalSales : BigDecimal.ZERO;
-        statistics.totalRefunds = totalRefunds != null ? totalRefunds : 0;
         statistics.refundAmount = refundAmount != null ? refundAmount : BigDecimal.ZERO;
         statistics.netSales = netSales != null ? netSales : BigDecimal.ZERO;
         statistics.createdAt = LocalDateTime.now();

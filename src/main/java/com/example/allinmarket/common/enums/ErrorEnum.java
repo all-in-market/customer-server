@@ -22,11 +22,27 @@ public enum ErrorEnum {
     ORDER_ALREADY_COMPLETED(400, "이미 결제 완료된 주문입니다."),
     ORDER_NOT_CANCELLABLE(400, "취소할 수 없는 주문 상태입니다."),
 
+    // Cart
+    CART_ITEMS_EMPTY(404, "주문할 장바구니 상품이 없습니다."),
+    INVALID_CART_ITEM_OWNER(403, "다른 사용자의 장바구니 상품이 포함되어 있습니다."),
+
+    // Product
+    INVALID_ORDER_PRODUCT(404, "주문 대상 상품이 유효하지 않습니다."),
+    PRODUCT_OUT_OF_STOCK(409, "해당 상품의 재고가 부족합니다."),
+    PRODUCT_NOT_AVAILABLE(409, "현재 판매 중인 상품이 아닙니다."),
+
     //Payment
     PAYMENT_ALREADY_EXISTS(400, "이미 결제된 주문입니다."),
     PAYMENT_FAILED(500, "결제 처리 중 오류가 발생했습니다."),
     PAYMENT_NOT_FOUND(404, "결제 내역이 없습니다."),
 
+    // Address
+    ADDRESS_NOT_FOUND(404, "존재하지 않는 주소입니다."),
+
+    // User
+    USER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
+    USER_ALREADY_DELETED(400, "이미 탈퇴한 사용자입니다."),
+  
     // BUYER
     BUYER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
     BUYER_ALREADY_DELETED(400, "이미 탈퇴한 사용자입니다."),

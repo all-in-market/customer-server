@@ -1,6 +1,8 @@
 package com.example.allinmarket.domain.product.entity;
 
 import com.example.allinmarket.common.entity.DeletableEntity;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.seller.entity.Seller;
@@ -59,5 +61,12 @@ public class Product extends DeletableEntity {
         product.status = ProductStatus.ON_SALE;
         product.description = description;
         return product;
+    }
+
+    public void decreaseStock(int amount) {
+        if (amount > stock) {
+            throw new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK);
+        }
+        stock -= amount;
     }
 }

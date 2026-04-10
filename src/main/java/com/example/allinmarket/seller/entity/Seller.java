@@ -4,6 +4,7 @@ import com.example.allinmarket.common.entity.DeletableEntity;
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,22 +18,28 @@ public class Seller extends DeletableEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 100, nullable = false, unique = true)
+    @NotBlank
+    @Column(length = 100, unique = true)
     private String email;
 
-    @Column(length = 255, nullable = false)
+    @NotBlank
+    @Column(length = 255)
     private String password;
 
-    @Column(length = 50, nullable = false)
+    @NotBlank
+    @Column(length = 50)
     private String name;
 
-    @Column(length = 20, nullable = false)
+    @NotBlank
+    @Column(length = 20)
     private String phone;
 
-    @Column(name = "store_name", length = 100, nullable = false)
+    @NotBlank
+    @Column(name = "store_name", length = 100)
     private String storeName;
 
-    @Column(name = "biz_number", length = 20, nullable = false, unique = true)
+    @NotBlank
+    @Column(name = "biz_number", length = 20, unique = true)
     private String bizNumber;
 
     @Column(name = "bank_account", length = 50)

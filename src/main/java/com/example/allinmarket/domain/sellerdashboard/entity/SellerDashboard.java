@@ -3,6 +3,7 @@ package com.example.allinmarket.domain.sellerdashboard.entity;
 import com.example.allinmarket.common.entity.BaseEntity;
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +32,7 @@ public class SellerDashboard extends BaseEntity {
     @Column(name = "total_orders", nullable = false)
     private int totalOrders;
 
+    @PositiveOrZero
     @Column(name = "total_sales", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalSales;
 
@@ -40,12 +42,15 @@ public class SellerDashboard extends BaseEntity {
     @Column(name = "total_refunds", nullable = false)
     private int totalRefunds;
 
+    @PositiveOrZero
     @Column(name = "refund_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal refundAmount;
 
+    @PositiveOrZero
     @Column(name = "settlement_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal settlementAmount;
 
+    @PositiveOrZero
     @Column(name = "fee_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal feeAmount;
 

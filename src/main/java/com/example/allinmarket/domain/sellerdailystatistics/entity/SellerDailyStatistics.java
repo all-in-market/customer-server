@@ -2,6 +2,7 @@ package com.example.allinmarket.domain.sellerdailystatistics.entity;
 
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,15 +34,18 @@ public class SellerDailyStatistics {
     @Column(name = "total_items", nullable = false)
     private int totalItems;
 
+    @PositiveOrZero
     @Column(name = "total_sales", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalSales;
 
     @Column(name = "total_refunds", nullable = false)
     private int totalRefunds;
 
+    @PositiveOrZero
     @Column(name = "refund_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal refundAmount;
 
+    @PositiveOrZero
     @Column(name = "net_sales", nullable = false, precision = 12, scale = 2)
     private BigDecimal netSales;
 

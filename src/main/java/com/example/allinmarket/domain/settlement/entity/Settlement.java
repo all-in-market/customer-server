@@ -6,6 +6,7 @@ import com.example.allinmarket.domain.settlement.enums.SettlementStatus;
 import com.example.allinmarket.domain.settlement.enums.SettlementType;
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,9 +29,11 @@ public class Settlement extends BaseEntity {
     @JoinColumn(name = "seller_id", nullable = false)
     private Seller seller;
 
+    @PositiveOrZero
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @PositiveOrZero
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal fee;
 

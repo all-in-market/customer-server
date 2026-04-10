@@ -29,17 +29,17 @@ public class SellerDashboard extends BaseEntity {
     @Column(name = "stat_date", nullable = false)
     private LocalDate statDate;
 
-    @Column(name = "total_orders", nullable = false)
+    @Column(name = "total_orders")
     private int totalOrders;
 
     @PositiveOrZero
     @Column(name = "total_sales", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalSales;
 
-    @Column(name = "total_products_sold", nullable = false)
+    @Column(name = "total_products_sold")
     private int totalProductsSold;
 
-    @Column(name = "total_refunds", nullable = false)
+    @Column(name = "total_refunds")
     private int totalRefunds;
 
     @PositiveOrZero

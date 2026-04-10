@@ -28,17 +28,17 @@ public class SellerDailyStatistics {
     @Column(name = "stat_date", nullable = false)
     private LocalDate statDate;
 
-    @Column(name = "total_orders", nullable = false)
+    @Column(name = "total_orders")
     private int totalOrders;
 
-    @Column(name = "total_items", nullable = false)
+    @Column(name = "total_items")
     private int totalItems;
 
     @PositiveOrZero
     @Column(name = "total_sales", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalSales;
 
-    @Column(name = "total_refunds", nullable = false)
+    @Column(name = "total_refunds")
     private int totalRefunds;
 
     @PositiveOrZero

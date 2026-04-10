@@ -1,5 +1,5 @@
 package com.example.allinmarket.domain.transactionhistory.enums;
 
-public enum TransactionTypes {
+public enum TransactionType {
     PAYMENT, REFUND
 }

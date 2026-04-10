@@ -18,9 +18,6 @@ public enum ErrorEnum {
     REDIS_UNAVAILABLE(503, "Redis 서버에 연결할 수 없습니다."),
     INVALID_ARGUMENT(400, "요청값이 올바르지 않습니다"),
 
-    // Buyer
-    BUYER_NOT_FOUND(404, "존재하지 않는 구매자입니다."),
-
     // Order
     ORDER_NOT_FOUND(404, "존재하지 않는 주문입니다."),
     ORDER_ALREADY_COMPLETED(400, "이미 결제 완료된 주문입니다."),
@@ -46,8 +43,17 @@ public enum ErrorEnum {
     // User
     USER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
     USER_ALREADY_DELETED(400, "이미 탈퇴한 사용자입니다."),
+  
+    // BUYER
+    BUYER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
+    BUYER_ALREADY_DELETED(400, "이미 탈퇴한 사용자입니다."),
     EMAIL_ALREADY_EXISTS(400, "이미 사용 중인 이메일입니다."),
-    PASSWORD_MISMATCH(401, "이메일 또는 비밀번호가 올바르지 않습니다."),
+    PASSWORD_MISMATCH(401, "비밀번호가 올바르지 않습니다."),
+
+    // Seller
+    SELLER_NOT_FOUND(404, "존재하지 않는 판매자입니다."),
+    SELLER_ALREADY_DELETED(400, "이미 탈퇴한 판매자입니다."),
+
 
     // Token
     TOKEN_EXPIRED(401, "만료된 토큰입니다."),

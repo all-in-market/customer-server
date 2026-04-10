@@ -19,15 +19,13 @@ import org.hibernate.validator.constraints.Length;
 public class Buyer extends DeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
     @NotBlank
-    @Email
+    @Length(max = 100)
     private String email;
 
     @NotBlank
-    @Length(max = 255)
     private String password;
 
     @NotBlank
@@ -36,7 +34,6 @@ public class Buyer extends DeletableEntity {
 
     @NotBlank
     @Length(max = 20)
-    @Pattern(regexp = "^\\d{2,3}-\\d{3,4}-\\d{4}$")
     private String phone;
 
     @NotNull

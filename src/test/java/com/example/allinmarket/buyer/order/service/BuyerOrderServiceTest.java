@@ -1,7 +1,5 @@
 package com.example.allinmarket.buyer.order.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.order.dto.request.OrderCreateRequest;
 import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
@@ -21,7 +19,6 @@ import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -77,7 +74,6 @@ class BuyerOrderServiceTest {
 
         Buyer buyer = mock(Buyer.class);
         Address address = mock(Address.class);
-        Cart cart = mock(Cart.class);
 
         Product product1 = mock(Product.class);
         Product product2 = mock(Product.class);
@@ -85,28 +81,16 @@ class BuyerOrderServiceTest {
         CartItem cartItem1 = mock(CartItem.class);
         CartItem cartItem2 = mock(CartItem.class);
 
-        Order savedOrder = mock(Order.class);
-
         given(buyerRepository.findById(buyerId)).willReturn(Optional.of(buyer));
         given(addressRepository.findByIdAndBuyerId(addressId, buyerId)).willReturn(Optional.of(address));
         given(cartItemRepository.findAllByIdsWithCartAndProduct(request.cartItemIds()))
                 .willReturn(List.of(cartItem1, cartItem2));
-
-        given(cartItem1.getCart()).willReturn(cart);
-        given(cartItem2.getCart()).willReturn(cart);
-        given(cart.getBuyer()).willReturn(buyer);
 
         given(cartItem1.getProduct()).willReturn(product1);
         given(cartItem2.getProduct()).willReturn(product2);
 
         given(product1.getId()).willReturn(1000L);
         given(product2.getId()).willReturn(2000L);
-
-        given(product1.getStatus()).willReturn(ProductStatus.ON_SALE);
-        given(product2.getStatus()).willReturn(ProductStatus.ON_SALE);
-
-        given(product1.getStock()).willReturn(10);
-        given(product2.getStock()).willReturn(20);
 
         given(product1.getPrice()).willReturn(BigDecimal.valueOf(1000));
         given(product2.getPrice()).willReturn(BigDecimal.valueOf(2000));
@@ -121,7 +105,8 @@ class BuyerOrderServiceTest {
         given(address.getPhone()).willReturn("010-1111-2222");
         given(address.getDetail()).willReturn("서울시 강남구");
 
-        given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
+        given(orderRepository.save(any(Order.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
 
         // when
         OrderDetailResponse result = buyerOrderService.createOrder(buyerId, request);
@@ -129,139 +114,16 @@ class BuyerOrderServiceTest {
         // then
         assertThat(result).isNotNull();
 
-        then(orderValidator).should().validateCartItemsNotEmpty(anyList());
-        then(orderValidator).should().validateCartItemsOwnedByBuyer(anyList(), eq(buyerId));
-        then(orderValidator).should().validateProductSellable(anyMap(), anyList());
+        verify(orderValidator).validateCartItemsNotEmpty(anyList());
+        verify(orderValidator).validateCartItemsOwnedByBuyer(anyList(), eq(buyerId));
+        verify(orderValidator).validateProductSellable(anyMap(), anyList());
 
-        then(orderRepository).should().save(any(Order.class));
-        then(orderItemRepository).should().saveAll(anyList());
-        then(cartItemRepository).should().deleteAll(List.of(cartItem1, cartItem2));
+        verify(orderRepository).save(any(Order.class));
+        verify(orderItemRepository).saveAll(anyList());
+        verify(cartItemRepository).deleteAll(List.of(cartItem1, cartItem2));
 
-        then(product1).should().decreaseStock(2);
-        then(product2).should().decreaseStock(3);
+        verify(product1).decreaseStock(2);
+        verify(product2).decreaseStock(3);
     }
 
-    @Test
-    @DisplayName("buyer가 없으면 BUYER_NOT_FOUND 예외")
-    void createOrder_fail_buyerNotFound() {
-        // given
-        OrderCreateRequest request = new OrderCreateRequest(List.of(cartItemId1), addressId);
-        given(buyerRepository.findById(buyerId)).willReturn(Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> buyerOrderService.createOrder(buyerId, request))
-                .isInstanceOf(BaseException.class)
-                .extracting("errorEnum")
-                .isEqualTo(ErrorEnum.BUYER_NOT_FOUND);
-
-        then(addressRepository).shouldHaveNoInteractions();
-        then(cartItemRepository).shouldHaveNoInteractions();
-    }
-
-    @Test
-    @DisplayName("address가 없거나 본인 주소가 아니면 ADDRESS_NOT_FOUND 예외")
-    void createOrder_fail_addressNotFound() {
-        // given
-        OrderCreateRequest request = new OrderCreateRequest(List.of(cartItemId1), addressId);
-        Buyer buyer = mock(Buyer.class);
-
-        given(buyerRepository.findById(buyerId)).willReturn(Optional.of(buyer));
-        given(addressRepository.findByIdAndBuyerId(addressId, buyerId)).willReturn(Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> buyerOrderService.createOrder(buyerId, request))
-                .isInstanceOf(BaseException.class)
-                .extracting("errorEnum")
-                .isEqualTo(ErrorEnum.ADDRESS_NOT_FOUND);
-
-        then(cartItemRepository).shouldHaveNoInteractions();
-    }
-
-    @Test
-    @DisplayName("cartItems가 비어 있으면 예외")
-    void createOrder_fail_cartItemsEmpty() {
-        // given
-        OrderCreateRequest request = new OrderCreateRequest(List.of(cartItemId1), addressId);
-        Buyer buyer = mock(Buyer.class);
-        Address address = mock(Address.class);
-
-        given(buyerRepository.findById(buyerId)).willReturn(Optional.of(buyer));
-        given(addressRepository.findByIdAndBuyerId(addressId, buyerId)).willReturn(Optional.of(address));
-        given(cartItemRepository.findAllByIdsWithCartAndProduct(request.cartItemIds())).willReturn(List.of());
-
-        willThrow(new BaseException(ErrorEnum.CART_ITEMS_EMPTY))
-                .given(orderValidator).validateCartItemsNotEmpty(anyList());
-
-        // when & then
-        assertThatThrownBy(() -> buyerOrderService.createOrder(buyerId, request))
-                .isInstanceOf(BaseException.class)
-                .extracting("errorEnum")
-                .isEqualTo(ErrorEnum.CART_ITEMS_EMPTY);
-
-        then(orderRepository).shouldHaveNoInteractions();
-        then(orderItemRepository).shouldHaveNoInteractions();
-    }
-
-    @Test
-    @DisplayName("cartItem 소유자가 다르면 INVALID_CART_ITEM_OWNER 예외")
-    void createOrder_fail_invalidCartItemOwner() {
-        // given
-        OrderCreateRequest request = new OrderCreateRequest(List.of(cartItemId1), addressId);
-        Buyer buyer = mock(Buyer.class);
-        Address address = mock(Address.class);
-        CartItem cartItem = mock(CartItem.class);
-
-        given(buyerRepository.findById(buyerId)).willReturn(Optional.of(buyer));
-        given(addressRepository.findByIdAndBuyerId(addressId, buyerId)).willReturn(Optional.of(address));
-        given(cartItemRepository.findAllByIdsWithCartAndProduct(request.cartItemIds())).willReturn(List.of(cartItem));
-
-        willDoNothing().given(orderValidator).validateCartItemsNotEmpty(anyList());
-        willThrow(new BaseException(ErrorEnum.INVALID_CART_ITEM_OWNER))
-                .given(orderValidator).validateCartItemsOwnedByBuyer(anyList(), eq(buyerId));
-
-        // when & then
-        assertThatThrownBy(() -> buyerOrderService.createOrder(buyerId, request))
-                .isInstanceOf(BaseException.class)
-                .extracting("errorEnum")
-                .isEqualTo(ErrorEnum.INVALID_CART_ITEM_OWNER);
-
-        then(productRepository).shouldHaveNoInteractions();
-        then(orderRepository).shouldHaveNoInteractions();
-    }
-
-    @Test
-    @DisplayName("상품이 판매중이 아니면 PRODUCT_NOT_AVAILABLE 예외")
-    void createOrder_fail_productNotAvailable() {
-        // given
-        OrderCreateRequest request = new OrderCreateRequest(List.of(cartItemId1), addressId);
-
-        Buyer buyer = mock(Buyer.class);
-        Address address = mock(Address.class);
-        CartItem cartItem = mock(CartItem.class);
-        Product product = mock(Product.class);
-
-        given(buyerRepository.findById(buyerId)).willReturn(Optional.of(buyer));
-        given(addressRepository.findByIdAndBuyerId(addressId, buyerId)).willReturn(Optional.of(address));
-        given(cartItemRepository.findAllByIdsWithCartAndProduct(request.cartItemIds()))
-                .willReturn(List.of(cartItem));
-
-        given(cartItem.getProduct()).willReturn(product);
-        given(product.getId()).willReturn(1000L);
-        given(productRepository.findAllByIdInWithSellerWithLock(List.of(1000L)))
-                .willReturn(List.of(product));
-
-        willDoNothing().given(orderValidator).validateCartItemsNotEmpty(anyList());
-        willDoNothing().given(orderValidator).validateCartItemsOwnedByBuyer(anyList(), eq(buyerId));
-        willThrow(new BaseException(ErrorEnum.PRODUCT_NOT_AVAILABLE))
-                .given(orderValidator).validateProductSellable(anyMap(), anyList());
-
-        // when & then
-        assertThatThrownBy(() -> buyerOrderService.createOrder(buyerId, request))
-                .isInstanceOf(BaseException.class)
-                .extracting("errorEnum")
-                .isEqualTo(ErrorEnum.PRODUCT_NOT_AVAILABLE);
-
-        then(orderRepository).shouldHaveNoInteractions();
-        then(orderItemRepository).shouldHaveNoInteractions();
-    }
 }

@@ -1,6 +1,6 @@
 package com.example.allinmarket.domain.category.entity;
 
-import com.example.allinmarket.common.entity.BaseEntity;
+import com.example.allinmarket.common.entity.DeletableEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "categories")
-public class Category extends BaseEntity {
+public class Category extends DeletableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -42,7 +42,6 @@ public class Payment extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
-    @NotNull
     private LocalDateTime paidAt;
 
     public static Payment of(Order order, BigDecimal amount, MethodEnum method, PaymentStatus status, LocalDateTime paidAt) {

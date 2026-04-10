@@ -2,6 +2,7 @@ package com.example.allinmarket.domain.refund.entity;
 
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.common.entity.BaseEntity;
+import com.example.allinmarket.common.entity.CreatableEntity;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.enums.RefundStatus;
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "refunds")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Refund extends BaseEntity {
+public class Refund extends CreatableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

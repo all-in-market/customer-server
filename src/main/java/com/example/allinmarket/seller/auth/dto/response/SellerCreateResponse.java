@@ -1,4 +1,4 @@
-package com.example.allinmarket.seller.auth.dto;
+package com.example.allinmarket.seller.auth.dto.response;
 
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.seller.entity.Seller;

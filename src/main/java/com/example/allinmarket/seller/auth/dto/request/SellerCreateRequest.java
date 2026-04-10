@@ -1,4 +1,4 @@
-package com.example.allinmarket.seller.auth.dto;
+package com.example.allinmarket.seller.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

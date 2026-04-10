@@ -2,8 +2,8 @@ package com.example.allinmarket.seller.auth.controller;
 
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.security.JwtProvider;
-import com.example.allinmarket.seller.auth.dto.SellerCreateRequest;
-import com.example.allinmarket.seller.auth.dto.SellerCreateResponse;
+import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
+import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
 import com.example.allinmarket.seller.auth.service.SellerAuthService;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import org.junit.jupiter.api.Test;

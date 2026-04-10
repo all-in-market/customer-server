@@ -4,5 +4,5 @@ import lombok.Getter;
 
 @Getter
 public enum ReasonEnum {
-    CHANGE_OF_MINE, WRONG_ITEM, DAMAGED
+    CHANGE_OF_MIND, WRONG_ITEM, DAMAGED
 }

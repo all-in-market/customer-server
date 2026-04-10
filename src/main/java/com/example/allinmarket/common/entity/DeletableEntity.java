@@ -9,4 +9,8 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 public abstract class DeletableEntity extends ModifiableEntity {
     private LocalDateTime deletedAt;
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

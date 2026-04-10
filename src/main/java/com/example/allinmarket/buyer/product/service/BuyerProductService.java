@@ -1,4 +1,4 @@
-package com.example.allinmarket.buyer.entity.product.service;
+package com.example.allinmarket.buyer.product.service;
 
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.entity.Product;

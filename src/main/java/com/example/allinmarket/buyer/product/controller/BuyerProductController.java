@@ -1,6 +1,6 @@
-package com.example.allinmarket.buyer.entity.product.controller;
+package com.example.allinmarket.buyer.product.controller;
 
-import com.example.allinmarket.buyer.entity.product.service.BuyerProductService;
+import com.example.allinmarket.buyer.product.service.BuyerProductService;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.response.PageResponse;

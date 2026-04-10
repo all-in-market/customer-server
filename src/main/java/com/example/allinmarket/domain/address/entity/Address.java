@@ -33,7 +33,7 @@ public class Address extends DeletableEntity {
     private String detail;
 
     @Column(nullable = false)
-    private boolean isDefault;
+    private boolean isDefault = true;
 
     public static Address of(Buyer buyer, String recipient, String phone, String detail) {
         Address address = new Address();
@@ -44,5 +44,12 @@ public class Address extends DeletableEntity {
         address.isDefault = true;
 
         return address;
+    }
+
+    public void softDelete() {
+        /**
+         * 삭제 전 검증 로직
+         */
+        delete();
     }
 }

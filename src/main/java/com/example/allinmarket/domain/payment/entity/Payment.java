@@ -1,6 +1,5 @@
 package com.example.allinmarket.domain.payment.entity;
 
-import com.example.allinmarket.common.entity.BaseEntity;
 import com.example.allinmarket.common.entity.CreatableEntity;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;

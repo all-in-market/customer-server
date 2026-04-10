@@ -1,5 +1,5 @@
 package com.example.allinmarket.domain.transactionhistory.enums;
 
-public enum TransactionEnums {
+public enum TransactionStatus {
     PENDING, SUCCESS, FAILED, DENIED, REFUNDED
 }

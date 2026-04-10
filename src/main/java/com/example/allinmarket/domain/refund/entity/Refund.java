@@ -4,7 +4,7 @@ import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
-import com.example.allinmarket.domain.refund.enums.RefundStatus;
+import com.example.allinmarket.domain.transactionhistory.enums.TransactionEnums;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
@@ -44,7 +44,7 @@ public class Refund extends ModifiableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private RefundStatus status = RefundStatus.REQUESTED;
+    private TransactionEnums status = TransactionEnums.PENDING;
 
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
@@ -56,8 +56,21 @@ public class Refund extends ModifiableEntity {
         refund.reason = reasonEnum;
         refund.description = description;
         refund.deniedReason = null;
-        refund.status = RefundStatus.REQUESTED;
+        refund.status = TransactionEnums.PENDING;
         refund.processedAt = null;
         return refund;
+    }
+
+    public void complete(String impUid) {
+        this.status = TransactionEnums.SUCCESS;
+        this.processedAt = LocalDateTime.now();
+    }
+
+    public void fail() {
+        this.status = TransactionEnums.FAILED;
+    }
+
+    public void denied() {
+        this.status = TransactionEnums.DENIED;
     }
 }

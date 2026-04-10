@@ -3,14 +3,10 @@ package com.example.allinmarket.buyer.entity;
 import com.example.allinmarket.common.entity.DeletableEntity;
 import com.example.allinmarket.common.enums.UserRole;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 
 @Getter
 @Entity
@@ -22,31 +18,32 @@ public class Buyer extends DeletableEntity {
     private Long id;
 
     @NotBlank
-    @Length(max = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String email;
 
     @NotBlank
+    @Column(nullable = false)
     private String password;
 
     @NotBlank
-    @Length(max = 50)
+    @Column(nullable = false, length = 50)
     private String name;
 
     @NotBlank
-    @Length(max = 20)
+    @Column(nullable = false, length = 20)
     private String phone;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private UserRole role;
 
-    public static Buyer of(String email, String password, String name, String phone, UserRole role) {
+    public static Buyer of(String email, String password, String name, String phone) {
         Buyer buyer = new Buyer();
         buyer.email = email;
         buyer.password = password;
         buyer.name = name;
         buyer.phone = phone;
-        buyer.role = role;
+        buyer.role = UserRole.BUYER;
         return buyer;
     }
 }

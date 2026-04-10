@@ -7,7 +7,6 @@ import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.enums.RefundStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,27 +31,29 @@ public class Refund extends BaseEntity {
     @JoinColumn(name = "payment_id", nullable = false)
     private Payment payment;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
     private ReasonEnum reason;
 
     @NotBlank
+    @Column(nullable = false)
     private String description;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private RefundStatus status;
 
+    @Column(name = "processed_at", nullable = false)
     private LocalDateTime processedAt;
 
-    public static Refund of(Buyer buyer, Payment payment, ReasonEnum reasonEnum, String description, RefundStatus status, LocalDateTime processedAt) {
+    public static Refund of(Buyer buyer, Payment payment, ReasonEnum reasonEnum, String description, RefundStatus status) {
         Refund refund = new Refund();
         refund.buyer = buyer;
         refund.payment = payment;
         refund.reason = reasonEnum;
         refund.description = description;
         refund.status = status;
-        refund.processedAt = processedAt;
+        refund.processedAt = null;
         return refund;
     }
 }

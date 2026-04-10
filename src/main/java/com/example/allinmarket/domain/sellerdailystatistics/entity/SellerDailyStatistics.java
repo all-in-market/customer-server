@@ -1,5 +1,6 @@
 package com.example.allinmarket.domain.sellerdailystatistics.entity;
 
+import com.example.allinmarket.common.entity.CreatableEntity;
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "seller_daily_statistics")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SellerDailyStatistics {
+public class SellerDailyStatistics extends CreatableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,9 +50,6 @@ public class SellerDailyStatistics {
     @Column(name = "net_sales", nullable = false, precision = 12, scale = 2)
     private BigDecimal netSales = BigDecimal.ZERO;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
     public static SellerDailyStatistics of(
             Seller seller,
             LocalDate statDate,
@@ -71,7 +69,6 @@ public class SellerDailyStatistics {
         statistics.totalSales = totalSales != null ? totalSales : BigDecimal.ZERO;
         statistics.refundAmount = refundAmount != null ? refundAmount : BigDecimal.ZERO;
         statistics.netSales = netSales != null ? netSales : BigDecimal.ZERO;
-        statistics.createdAt = LocalDateTime.now();
         return statistics;
     }
 }

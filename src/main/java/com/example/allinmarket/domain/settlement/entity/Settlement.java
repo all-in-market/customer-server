@@ -2,6 +2,7 @@ package com.example.allinmarket.domain.settlement.entity;
 
 import com.example.allinmarket.common.entity.BaseEntity;
 
+import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.settlement.enums.SettlementStatus;
 import com.example.allinmarket.domain.settlement.enums.SettlementType;
 import com.example.allinmarket.seller.entity.Seller;
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "settlements")
-public class Settlement extends BaseEntity {
+public class Settlement extends ModifiableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

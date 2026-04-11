@@ -6,10 +6,12 @@ import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.me.dto.request.SellerUpdateRequest;
 import com.example.allinmarket.seller.me.dto.response.SellerDetailResponse;
 import com.example.allinmarket.seller.repository.SellerRepository;
+import jodd.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -34,31 +36,31 @@ public class SellerMeService {
         Seller me = sellerRepository.findByIdAndDeletedAtIsNull(userId).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND));
 
-        if (request.email() != null && !request.email().isBlank()) {
+        if (StringUtils.hasText(request.email())) {
             me.updateEmail(request.email());
         }
 
-        if (request.password() != null && !request.password().isBlank()) {
+        if (StringUtils.hasText(request.password())) {
             me.updatePassword(passwordEncoder.encode(request.password()));
         }
 
-        if (request.name() != null && !request.name().isBlank()) {
+        if (StringUtils.hasText(request.name())) {
             me.updateName(request.name());
         }
 
-        if (request.phone() != null && !request.phone().isBlank()) {
+        if (StringUtils.hasText(request.phone())) {
             me.updatePhone(request.phone());
         }
 
-        if (request.storeName() != null && !request.storeName().isBlank()) {
+        if (StringUtils.hasText(request.storeName())) {
             me.updateStoreName(request.storeName());
         }
 
-        if (request.bizNumber() != null && !request.bizNumber().isBlank()) {
+        if (StringUtils.hasText(request.bizNumber())) {
             me.updateBizNumber(request.bizNumber());
         }
 
-        if (request.bankAccount() != null && !request.bankAccount().isBlank()) {
+        if (StringUtils.hasText(request.bankAccount())) {
             me.updateBankAccount(request.bankAccount());
         }
 

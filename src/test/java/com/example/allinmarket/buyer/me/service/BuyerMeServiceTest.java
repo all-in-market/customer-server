@@ -22,7 +22,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -78,6 +80,27 @@ class BuyerMeServiceTest {
                     .hasFieldOrPropertyWithValue("errorEnum", ErrorEnum.BUYER_NOT_FOUND);
 
             verify(buyerRepository).findByIdAndDeletedAtIsNull(buyerId);
+        }
+
+        @Test
+        @DisplayName("이름만 수정되고 전화번호는 수정되지 않는다")
+        void updateMyProfile_onlyNameUpdated() {
+            // given
+            Long buyerId = 1L;
+
+            Buyer buyer = createBuyer(buyerId, "기존이름", "010-1111-2222");
+
+            BuyerUpdateRequest request = new BuyerUpdateRequest("홍길동", null);
+
+            given(buyerRepository.findByIdAndDeletedAtIsNull(buyerId))
+                    .willReturn(Optional.of(buyer));
+
+            // when
+            buyerMeService.updateMyProfile(buyerId, request);
+
+            // then
+            assertThat(buyer.getName()).isEqualTo("홍길동");
+            assertThat(buyer.getPhone()).isEqualTo("010-1111-2222");
         }
 
         private Buyer createBuyer(Long id, String name, String phone) {

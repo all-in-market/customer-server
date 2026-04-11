@@ -9,6 +9,7 @@ import com.example.allinmarket.common.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +38,13 @@ public class BuyerMeService {
                 () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
         );
 
-        buyer.updateNameAndPhone(request.name(), request.phone());
+        if (StringUtils.hasText(request.name())) {
+            buyer.updateName(request.name());
+        }
+
+        if (StringUtils.hasText(request.phone())) {
+            buyer.updatePhone(request.phone());
+        }
 
         return BuyerDetailResponse.from(buyer);
     }

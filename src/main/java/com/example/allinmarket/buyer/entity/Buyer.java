@@ -49,13 +49,11 @@ public class Buyer extends DeletableEntity {
         return buyer;
     }
 
-    public void updateNameAndPhone(String name, String phone) {
-
-        if (name == null || name.isBlank() || phone == null || phone.isBlank()) {
-            throw new BaseException(ErrorEnum.INVALID_INPUT);
-        }
-
+    public void updateName(String name) {
         this.name = name;
+    }
+
+    public void updatePhone(String phone) {
         this.phone = phone;
     }
 }

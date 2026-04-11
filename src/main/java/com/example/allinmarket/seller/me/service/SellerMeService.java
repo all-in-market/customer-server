@@ -7,6 +7,7 @@ import com.example.allinmarket.seller.me.dto.request.SellerUpdateRequest;
 import com.example.allinmarket.seller.me.dto.response.SellerDetailResponse;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SellerMeService {
 
     private final SellerRepository sellerRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 내 정보 조회
     public SellerDetailResponse getMyProfile (Long userId) {
@@ -32,7 +34,15 @@ public class SellerMeService {
         Seller me = sellerRepository.findByIdAndDeletedAtIsNull(userId).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND));
 
-        me.updateMyProfile(request);
+        me.updateMyProfile(
+                request.email(),
+                passwordEncoder.encode(request.password()),
+                request.name(),
+                request.phone(),
+                request.storeName(),
+                request.bizNumber(),
+                request.bankAccount()
+        );
 
         return SellerDetailResponse.from(me);
     }

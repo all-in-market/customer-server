@@ -76,4 +76,22 @@ public class Seller extends DeletableEntity {
 
         return seller;
     }
+
+    public void updateMyProfile (
+            String email,
+            String password,
+            String name,
+            String phone,
+            String storeName,
+            String bizNumber,
+            String bankAccount
+    ) {
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.phone = phone;
+        this.storeName = storeName;
+        this.bizNumber = bizNumber;
+        this.bankAccount = bankAccount;
+    }
 }

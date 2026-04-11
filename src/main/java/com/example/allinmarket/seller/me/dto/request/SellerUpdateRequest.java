@@ -19,6 +19,10 @@ public record SellerUpdateRequest (
         String name,
 
         @NotBlank
+        @Length(max = 20, message = "전화번호는 20자를 초과할 수 없습니다.")
+        String phone,
+
+        @NotBlank
         @Length(max = 100, message = "사업자명은 100자를 초과할 수 없습니다.")
         String storeName,
 

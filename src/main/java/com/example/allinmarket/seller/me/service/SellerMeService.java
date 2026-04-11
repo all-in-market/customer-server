@@ -19,9 +19,8 @@ public class SellerMeService {
     // 내 정보 조회
     public SellerDetailResponse getMyProfile (Long userId) {
 
-        // 존재 && deletedAt != null 확인
         Seller me = sellerRepository.findByIdAndDeletedAtIsNull(userId).orElseThrow(
-                () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND));
+                () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND));
 
         return SellerDetailResponse.from(me);
     }

@@ -6,6 +6,7 @@ import com.example.allinmarket.buyer.me.service.BuyerMeService;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,7 @@ public class BuyerMeController {
      */
     @PutMapping
     public ResponseEntity<ApiResponse<BuyerDetailResponse>> updateMyProfile(
-            @RequestBody BuyerUpdateRequest request
+            @RequestBody @Valid BuyerUpdateRequest request
     ) {
         BuyerDetailResponse result = buyerMeService.updateMyProfile(SecurityUtils.getCurrentUserId(), request);
         return ResponseEntity.ok(

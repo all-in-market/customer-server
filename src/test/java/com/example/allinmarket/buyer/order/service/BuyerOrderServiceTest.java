@@ -6,12 +6,14 @@ import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.address.entity.Address;
 import com.example.allinmarket.domain.address.repository.AddressRepository;
 import com.example.allinmarket.domain.cart.entity.Cart;
 import com.example.allinmarket.domain.cartitem.entity.CartItem;
 import com.example.allinmarket.domain.cartitem.repository.CartItemRepository;
 import com.example.allinmarket.domain.order.entity.Order;
+import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
 import com.example.allinmarket.domain.product.entity.Product;
@@ -19,10 +21,12 @@ import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -126,4 +130,107 @@ class BuyerOrderServiceTest {
         verify(product2).decreaseStock(3);
     }
 
+    @Nested
+    @DisplayName("주문 목록 조회")
+    class FindAllOrdersTest {
+
+        @Test
+        @DisplayName("status가 null이면 구매자의 전체 주문을 조회한다")
+        void findAllOrders_withNullStatus() {
+            // given
+            Long buyerId = 1L;
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+            Order order1 = mock(Order.class);
+            Order order2 = mock(Order.class);
+
+            stubOrder(order1, 100L, 1L, OrderStatus.CREATED);
+            stubOrder(order2, 101L, 1L, OrderStatus.PAID);
+
+            Page<Order> orderPage = new PageImpl<>(List.of(order1, order2), pageable, 2);
+
+            given(orderRepository.findByBuyerId(buyerId, pageable)).willReturn(orderPage);
+
+            // when
+            PageResponse<OrderDetailResponse> result = buyerOrderService.findAllOrders(buyerId, pageable, null);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).hasSize(2);
+
+            verify(orderRepository).findByBuyerId(buyerId, pageable);
+            verify(orderRepository, never()).findByBuyerIdAndStatus(anyLong(), any(OrderStatus.class), any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("status가 CREATED이면 구매자의 CREATED 주문만 조회한다")
+        void findAllOrders_withCreatedStatus() {
+            // given
+            Long buyerId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            Order order1 = mock(Order.class);
+            Order order2 = mock(Order.class);
+
+            stubOrder(order1, 200L, 1L, OrderStatus.CREATED);
+            stubOrder(order2, 201L, 1L, OrderStatus.CREATED);
+
+            Page<Order> orderPage = new PageImpl<>(List.of(order1, order2), pageable, 2);
+
+            given(orderRepository.findByBuyerIdAndStatus(buyerId, OrderStatus.CREATED, pageable))
+                    .willReturn(orderPage);
+
+            // when
+            PageResponse<OrderDetailResponse> result =
+                    buyerOrderService.findAllOrders(buyerId, pageable, OrderStatus.CREATED);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).hasSize(2);
+
+            verify(orderRepository).findByBuyerIdAndStatus(buyerId, OrderStatus.CREATED, pageable);
+            verify(orderRepository, never()).findByBuyerId(anyLong(), any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("status가 null이고 조회 결과가 없으면 빈 페이지를 반환한다")
+        void findAllOrders_withNullStatusAndEmptyResult() {
+            // given
+            Long buyerId = 1L;
+            Pageable pageable = PageRequest.of(0, 10);
+
+            given(orderRepository.findByBuyerId(buyerId, pageable))
+                    .willReturn(Page.empty(pageable));
+
+            // when
+            PageResponse<OrderDetailResponse> result = buyerOrderService.findAllOrders(buyerId, pageable, null);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.content()).isEmpty();
+
+            verify(orderRepository).findByBuyerId(buyerId, pageable);
+            verify(orderRepository, never()).findByBuyerIdAndStatus(anyLong(), any(OrderStatus.class), any(Pageable.class));
+        }
+
+        private void stubOrder(
+                Order order,
+                Long orderId,
+                Long buyerId,
+                OrderStatus status
+        ) {
+            Buyer buyer = mock(Buyer.class);
+
+            // 필수
+            given(order.getId()).willReturn(orderId);
+            given(order.getBuyer()).willReturn(buyer);
+            given(buyer.getId()).willReturn(buyerId);
+
+            given(order.getTotalAmount()).willReturn(BigDecimal.valueOf(10000));
+            given(order.getStatus()).willReturn(status);
+            given(order.getTrackingNumber()).willReturn("TRACK-123");
+            given(order.getRecipient()).willReturn("홍길동");
+            given(order.getAddress()).willReturn("서울시 강남구");
+        }
+    }
 }

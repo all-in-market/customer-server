@@ -354,4 +354,82 @@ public class SellerProductServiceTest {
             assertEquals(ErrorEnum.CATEGORY_NOT_FOUND, exception.getErrorEnum());
         }
     }
+
+    @Test
+    void 판매자_상품_삭제_성공_테스트() {
+        // given
+        Long sellerId = 1L;
+        Long productId = 1L;
+
+        Seller seller = mock(Seller.class);
+        given(seller.getId()).willReturn(sellerId);
+
+        Category category = mock(Category.class);
+        Product product = Product.of(
+                seller, category, "테스트 상품",
+                BigDecimal.valueOf(10000), 50, "상품 설명"
+        );
+        ReflectionTestUtils.setField(product, "id", productId);
+
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
+            given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
+
+            // when
+            ProductDetailResponse response = sellerProductService.delete(sellerId, productId);
+
+            // then
+            assertNotNull(response);
+            assertEquals("테스트 상품", response.name());
+        }
+    }
+
+    @Test
+    void 판매자_상품_삭제_상품없음_실패_테스트() {
+        // given
+        Long sellerId = 1L;
+        Long productId = 999L;
+
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
+            given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.empty());
+
+            // when & then
+            BaseException exception = assertThrows(
+                    BaseException.class,
+                    () -> sellerProductService.delete(sellerId, productId)
+            );
+            assertEquals(ErrorEnum.PRODUCT_NOT_FOUND, exception.getErrorEnum());
+        }
+    }
+
+    @Test
+    void 판매자_상품_삭제_권한없음_실패_테스트() {
+        // given
+        Long sellerId = 1L;
+        Long otherSellerId = 2L;
+        Long productId = 1L;
+
+        Seller seller = mock(Seller.class);
+        given(seller.getId()).willReturn(otherSellerId); // 상품 소유자는 2L
+
+        Category category = mock(Category.class);
+        Product product = Product.of(
+                seller, category, "테스트 상품",
+                BigDecimal.valueOf(10000), 50, "상품 설명"
+        );
+        ReflectionTestUtils.setField(product, "id", productId);
+
+        try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
+            mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId); // 요청자는 1L
+            given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
+
+            // when & then
+            BaseException exception = assertThrows(
+                    BaseException.class,
+                    () -> sellerProductService.delete(sellerId, productId)
+            );
+            assertEquals(ErrorEnum.FORBIDDEN, exception.getErrorEnum());
+        }
+    }
 }

@@ -279,4 +279,75 @@ public class SellerProductControllerTest {
                 .exchange()
                 .expectStatus().is5xxServerError();
     }
+
+    @Test
+    void 판매자_상품_삭제_성공_테스트() {
+        // given
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        ProductDetailResponse response = new ProductDetailResponse(
+                1L, 1L, 1L, "테스트 상품",
+                BigDecimal.valueOf(10000), 50,
+                ProductStatus.ON_SALE, "상품 설명"
+        );
+
+        when(sellerProductService.delete(any(Long.class), any(Long.class)))
+                .thenReturn(response);
+
+        // when & then
+        restTestClient.delete().uri("/seller/products/1")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.status").isEqualTo(200)
+                .jsonPath("$.data.name").isEqualTo("테스트 상품");
+    }
+
+    @Test
+    void 판매자_상품_삭제_상품없음_실패_테스트() {
+        // given
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(sellerProductService.delete(any(Long.class), any(Long.class)))
+                .thenThrow(new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+
+        // when & then
+        restTestClient.delete().uri("/seller/products/999")
+                .exchange()
+                .expectStatus().is4xxClientError();
+    }
+
+    @Test
+    void 판매자_상품_삭제_권한없음_실패_테스트() {
+        // given
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(sellerProductService.delete(any(Long.class), any(Long.class)))
+                .thenThrow(new BaseException(ErrorEnum.FORBIDDEN));
+
+        // when & then
+        restTestClient.delete().uri("/seller/products/1")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    @WithMockUser
+    void 판매자_상품_삭제_500에러_실패_테스트() {
+        // given
+        when(sellerProductService.delete(any(Long.class), any(Long.class)))
+                .thenThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
+
+        // when & then
+        restTestClient.delete().uri("/seller/products/1")
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
 }

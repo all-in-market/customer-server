@@ -20,7 +20,7 @@ public class BuyerMeService {
      * 구매자 내 정보 조회
      */
     public BuyerDetailResponse getMe(Long currentUserId) {
-        Buyer buyer = buyerRepository.findById(currentUserId).orElseThrow(
+        Buyer buyer = buyerRepository.findByIdAndDeletedAtIsNull(currentUserId).orElseThrow(
                 () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
         );
 

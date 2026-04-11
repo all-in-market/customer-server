@@ -5,7 +5,6 @@ import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import com.example.allinmarket.seller.me.dto.request.SellerUpdateRequest;
 import com.example.allinmarket.seller.me.dto.response.SellerDetailResponse;
-import com.example.allinmarket.seller.me.dto.response.SellerUpdateResponse;
 import com.example.allinmarket.seller.me.service.SellerMeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,21 +21,23 @@ public class SellerMeController {
     @GetMapping
     public ResponseEntity<ApiResponse<SellerDetailResponse>> getMyProfile() {
         Long userId = SecurityUtils.getCurrentUserId();
+        SellerDetailResponse response = sellerMeService.getMyProfile(userId);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessEnum.READ_SUCCESS,
-                sellerMeService.getMyProfile(userId)
+                response
         ));
     }
 
 
     @PutMapping
-    public ResponseEntity<ApiResponse<SellerUpdateResponse>> updateMyProfile(
+    public ResponseEntity<ApiResponse<SellerDetailResponse>> updateMyProfile(
             @Valid @RequestBody SellerUpdateRequest request
     ) {
         Long userId = SecurityUtils.getCurrentUserId();
+        SellerDetailResponse response = sellerMeService.updateMyProfile(userId, request);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessEnum.UPDATE_SUCCESS,
-                sellerMeService.updateMyProfile(userId, request)
+                response
         ));
     }
 }

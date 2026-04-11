@@ -3,6 +3,7 @@ package com.example.allinmarket.seller.me.service;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.seller.entity.Seller;
+import com.example.allinmarket.seller.me.dto.request.SellerUpdateRequest;
 import com.example.allinmarket.seller.me.dto.response.SellerDetailResponse;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,17 @@ public class SellerMeService {
 
         Seller me = sellerRepository.findByIdAndDeletedAtIsNull(userId).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND));
+
+        return SellerDetailResponse.from(me);
+    }
+
+    @Transactional
+    public SellerDetailResponse updateMyProfile (Long userId, SellerUpdateRequest request) {
+
+        Seller me = sellerRepository.findByIdAndDeletedAtIsNull(userId).orElseThrow(
+                () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND));
+
+        me.updateMyProfile(request);
 
         return SellerDetailResponse.from(me);
     }

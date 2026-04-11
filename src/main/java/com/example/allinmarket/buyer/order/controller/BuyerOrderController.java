@@ -41,12 +41,11 @@ public class BuyerOrderController {
 
     ) {
         PageResponse<OrderDetailResponse> result = buyerOrderService.findAllOrders(SecurityUtils.getCurrentUserId(), pageable, status);
-        return ResponseEntity.status(HttpStatus.OK).body(
+        return ResponseEntity.ok(
                 ApiResponse.success(
-                        SuccessEnum.READ_SUCCESS,
-                        result
-                )
-        );
+                SuccessEnum.READ_SUCCESS,
+                result
+        ));
     }
 
 }

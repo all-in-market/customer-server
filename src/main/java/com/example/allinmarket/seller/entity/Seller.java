@@ -42,6 +42,7 @@ public class Seller extends DeletableEntity {
     @Column(name = "biz_number", length = 20, unique = true)
     private String bizNumber;
 
+    @NotBlank
     @Column(name = "bank_account", length = 50)
     private String bankAccount;
 

@@ -3,7 +3,7 @@ package com.example.allinmarket.seller.me.service;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.seller.entity.Seller;
-import com.example.allinmarket.seller.me.dto.SellerDetailResponse;
+import com.example.allinmarket.seller.me.dto.response.SellerDetailResponse;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

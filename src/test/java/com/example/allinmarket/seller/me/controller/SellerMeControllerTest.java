@@ -5,7 +5,7 @@ import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;
 import com.example.allinmarket.seller.enums.SellerStatus;
-import com.example.allinmarket.seller.me.dto.SellerDetailResponse;
+import com.example.allinmarket.seller.me.dto.response.SellerDetailResponse;
 import com.example.allinmarket.seller.me.service.SellerMeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

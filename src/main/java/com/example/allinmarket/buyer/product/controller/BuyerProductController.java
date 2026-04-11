@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,5 +27,10 @@ public class BuyerProductController {
         PageResponse<ProductDetailResponse> pageResponse = PageResponse.register(productPage);
 
         return ResponseEntity.ok(ApiResponse.success(SuccessEnum.READ_SUCCESS, pageResponse));
+    }
+
+    @GetMapping("/{productId}")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> findOneProduct(@PathVariable Long productId) {
+        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.READ_SUCCESS, buyerProductService.findOneProduct(productId)));
     }
 }

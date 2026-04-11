@@ -41,6 +41,7 @@ public class SellerProductControllerTest {
         ProductDetailResponse response = new ProductDetailResponse(
                 1L,
                 1L,
+                1L,
                 "테스트 상품",
                 BigDecimal.valueOf(10000),
                 50,

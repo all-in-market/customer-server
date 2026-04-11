@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -72,5 +73,41 @@ public class BuyerProductServiceTest {
 
         // when & then
         assertThrows(BaseException.class, () -> buyerProductService.findAllProducts(PageRequest.of(0, 10)));
+    }
+
+    @Test
+    void 상품_상세_조회_성공_테스트() {
+        // given
+        Seller seller = mock(Seller.class);
+        Category category = mock(Category.class);
+
+        Product product = Product.of(
+                seller,
+                category,
+                "테스트",
+                BigDecimal.valueOf(10000),
+                50,
+                "설명"
+        );
+
+        ReflectionTestUtils.setField(product, "id", 1L);
+
+        given(productRepository.findVisibleProductById(1L)).willReturn(Optional.of(product));
+
+        // when
+        ProductDetailResponse response = buyerProductService.findOneProduct(1L);
+
+        // then
+        assertEquals(1L, response.id());
+        assertEquals("테스트", response.name());
+    }
+
+    @Test
+    void 상품_상세_조회_실패_테스트() {
+        //given
+        given(productRepository.findVisibleProductById(any())).willThrow(new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+
+        // when & then
+        assertThrows(BaseException.class, () -> buyerProductService.findOneProduct(1L));
     }
 }

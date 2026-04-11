@@ -32,10 +32,11 @@ public class SellerProductController {
         return ResponseEntity.ok(ApiResponse.success(SuccessEnum.UPDATE_SUCCESS, sellerProductService.update(sellerId, productId, request)));
     }
 
-//    @DeleteMapping("/{productId}")
-//    public ResponseEntity<ApiResponse<ProductDetailResponse>> delete(@PathVariable(name = "productId") Long productId) {
-//        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.DELETE_SUCCESS, sellerProductService.delete(productId)));
-//    }
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> delete(@PathVariable(name = "productId") Long productId) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.DELETE_SUCCESS, sellerProductService.delete(sellerId, productId)));
+    }
 //
 //    @PutMapping("/{productId}/stock")
 //    public ResponseEntity<ApiResponse<ProductDetailResponse>> stockUpdate(@PathVariable(name = "productId") Long productId, @Valid @RequestBody SellerProductStockUpdateRequest request) {

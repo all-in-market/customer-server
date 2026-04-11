@@ -15,14 +15,18 @@ import com.example.allinmarket.seller.repository.SellerRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SellerProductService {
+
     private final SellerRepository sellerRepository;
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
+    @Transactional
     public ProductDetailResponse create(Long sellerId, SellerProductCreateRequest request) {
 
         Seller seller = sellerRepository.findByIdAndDeletedAtIsNull(sellerId).orElseThrow(
@@ -46,6 +50,7 @@ public class SellerProductService {
         return ProductDetailResponse.from(savedProduct);
     }
 
+    @Transactional
     public ProductDetailResponse update(Long sellerId, Long productId, SellerProductUpdateRequest request) {
 
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
@@ -80,9 +85,23 @@ public class SellerProductService {
         return ProductDetailResponse.from(product);
     }
 
+    @Transactional
+    public ProductDetailResponse delete(Long sellerId, Long productId) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
+
+        validationForbidden(sellerId, product);
+
+        product.delete();
+
+        return ProductDetailResponse.from(product);
+    }
+
     private void validationForbidden(Long sellerId, Product product) {
         if(!product.getSeller().getId().equals(sellerId)) {
             throw new BaseException(ErrorEnum.FORBIDDEN);
         }
     }
+
 }

@@ -20,5 +20,6 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     """)
     List<CartItem> findAllByIdsWithCartAndProduct(@Param("ids") List<Long> ids);
 
+    @Query("SELECT p FROM Product p WHERE p.status != 'HIDDEN' AND p.deletedAt IS NULL")
     Page<CartItem> findByCartId(Long id, Pageable pageable);
 }

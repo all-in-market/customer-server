@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BuyerCartController {
     private final BuyerCartService buyerCartService;
 
-    @GetMapping()
+    @GetMapping
     public ResponseEntity<ApiResponse<CartDetailResponse>> getCart(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessEnum.READ_SUCCESS, buyerCartService.getCart(SecurityUtils.getCurrentUserId(), pageable))

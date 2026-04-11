@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 public record CartDetailResponse(
         Long id,
         Long buyerId,
-        PageResponse<CartItemDetailResponse> cartItemDetailResponsePage
+        PageResponse<CartItemDetailResponse> items
 ) {
     public static CartDetailResponse from(Cart cart, Page<CartItemDetailResponse> items) {
         return new CartDetailResponse(

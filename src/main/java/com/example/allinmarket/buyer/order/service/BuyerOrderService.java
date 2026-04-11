@@ -44,6 +44,9 @@ public class BuyerOrderService {
 
     private final OrderValidator orderValidator;
 
+    /**
+     * 주문 생성
+     */
     @Transactional
     public OrderDetailResponse createOrder(Long buyerId, OrderCreateRequest request) {
 
@@ -107,6 +110,9 @@ public class BuyerOrderService {
         return OrderDetailResponse.from(order);
     }
 
+    /**
+     * 주문 내역 전체 조회
+     */
     public PageResponse<OrderDetailResponse> findAllOrders(Long buyerId, Pageable pageable, OrderStatus status) {
 
         if (status == null) {
@@ -122,7 +128,21 @@ public class BuyerOrderService {
         );
     }
 
+    /**
+     * 주문 내역 단건 조회
+     */
+    public OrderDetailResponse findOrder(Long orderId, Long buyerId) {
+        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId).orElseThrow(
+                () -> new BaseException(ErrorEnum.ORDER_NOT_FOUND)
+        );
 
+        return OrderDetailResponse.from(order);
+    }
+
+
+    /**
+     * 주문 생성 시, 총 주문 금액 계산
+     */
     private BigDecimal calculateTotalAmount(Map<Long, Product> productMap, List<CartItem> cartItems) {
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -139,6 +159,9 @@ public class BuyerOrderService {
         return totalAmount;
     }
 
+    /**
+     * cartItem에 있는 담긴 상품을 락을 걸고 조회
+     */
     private List<Product> findAndLockProducts(List<CartItem> cartItems) {
         List<Long> productIds = cartItems.stream()
                 .map(cartItem -> cartItem.getProduct().getId())
@@ -154,6 +177,5 @@ public class BuyerOrderService {
 
         return products;
     }
-
 
 }

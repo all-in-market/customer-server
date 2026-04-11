@@ -22,6 +22,9 @@ public class BuyerOrderController {
 
     private BuyerOrderService buyerOrderService;
 
+    /**
+     * 주문 생성
+     */
     @PostMapping
     public ResponseEntity<ApiResponse<OrderDetailResponse>> createOrder(
             @RequestBody @Valid OrderCreateRequest request
@@ -34,11 +37,13 @@ public class BuyerOrderController {
                 ));
     }
 
+    /**
+     * 주문 내역 전체 조회
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<OrderDetailResponse>>> findAllOrders(
             Pageable pageable,
             @RequestParam(required = false) OrderStatus status
-
     ) {
         PageResponse<OrderDetailResponse> result = buyerOrderService.findAllOrders(SecurityUtils.getCurrentUserId(), pageable, status);
         return ResponseEntity.ok(
@@ -46,6 +51,21 @@ public class BuyerOrderController {
                 SuccessEnum.READ_SUCCESS,
                 result
         ));
+    }
+
+    /**
+     * 주문 내역 단건 조회
+     */
+    @GetMapping("/{orderId}")
+    public ResponseEntity<ApiResponse<OrderDetailResponse>> findOrder(
+            @PathVariable Long orderId
+    ) {
+        OrderDetailResponse result = buyerOrderService.findOrder(orderId, SecurityUtils.getCurrentUserId());
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        SuccessEnum.READ_SUCCESS,
+                        result
+                ));
     }
 
 }

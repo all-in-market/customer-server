@@ -19,7 +19,7 @@ public class BuyerMeController {
     /**
      * 구매자 내 정보 조회
      */
-    @GetMapping("/buyer/me")
+    @GetMapping("/buyers/me")
     public ResponseEntity<ApiResponse<BuyerDetailResponse>> getMe() {
         BuyerDetailResponse result = buyerMeService.getMe(SecurityUtils.getCurrentUserId());
         return ResponseEntity.ok(

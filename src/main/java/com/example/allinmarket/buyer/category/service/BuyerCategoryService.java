@@ -23,7 +23,7 @@ public class BuyerCategoryService {
                 PageRequest.of(
                         pageable.getPageNumber(),
                         pageable.getPageSize(),
-                        Sort.by(Sort.Direction.ASC, "sortOrder")
+                        Sort.by(Sort.Direction.ASC, "sortOrder") // sortOrder 기준 오름차순 정렬
                 )
         );
 

@@ -133,6 +133,7 @@ public class SellerProductControllerTest {
         ProductDetailResponse response = new ProductDetailResponse(
                 1L,
                 1L,
+                1L,
                 "수정된 상품",
                 BigDecimal.valueOf(20000),
                 50,
@@ -175,11 +176,12 @@ public class SellerProductControllerTest {
         ProductDetailResponse response = new ProductDetailResponse(
                 1L,
                 1L,
+                1L,
                 "수정된 상품",
-                BigDecimal.valueOf(10000),
+                BigDecimal.valueOf(20000),
                 50,
                 ProductStatus.ON_SALE,
-                "상품 설명"
+                "수정된 설명"
         );
 
         when(sellerProductService.update(any(Long.class), any(SellerProductUpdateRequest.class)))

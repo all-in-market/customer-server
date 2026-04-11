@@ -22,7 +22,8 @@ public class SellerProductController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ProductDetailResponse>> create(@Valid @RequestBody SellerProductCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(SuccessEnum.CREATE_SUCCESS, sellerProductService.create(request)));
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(SuccessEnum.CREATE_SUCCESS, sellerProductService.create(sellerId, request)));
     }
 
     @PutMapping("/{productId}")
@@ -30,7 +31,7 @@ public class SellerProductController {
         Long sellerId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(SuccessEnum.UPDATE_SUCCESS, sellerProductService.update(sellerId, productId, request)));
     }
-//
+
 //    @DeleteMapping("/{productId}")
 //    public ResponseEntity<ApiResponse<ProductDetailResponse>> delete(@PathVariable(name = "productId") Long productId) {
 //        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.DELETE_SUCCESS, sellerProductService.delete(productId)));

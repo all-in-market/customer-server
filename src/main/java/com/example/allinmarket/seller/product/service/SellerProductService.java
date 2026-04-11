@@ -23,8 +23,8 @@ public class SellerProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
-    public ProductDetailResponse create(@Valid SellerProductCreateRequest request) {
-        Long sellerId = SecurityUtils.getCurrentUserId();
+    public ProductDetailResponse create(Long sellerId, SellerProductCreateRequest request) {
+
         Seller seller = sellerRepository.findByIdAndDeletedAtIsNull(sellerId).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
         );

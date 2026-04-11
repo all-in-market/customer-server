@@ -31,7 +31,7 @@ public enum ErrorEnum {
     PRODUCT_OUT_OF_STOCK(409, "해당 상품의 재고가 부족합니다."),
     PRODUCT_NOT_AVAILABLE(409, "현재 판매 중인 상품이 아닙니다."),
 
-    //Payment
+    // Payment
     PAYMENT_ALREADY_EXISTS(400, "이미 결제된 주문입니다."),
     PAYMENT_FAILED(500, "결제 처리 중 오류가 발생했습니다."),
     PAYMENT_NOT_FOUND(404, "결제 내역이 없습니다."),

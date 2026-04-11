@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.me.service;
 
 import com.example.allinmarket.buyer.entity.Buyer;
+import com.example.allinmarket.buyer.me.dto.request.BuyerUpdateRequest;
 import com.example.allinmarket.buyer.me.dto.response.BuyerDetailResponse;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
@@ -19,10 +20,24 @@ public class BuyerMeService {
     /**
      * 구매자 내 정보 조회
      */
-    public BuyerDetailResponse getMe(Long currentUserId) {
+    public BuyerDetailResponse getMyProfile(Long currentUserId) {
         Buyer buyer = buyerRepository.findByIdAndDeletedAtIsNull(currentUserId).orElseThrow(
                 () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
         );
+
+        return BuyerDetailResponse.from(buyer);
+    }
+
+    /**
+     * 구매자 내 정보 수정
+     */
+    @Transactional
+    public BuyerDetailResponse updateMyProfile(Long currentUserId, BuyerUpdateRequest request) {
+        Buyer buyer = buyerRepository.findByIdAndDeletedAtIsNull(currentUserId).orElseThrow(
+                () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
+        );
+
+        buyer.updateNameAndPhone(request.name(), request.phone());
 
         return BuyerDetailResponse.from(buyer);
     }

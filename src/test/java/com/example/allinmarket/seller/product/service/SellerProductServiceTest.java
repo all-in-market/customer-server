@@ -77,8 +77,8 @@ public class SellerProductServiceTest {
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
 
-            given(sellerRepository.findById(sellerId)).willReturn(Optional.of(seller));
-            given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
+            given(sellerRepository.findByIdAndDeletedAtIsNull(sellerId)).willReturn(Optional.of(seller));
+            given(categoryRepository.findByIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(category));
             given(productRepository.save(any(Product.class))).willReturn(product);
 
             // when
@@ -110,7 +110,7 @@ public class SellerProductServiceTest {
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
 
-            given(sellerRepository.findById(sellerId)).willReturn(Optional.empty());
+            given(sellerRepository.findByIdAndDeletedAtIsNull(sellerId)).willReturn(Optional.empty());
 
             // when & then
             BaseException exception = assertThrows(
@@ -139,8 +139,8 @@ public class SellerProductServiceTest {
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
 
-            given(sellerRepository.findById(sellerId)).willReturn(Optional.of(seller));
-            given(categoryRepository.findById(999L)).willReturn(Optional.empty());
+            given(sellerRepository.findByIdAndDeletedAtIsNull(sellerId)).willReturn(Optional.of(seller));
+            given(categoryRepository.findByIdAndDeletedAtIsNull(999L)).willReturn(Optional.empty());
 
             // when & then
             BaseException exception = assertThrows(
@@ -171,8 +171,8 @@ public class SellerProductServiceTest {
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
 
-            given(sellerRepository.findById(sellerId)).willReturn(Optional.of(seller));
-            given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
+            given(sellerRepository.findByIdAndDeletedAtIsNull(sellerId)).willReturn(Optional.of(seller));
+            given(categoryRepository.findByIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(category));
             given(productRepository.save(any(Product.class)))
                     .willThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
 
@@ -214,8 +214,8 @@ public class SellerProductServiceTest {
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
 
-            given(productRepository.findById(productId)).willReturn(Optional.of(product));
-            given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
+            given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
+            given(categoryRepository.findByIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(category));
 
             // when
             ProductDetailResponse response = sellerProductService.update(productId, request);
@@ -256,7 +256,7 @@ public class SellerProductServiceTest {
 
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
-            given(productRepository.findById(productId)).willReturn(Optional.of(product));
+            given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
             // when
             ProductDetailResponse response = sellerProductService.update(productId, request);
@@ -280,7 +280,7 @@ public class SellerProductServiceTest {
 
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
-            given(productRepository.findById(productId)).willReturn(Optional.empty());
+            given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.empty());
 
             // when & then
             BaseException exception = assertThrows(
@@ -312,7 +312,7 @@ public class SellerProductServiceTest {
 
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId); // 요청자는 1L
-            given(productRepository.findById(productId)).willReturn(Optional.of(product));
+            given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
             // when & then
             BaseException exception = assertThrows(
@@ -343,8 +343,8 @@ public class SellerProductServiceTest {
 
         try (MockedStatic<SecurityUtils> mockedStatic = mockStatic(SecurityUtils.class)) {
             mockedStatic.when(SecurityUtils::getCurrentUserId).thenReturn(sellerId);
-            given(productRepository.findById(productId)).willReturn(Optional.of(product));
-            given(categoryRepository.findById(999L)).willReturn(Optional.empty());
+            given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
+            given(categoryRepository.findByIdAndDeletedAtIsNull(999L)).willReturn(Optional.empty());
 
             // when & then
             BaseException exception = assertThrows(

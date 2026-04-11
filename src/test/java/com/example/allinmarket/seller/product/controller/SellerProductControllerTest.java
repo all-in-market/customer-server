@@ -13,11 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -127,9 +131,12 @@ public class SellerProductControllerTest {
     }
 
     @Test
-    @WithMockUser
     void 판매자_상품_수정_성공_테스트() {
         // given
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         ProductDetailResponse response = new ProductDetailResponse(
                 1L,
                 1L,
@@ -141,7 +148,7 @@ public class SellerProductControllerTest {
                 "수정된 설명"
         );
 
-        when(sellerProductService.update(any(Long.class), any(SellerProductUpdateRequest.class)))
+        when(sellerProductService.update(any(Long.class), any(Long.class), any(SellerProductUpdateRequest.class)))
                 .thenReturn(response);
 
         String requestBody = """
@@ -170,9 +177,12 @@ public class SellerProductControllerTest {
     }
 
     @Test
-    @WithMockUser
     void 판매자_상품_수정_일부필드만_성공_테스트() {
         // given - name만 수정
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         ProductDetailResponse response = new ProductDetailResponse(
                 1L,
                 1L,
@@ -184,7 +194,7 @@ public class SellerProductControllerTest {
                 "수정된 설명"
         );
 
-        when(sellerProductService.update(any(Long.class), any(SellerProductUpdateRequest.class)))
+        when(sellerProductService.update(any(Long.class), any(Long.class), any(SellerProductUpdateRequest.class)))
                 .thenReturn(response);
 
         String requestBody = """
@@ -244,7 +254,7 @@ public class SellerProductControllerTest {
     @WithMockUser
     void 판매자_상품_수정_500에러_실패_테스트() {
         // given
-        when(sellerProductService.update(any(Long.class), any(SellerProductUpdateRequest.class)))
+        when(sellerProductService.update(any(Long.class), any(Long.class), any(SellerProductUpdateRequest.class)))
                 .thenThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
 
         String requestBody = """

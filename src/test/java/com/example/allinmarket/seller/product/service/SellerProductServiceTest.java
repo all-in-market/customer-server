@@ -218,7 +218,7 @@ public class SellerProductServiceTest {
             given(categoryRepository.findByIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(category));
 
             // when
-            ProductDetailResponse response = sellerProductService.update(productId, request);
+            ProductDetailResponse response = sellerProductService.update(sellerId, productId, request);
 
             // then
             assertNotNull(response);
@@ -259,7 +259,7 @@ public class SellerProductServiceTest {
             given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
             // when
-            ProductDetailResponse response = sellerProductService.update(productId, request);
+            ProductDetailResponse response = sellerProductService.update(sellerId, productId, request);
 
             // then
             assertEquals("수정된 상품", response.name());
@@ -285,7 +285,7 @@ public class SellerProductServiceTest {
             // when & then
             BaseException exception = assertThrows(
                     BaseException.class,
-                    () -> sellerProductService.update(productId, request)
+                    () -> sellerProductService.update(sellerId, productId, request)
             );
             assertEquals(ErrorEnum.PRODUCT_NOT_FOUND, exception.getErrorEnum());
         }
@@ -317,7 +317,7 @@ public class SellerProductServiceTest {
             // when & then
             BaseException exception = assertThrows(
                     BaseException.class,
-                    () -> sellerProductService.update(productId, request)
+                    () -> sellerProductService.update(sellerId, productId, request)
             );
             assertEquals(ErrorEnum.FORBIDDEN, exception.getErrorEnum());
         }
@@ -349,7 +349,7 @@ public class SellerProductServiceTest {
             // when & then
             BaseException exception = assertThrows(
                     BaseException.class,
-                    () -> sellerProductService.update(productId, request)
+                    () -> sellerProductService.update(sellerId, productId, request)
             );
             assertEquals(ErrorEnum.CATEGORY_NOT_FOUND, exception.getErrorEnum());
         }

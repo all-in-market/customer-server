@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.status != 'HIDDEN' AND p.deletedAt IS NULL")
@@ -23,4 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
          WHERE p.id In :productIds
     """)
     List<Product> findAllByIdInWithSellerWithLock(@Param("productIds") List<Long> productIds);
+
+    @Query("SELECT p FROM Product p WHERE p.status != 'HIDDEN' AND p.deletedAt IS NULL")
+    Optional<Product> findVisibleProductById(Long productId);
 }

@@ -6,7 +6,7 @@ import com.example.allinmarket.domain.product.enums.ProductStatus;
 import java.math.BigDecimal;
 
 public record ProductDetailResponse (
-
+        Long id,
         Long sellerId,
         Long categoryId,
         String name,
@@ -17,6 +17,7 @@ public record ProductDetailResponse (
 ) {
     public static ProductDetailResponse from(Product product) {
         return new ProductDetailResponse(
+                product.getId(),
                 product.getSeller().getId(),
                 product.getCategory().getId(),
                 product.getName(),

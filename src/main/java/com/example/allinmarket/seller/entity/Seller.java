@@ -77,49 +77,31 @@ public class Seller extends DeletableEntity {
         return seller;
     }
 
-    public void updateMyProfile (
-            String email,
-            String password,
-            String name,
-            String phone,
-            String storeName,
-            String bizNumber,
-            String bankAccount
-    ) {
-        updateEmail(email);
-        updatePassword(password);
-        updateName(name);
-        updatePhone(phone);
-        updateStoreName(storeName);
-        updateBizNumber(bizNumber);
-        updateBankAccount(bankAccount);
-    }
-
-    private void updateEmail(String email) {
+    public void updateEmail(String email) {
         this.email = email;
     }
 
-    private void updatePassword(String password) {
+    public void updatePassword(String password) {
         this.password = password;
     }
 
-    private void updateName(String name) {
+    public void updateName(String name) {
         this.name = name;
     }
 
-    private void updatePhone(String phone) {
+    public void updatePhone(String phone) {
         this.phone = phone;
     }
 
-    private void updateStoreName(String storeName) {
+    public void updateStoreName(String storeName) {
         this.storeName = storeName;
     }
 
-    private void updateBizNumber(String bizNumber) {
+    public void updateBizNumber(String bizNumber) {
         this.bizNumber = bizNumber;
     }
 
-    private void updateBankAccount(String bankAccount) {
+    public void updateBankAccount(String bankAccount) {
         this.bankAccount = bankAccount;
     }
 }

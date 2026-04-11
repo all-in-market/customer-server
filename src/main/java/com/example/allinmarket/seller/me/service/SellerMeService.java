@@ -34,15 +34,33 @@ public class SellerMeService {
         Seller me = sellerRepository.findByIdAndDeletedAtIsNull(userId).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND));
 
-        me.updateMyProfile(
-                request.email(),
-                passwordEncoder.encode(request.password()),
-                request.name(),
-                request.phone(),
-                request.storeName(),
-                request.bizNumber(),
-                request.bankAccount()
-        );
+        if (request.email() != null && !request.email().isBlank()) {
+            me.updateEmail(request.email());
+        }
+
+        if (request.password() != null && !request.password().isBlank()) {
+            me.updatePassword(passwordEncoder.encode(request.password()));
+        }
+
+        if (request.name() != null && !request.name().isBlank()) {
+            me.updateName(request.name());
+        }
+
+        if (request.phone() != null && !request.phone().isBlank()) {
+            me.updatePhone(request.phone());
+        }
+
+        if (request.storeName() != null && !request.storeName().isBlank()) {
+            me.updateStoreName(request.storeName());
+        }
+
+        if (request.bizNumber() != null && !request.bizNumber().isBlank()) {
+            me.updateBizNumber(request.bizNumber());
+        }
+
+        if (request.bankAccount() != null && !request.bankAccount().isBlank()) {
+            me.updateBankAccount(request.bankAccount());
+        }
 
         return SellerDetailResponse.from(me);
     }

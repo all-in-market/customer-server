@@ -128,6 +128,17 @@ public class BuyerOrderService {
         );
     }
 
+    /**
+     * 주문 내역 단건 조회
+     */
+    public OrderDetailResponse findOrder(Long orderId, Long buyerId) {
+        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId).orElseThrow(
+                () -> new BaseException(ErrorEnum.ORDER_NOT_FOUND)
+        );
+
+        return OrderDetailResponse.from(order);
+    }
+
 
     /**
      * 주문 생성 시, 총 주문 금액 계산
@@ -166,6 +177,5 @@ public class BuyerOrderService {
 
         return products;
     }
-
 
 }

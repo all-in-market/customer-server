@@ -25,10 +25,10 @@ public class SellerProductService {
 
     public ProductDetailResponse create(@Valid SellerProductCreateRequest request) {
         Long sellerId = SecurityUtils.getCurrentUserId();
-        Seller seller = sellerRepository.findById(sellerId).orElseThrow(
+        Seller seller = sellerRepository.findByIdAndDeletedAtIsNull(sellerId).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
         );
-        Category category = categoryRepository.findById(request.categoryId()).orElseThrow(
+        Category category = categoryRepository.findByIdAndDeletedAtIsNull(request.categoryId()).orElseThrow(
                 () -> new BaseException(ErrorEnum.CATEGORY_NOT_FOUND)
         );
 
@@ -48,14 +48,14 @@ public class SellerProductService {
 
     public ProductDetailResponse update(Long productId, @Valid SellerProductUpdateRequest request) {
         Long sellerId = SecurityUtils.getCurrentUserId();
-        Product product = productRepository.findById(productId).orElseThrow(
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
         );
 
         validationForbidden(sellerId, product);
 
         if(request.categoryId() != null) {
-            Category category = categoryRepository.findById(request.categoryId()).orElseThrow(
+            Category category = categoryRepository.findByIdAndDeletedAtIsNull(request.categoryId()).orElseThrow(
                     () -> new BaseException(ErrorEnum.CATEGORY_NOT_FOUND)
             );
             product.updateCategory(category);

@@ -22,6 +22,9 @@ public class BuyerOrderController {
 
     private BuyerOrderService buyerOrderService;
 
+    /**
+     * 주문 생성
+     */
     @PostMapping
     public ResponseEntity<ApiResponse<OrderDetailResponse>> createOrder(
             @RequestBody @Valid OrderCreateRequest request
@@ -34,6 +37,9 @@ public class BuyerOrderController {
                 ));
     }
 
+    /**
+     * 주문 내역 전체 조회
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<OrderDetailResponse>>> findAllOrders(
             Pageable pageable,

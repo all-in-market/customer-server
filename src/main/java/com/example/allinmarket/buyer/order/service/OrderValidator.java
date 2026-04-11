@@ -13,6 +13,9 @@ import java.util.Map;
 @Service
 public class OrderValidator {
 
+    /**
+     * 상품이 구매 가능한 상태인지 검증
+     */
     public void validateProductSellable(Map<Long, Product> productMap, List<CartItem> cartItems) {
 
         for (CartItem cartItem : cartItems) {
@@ -26,13 +29,18 @@ public class OrderValidator {
         }
     }
 
+    /**
+     * cartItem이 비어있지 않은지 검증
+     */
     public void validateCartItemsNotEmpty(List<CartItem> cartItems) {
         if (cartItems == null || cartItems.isEmpty()) {
             throw new BaseException(ErrorEnum.CART_ITEMS_EMPTY);
         }
     }
 
-    // 전달된 cartItemId 값들이 구매자 카트에 등록된 cartItem id가 맞는지 검증
+    /**
+     * 전달된 cartItemId 값들이 구매자 카트에 등록된 cartItem id가 맞는지 검증
+     */
     public void validateCartItemsOwnedByBuyer(List<CartItem> cartItems, Long buyerId) {
 
         for (CartItem cartItem : cartItems) {

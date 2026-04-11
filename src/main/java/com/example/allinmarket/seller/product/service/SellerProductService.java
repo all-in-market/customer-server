@@ -10,6 +10,7 @@ import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
+import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,5 +44,45 @@ public class SellerProductService {
         Product savedProduct = productRepository.save(product);
 
         return ProductDetailResponse.from(savedProduct);
+    }
+
+    public ProductDetailResponse update(Long productId, @Valid SellerProductUpdateRequest request) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        Product product = productRepository.findById(productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
+
+        validationForbidden(sellerId, product);
+
+        if(request.categoryId() != null) {
+            Category category = categoryRepository.findById(request.categoryId()).orElseThrow(
+                    () -> new BaseException(ErrorEnum.CATEGORY_NOT_FOUND)
+            );
+            product.updateCategory(category);
+        }
+
+        if (request.name() != null && !request.name().isBlank()) {
+            product.updateName(request.name());
+        }
+
+        if (request.price() != null) {
+            product.updatePrice(request.price());
+        }
+
+        if (request.status() != null) {
+            product.updateStatus(request.status());
+        }
+
+        if (request.description() != null && !request.description().isBlank()) {
+            product.updateDescription(request.description());
+        }
+
+        return ProductDetailResponse.from(product);
+    }
+
+    private void validationForbidden(Long sellerId, Product product) {
+        if(!product.getSeller().getId().equals(sellerId)) {
+            throw new BaseException(ErrorEnum.FORBIDDEN);
+        }
     }
 }

@@ -27,6 +27,7 @@ public enum ErrorEnum {
     INVALID_CART_ITEM_OWNER(403, "다른 사용자의 장바구니 상품이 포함되어 있습니다."),
 
     // Product
+    PRODUCT_NOT_FOUND(404, "존재하지 않는 상품입니다."),
     INVALID_ORDER_PRODUCT(404, "주문 대상 상품이 유효하지 않습니다."),
     PRODUCT_OUT_OF_STOCK(409, "해당 상품의 재고가 부족합니다."),
     PRODUCT_NOT_AVAILABLE(409, "현재 판매 중인 상품이 아닙니다."),

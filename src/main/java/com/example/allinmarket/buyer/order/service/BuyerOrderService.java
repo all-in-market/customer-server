@@ -4,11 +4,13 @@ import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.address.entity.Address;
 import com.example.allinmarket.domain.address.repository.AddressRepository;
 import com.example.allinmarket.domain.cartitem.entity.CartItem;
 import com.example.allinmarket.domain.cartitem.repository.CartItemRepository;
 import com.example.allinmarket.domain.order.entity.Order;
+import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
@@ -19,6 +21,7 @@ import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,6 +107,22 @@ public class BuyerOrderService {
         return OrderDetailResponse.from(order);
     }
 
+    public PageResponse<OrderDetailResponse> findAllOrders(Long buyerId, Pageable pageable, OrderStatus status) {
+
+        if (status == null) {
+            return PageResponse.register(
+                    orderRepository.findByBuyerId(buyerId, pageable)
+                            .map(OrderDetailResponse::from)
+            );
+        }
+
+        return PageResponse.register(
+                orderRepository.findByBuyerIdAndStatus(buyerId, status, pageable)
+                        .map(OrderDetailResponse::from)
+        );
+    }
+
+
     private BigDecimal calculateTotalAmount(Map<Long, Product> productMap, List<CartItem> cartItems) {
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -135,4 +154,6 @@ public class BuyerOrderService {
 
         return products;
     }
+
+
 }

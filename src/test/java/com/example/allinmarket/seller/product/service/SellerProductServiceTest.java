@@ -82,7 +82,7 @@ public class SellerProductServiceTest {
             given(productRepository.save(any(Product.class))).willReturn(product);
 
             // when
-            ProductDetailResponse response = sellerProductService.create(request);
+            ProductDetailResponse response = sellerProductService.create(sellerId, request);
 
             // then
             assertNotNull(response);
@@ -115,7 +115,7 @@ public class SellerProductServiceTest {
             // when & then
             BaseException exception = assertThrows(
                     BaseException.class,
-                    () -> sellerProductService.create(request)
+                    () -> sellerProductService.create(sellerId, request)
             );
 
             assertEquals(ErrorEnum.SELLER_NOT_FOUND, exception.getErrorEnum());
@@ -145,7 +145,7 @@ public class SellerProductServiceTest {
             // when & then
             BaseException exception = assertThrows(
                     BaseException.class,
-                    () -> sellerProductService.create(request)
+                    () -> sellerProductService.create(sellerId, request)
             );
 
             assertEquals(ErrorEnum.CATEGORY_NOT_FOUND, exception.getErrorEnum());
@@ -177,7 +177,7 @@ public class SellerProductServiceTest {
                     .willThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
 
             // when & then
-            assertThrows(BaseException.class, () -> sellerProductService.create(request));
+            assertThrows(BaseException.class, () -> sellerProductService.create(sellerId, request));
         }
     }
 

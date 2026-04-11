@@ -40,9 +40,12 @@ public class SellerProductControllerTest {
     private SellerProductService sellerProductService;
 
     @Test
-    @WithMockUser
     void 판매자_상품_등록_성공_테스트() {
         // given
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         ProductDetailResponse response = new ProductDetailResponse(
                 1L,
                 1L,
@@ -54,7 +57,7 @@ public class SellerProductControllerTest {
                 "상품 설명"
         );
 
-        when(sellerProductService.create(any(SellerProductCreateRequest.class)))
+        when(sellerProductService.create(any(Long.class), any(SellerProductCreateRequest.class)))
                 .thenReturn(response);
 
         String requestBody = """
@@ -85,10 +88,13 @@ public class SellerProductControllerTest {
     }
 
     @Test
-    @WithMockUser
     void 판매자_상품_등록_500에러_실패_테스트() {
         // given
-        when(sellerProductService.create(any(SellerProductCreateRequest.class)))
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(sellerProductService.create(any(Long.class), any(SellerProductCreateRequest.class)))
                 .thenThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
 
         String requestBody = """
@@ -110,9 +116,12 @@ public class SellerProductControllerTest {
     }
 
     @Test
-    @WithMockUser
     void 판매자_상품_등록_유효성검사_실패_테스트() {
         // given - name 누락된 잘못된 요청
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         String invalidRequestBody = """
             {
                 "categoryId": 1,

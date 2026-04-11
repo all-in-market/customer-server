@@ -20,8 +20,8 @@ public record SellerProductCreateRequest(
         @PositiveOrZero(message = "가격은 0 이상이어야 합니다")
         int stock,
 
-        @NotBlank(message = "상품 설명은 필수입니다.")
-        @Size(max = 255, message = "상품 설명은 255자 이하여야 합니다.")
+        @NotBlank(message = "상품 설명은 필수입니다")
+        @Size(max = 255, message = "상품 설명은 255자 이하여야 합니다")
         String description
 ) {
 }

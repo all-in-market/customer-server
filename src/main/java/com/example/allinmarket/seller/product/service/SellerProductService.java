@@ -46,7 +46,7 @@ public class SellerProductService {
         return ProductDetailResponse.from(savedProduct);
     }
 
-    public ProductDetailResponse update(Long sellerId, Long productId, @Valid SellerProductUpdateRequest request) {
+    public ProductDetailResponse update(Long sellerId, Long productId, SellerProductUpdateRequest request) {
 
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)

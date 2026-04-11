@@ -2,6 +2,7 @@ package com.example.allinmarket.seller.product.controller;
 
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
+import com.example.allinmarket.common.security.SecurityUtils;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,7 +27,8 @@ public class SellerProductController {
 
     @PutMapping("/{productId}")
     public ResponseEntity<ApiResponse<ProductDetailResponse>> update(@PathVariable(name = "productId") Long productId, @Valid @RequestBody SellerProductUpdateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.UPDATE_SUCCESS, sellerProductService.update(productId, request)));
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.UPDATE_SUCCESS, sellerProductService.update(sellerId, productId, request)));
     }
 //
 //    @DeleteMapping("/{productId}")

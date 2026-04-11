@@ -49,4 +49,8 @@ public class Address extends ModifiableEntity {
 
         return address;
     }
+
+    public void makeDefault() {
+        this.isDefault = true;
+    }
 }

@@ -96,6 +96,17 @@ public class BuyerAddressService {
         return AddressDetailResponse.from(address);
     }
 
+    @Transactional
+    public AddressDetailResponse removeAddress(Long currentUserId, Long addressId) {
+        Address address = addressRepository.findByIdAndBuyerId(addressId, currentUserId).orElseThrow(
+                () -> new BaseException(ErrorEnum.ADDRESS_NOT_FOUND)
+        );
+
+        addressRepository.delete(address);
+
+        return AddressDetailResponse.from(address);
+    }
+
     /**
      * 요청된 isDefault 값에 따라 현재 주소지의 기본 주소지 설정을 변경
      */

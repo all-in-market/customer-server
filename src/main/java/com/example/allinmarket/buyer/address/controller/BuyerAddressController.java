@@ -66,4 +66,19 @@ public class BuyerAddressController {
                 ));
     }
 
+    /**
+     *  배송지 삭제
+     */
+    @DeleteMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<AddressDetailResponse>> removeAddress(
+            @PathVariable Long addressId
+    ) {
+        AddressDetailResponse result = buyerAddressService.removeAddress(SecurityUtils.getCurrentUserId(), addressId);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        SuccessEnum.DELETE_SUCCESS,
+                        result
+                ));
+    }
+
 }

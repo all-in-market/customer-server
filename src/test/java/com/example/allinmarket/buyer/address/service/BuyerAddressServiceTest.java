@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.address.service;
 
 import com.example.allinmarket.buyer.address.dto.request.AddressCreateRequest;
+import com.example.allinmarket.buyer.address.dto.request.AddressUpdateRequest;
 import com.example.allinmarket.buyer.address.dto.response.AddressDetailResponse;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
@@ -21,11 +22,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BuyerAddressServiceTest {
@@ -189,6 +187,94 @@ class BuyerAddressServiceTest {
         );
         ReflectionTestUtils.setField(buyer, "id", id);
         return buyer;
+    }
+
+    @Nested
+    @DisplayName("주소지 수정")
+    class UpdateAddressTest {
+        @Test
+        @DisplayName("주소 수정 성공 - 실제 값 변경 검증")
+        void updateAddress_success_updateFields_realObject() {
+            // given
+            Long currentUserId = 1L;
+            Long addressId = 10L;
+
+            Buyer buyer = mock(Buyer.class);
+
+            Address address = Address.of(buyer, "기존이름", "010-0000-0000", "기존주소");
+
+            given(addressRepository.findByIdAndBuyerId(addressId, currentUserId))
+                    .willReturn(Optional.of(address));
+
+            AddressUpdateRequest request = new AddressUpdateRequest(
+                    "홍길동",
+                    "010-1234-5678",
+                    "서울 강남",
+                    null
+            );
+
+            // when
+            buyerAddressService.updateAddress(currentUserId, addressId, request);
+
+            // then
+            assertThat(address.getRecipient()).isEqualTo("홍길동");
+            assertThat(address.getPhone()).isEqualTo("010-1234-5678");
+            assertThat(address.getDetail()).isEqualTo("서울 강남");
+        }
+
+        @Test
+        @DisplayName("일반 배송지를 기본 배송지로 변경")
+        void updateAddress_makeDefault_realObject() {
+            // given
+            Long currentUserId = 1L;
+            Long addressId = 10L;
+
+            Buyer buyer = mock(Buyer.class);
+
+            // 기본 isDefault 값 false
+            Address address = Address.of(buyer, "홍길동", "010", "서울");
+
+            given(addressRepository.findByIdAndBuyerId(addressId, currentUserId))
+                    .willReturn(Optional.of(address));
+
+            AddressUpdateRequest request = new AddressUpdateRequest(
+                    null, null, null, true
+            );
+
+            // when
+            buyerAddressService.updateAddress(currentUserId, addressId, request);
+
+            // then
+            assertThat(address.isDefault()).isTrue();
+            verify(addressRepository).unsetOtherDefaultsByBuyerId(currentUserId, addressId);
+        }
+
+        @Test
+        @DisplayName("기본 배송지를 일반 배송지로 변경")
+        void updateAddress_unsetDefault_realObject() {
+            // given
+            Long currentUserId = 1L;
+            Long addressId = 10L;
+
+            Buyer buyer = mock(Buyer.class);
+
+            Address address = Address.of(buyer, "홍길동", "010", "서울");
+            address.makeDefault(); // true로 설정
+
+            given(addressRepository.findByIdAndBuyerId(addressId, currentUserId))
+                    .willReturn(Optional.of(address));
+
+            AddressUpdateRequest request = new AddressUpdateRequest(
+                    null, null, null, false
+            );
+
+            // when
+            buyerAddressService.updateAddress(currentUserId, addressId, request);
+
+            // then
+            assertThat(address.isDefault()).isFalse();
+            verify(addressRepository, never()).unsetOtherDefaultsByBuyerId(anyLong(), anyLong());
+        }
     }
 
     private Address createAddress(

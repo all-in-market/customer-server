@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.address.controller;
 
 import com.example.allinmarket.buyer.address.dto.request.AddressCreateRequest;
+import com.example.allinmarket.buyer.address.dto.request.AddressUpdateRequest;
 import com.example.allinmarket.buyer.address.dto.response.AddressDetailResponse;
 import com.example.allinmarket.buyer.address.service.BuyerAddressService;
 import com.example.allinmarket.common.enums.SuccessEnum;
@@ -45,6 +46,22 @@ public class BuyerAddressController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         SuccessEnum.READ_SUCCESS,
+                        result
+                ));
+    }
+
+    /**
+     * 배송지 수정
+     */
+    @PutMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<AddressDetailResponse>> updateAddress(
+            @RequestBody @Valid AddressUpdateRequest request,
+            @PathVariable Long addressId
+    ) {
+        AddressDetailResponse result = buyerAddressService.updateAddress(SecurityUtils.getCurrentUserId(), addressId, request);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        SuccessEnum.UPDATE_SUCCESS,
                         result
                 ));
     }

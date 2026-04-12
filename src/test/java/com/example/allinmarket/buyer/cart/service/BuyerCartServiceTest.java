@@ -1,6 +1,6 @@
 package com.example.allinmarket.buyer.cart.service;
 
-import com.example.allinmarket.buyer.cart.dto.CartDetailResponse;
+import com.example.allinmarket.buyer.cart.dto.response.CartDetailResponse;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.cart.entity.Cart;

@@ -1,6 +1,6 @@
 package com.example.allinmarket.buyer.cart.controller;
 
-import com.example.allinmarket.buyer.cart.dto.CartDetailResponse;
+import com.example.allinmarket.buyer.cart.dto.response.CartDetailResponse;
 import com.example.allinmarket.buyer.cart.service.BuyerCartService;
 import com.example.allinmarket.buyer.cartitem.dto.CartItemDetailResponse;
 import com.example.allinmarket.common.enums.ErrorEnum;

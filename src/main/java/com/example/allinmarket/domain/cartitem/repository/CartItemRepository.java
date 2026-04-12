@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
@@ -22,4 +23,6 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.status != 'HIDDEN' AND p.deletedAt IS NULL")
     Page<CartItem> findByCartId(Long id, Pageable pageable);
+
+    Optional<CartItem> findByCartIdAndProductId(Long cartId, Long productId);
 }

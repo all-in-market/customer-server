@@ -1,4 +1,4 @@
-package com.example.allinmarket.buyer.cart.dto;
+package com.example.allinmarket.buyer.cart.dto.response;
 
 import com.example.allinmarket.buyer.cartitem.dto.CartItemDetailResponse;
 import com.example.allinmarket.common.response.PageResponse;

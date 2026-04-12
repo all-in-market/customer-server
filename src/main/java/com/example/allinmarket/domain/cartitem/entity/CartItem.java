@@ -1,6 +1,8 @@
 package com.example.allinmarket.domain.cartitem.entity;
 
 import com.example.allinmarket.common.entity.ModifiableEntity;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.cart.entity.Cart;
 import com.example.allinmarket.domain.product.entity.Product;
 import jakarta.persistence.*;
@@ -39,5 +41,19 @@ public class CartItem extends ModifiableEntity {
         cartItem.quantity = 1;
 
         return cartItem;
+    }
+
+    public void increaseQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new BaseException(ErrorEnum.INVALID_INPUT);
+        }
+        this.quantity += quantity;
+    }
+
+    public void decreaseQuantity(int quantity) {
+        if (quantity <= 0 || quantity > this.quantity) {
+            throw new BaseException(ErrorEnum.INVALID_INPUT);
+        }
+        this.quantity -= quantity;
     }
 }

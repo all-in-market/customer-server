@@ -1,0 +1,26 @@
+package com.example.allinmarket.seller.dashboard.service;
+
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.domain.sellerdashboard.entity.SellerDashboard;
+import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboardRepository;
+import com.example.allinmarket.seller.dashboard.dto.response.SellerDashboardResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class SellerDashBoardService {
+
+    private final SellerDashboardRepository sellerDashboardRepository;
+
+    public SellerDashboardResponse getSellerDashboard(Long sellerId) {
+
+        SellerDashboard sellerDashboard = sellerDashboardRepository.findByIdAndDeletedAtIsNull(sellerId)
+                .orElseThrow(() -> new BaseException(ErrorEnum.NOT_FOUND));
+
+        return SellerDashboardResponse.from(sellerDashboard);
+    }
+}

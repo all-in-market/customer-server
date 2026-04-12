@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.cart.controller;
 
 import com.example.allinmarket.buyer.cart.dto.request.AddProductToCartRequest;
+import com.example.allinmarket.buyer.cart.dto.request.UpdateCartItemQuantityRequest;
 import com.example.allinmarket.buyer.cart.dto.response.CartDetailResponse;
 import com.example.allinmarket.buyer.cart.service.BuyerCartService;
 import com.example.allinmarket.buyer.cartitem.dto.CartItemDetailResponse;
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -157,7 +157,75 @@ public class BuyerCartControllerTest {
         restTestClient.post()
                 .uri("/carts/items")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(request)   // ✅ JSON 본문으로 request 전달
+                .body(request)
+                .exchange()
+                .expectStatus().isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus())
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.status").isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus())
+                .jsonPath("$.message").isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getMessage());
+    }
+
+    @Test
+    @WithMockUser
+    void 장바구니_상품_수량_변경_성공_테스트() {
+        // given
+        UpdateCartItemQuantityRequest request = new UpdateCartItemQuantityRequest(5);
+
+        CartDetailResponse response = new CartDetailResponse(
+                1L,
+                1L,
+                new PageResponse<>(
+                        List.of(new CartItemDetailResponse(
+                                        1L,
+                                        1L,
+                                        1L,
+                                        "노트북",
+                                        BigDecimal.valueOf(1200000),
+                                        5
+                                )
+                        ),
+                        1, 1, 1, 10, true
+                )
+        );
+
+        given(buyerCartService.updateCartItemQuantity(
+                eq(1L),
+                eq(1L),
+                eq(request),
+                any(Pageable.class)
+                )
+        ).willReturn(response);
+
+        // when & then
+        restTestClient.put().uri("/carts/items/{productId}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.status").isEqualTo(200)
+                .jsonPath("$.message").isEqualTo(SuccessEnum.UPDATE_SUCCESS.getMessage())
+                .jsonPath("$.data.buyerId").isEqualTo(1)
+                .jsonPath("$.data.items.content[0].cartId").isEqualTo(1)
+                .jsonPath("$.data.items.content[0].quantity").isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser
+    void 장바구니_수량_변경_실패_테스트() {
+        // given
+        UpdateCartItemQuantityRequest request = new UpdateCartItemQuantityRequest(5);
+
+        given(buyerCartService.updateCartItemQuantity(eq(1L), eq(1L), eq(request), any(Pageable.class)))
+                .willThrow(new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK));
+
+        // when & then
+        restTestClient.put()
+                .uri("/carts/items/{productId}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
                 .exchange()
                 .expectStatus().isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus())
                 .expectBody()

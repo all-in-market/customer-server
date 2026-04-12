@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.cart.service;
 
 import com.example.allinmarket.buyer.cart.dto.request.AddProductToCartRequest;
+import com.example.allinmarket.buyer.cart.dto.request.UpdateCartItemQuantityRequest;
 import com.example.allinmarket.buyer.cart.dto.response.CartDetailResponse;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.common.exception.BaseException;
@@ -149,5 +150,68 @@ public class BuyerCartServiceTest {
         // when & then
         assertThrows(BaseException.class,
                 () -> buyerCartService.addProductToCart(buyer.getId(), request, PageRequest.of(0, 10)));
+    }
+
+    @Test
+    void 장바구니_상품_수량_변경_성공_테스트() {
+        // given
+        Buyer buyer = Buyer.of("test@test.com", "12345678", "홍길동", "010-1234-5678");
+
+        ReflectionTestUtils.setField(buyer, "id", 1L);
+
+        Cart cart = Cart.of(buyer);
+
+        ReflectionTestUtils.setField(cart, "id", 1L);
+
+        Product product = Product.of(null, null, "노트북", BigDecimal.valueOf(1200000), 10, "노트북 설명");
+
+        ReflectionTestUtils.setField(product, "id", 1L);
+
+        CartItem cartItem = CartItem.of(cart, product);
+
+        UpdateCartItemQuantityRequest request = new UpdateCartItemQuantityRequest(5);
+
+        given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
+        given(productRepository.findById(product.getId())).willReturn(Optional.of(product));
+        given(cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId())).willReturn(Optional.of(cartItem));
+        given(cartItemRepository.findByCartId(eq(cart.getId()), any(Pageable.class)))
+                .willReturn(new PageImpl<>(List.of(cartItem)));
+
+        // when
+        CartDetailResponse response = buyerCartService.updateCartItemQuantity(buyer.getId(), product.getId(), request, PageRequest.of(0, 10));
+
+        // then
+        assertEquals(cart.getId(), response.id());
+        assertEquals(buyer.getId(), response.buyerId());
+        assertEquals(request.quantity(), cartItem.getQuantity());
+        assertEquals(cartItem.getQuantity(), response.items().content().get(0).quantity());
+    }
+
+    @Test
+    void 장바구니_상품_수량_변경_실패_테스트() {
+        // given
+        Buyer buyer = Buyer.of("test@test.com", "12345678", "홍길동", "010-1234-5678");
+
+        ReflectionTestUtils.setField(buyer, "id", 1L);
+
+        Cart cart = Cart.of(buyer);
+
+        ReflectionTestUtils.setField(cart, "id", 1L);
+
+        Product product = Product.of(null, null, "노트북", BigDecimal.valueOf(1200000), 1, "노트북 설명");
+
+        ReflectionTestUtils.setField(product, "id", 1L);
+
+        CartItem cartItem = CartItem.of(cart, product);
+
+        UpdateCartItemQuantityRequest request = new UpdateCartItemQuantityRequest(5);
+
+        given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
+        given(productRepository.findById(product.getId())).willReturn(Optional.of(product));
+        given(cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId())).willReturn(Optional.of(cartItem));
+
+        // when & then
+        assertThrows(BaseException.class,
+                () -> buyerCartService.updateCartItemQuantity(buyer.getId(), product.getId(), request, PageRequest.of(0, 10)));
     }
 }

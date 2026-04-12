@@ -28,6 +28,7 @@ public class SellerDashboard extends CreatableEntity {
     @Column(name = "stat_date", nullable = false)
     private LocalDate statDate;
 
+    @PositiveOrZero
     @Column(name = "total_orders")
     private int totalOrders;
 
@@ -35,9 +36,11 @@ public class SellerDashboard extends CreatableEntity {
     @Column(name = "total_sales", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalSales;
 
+    @PositiveOrZero
     @Column(name = "total_products_sold")
     private int totalProductsSold;
 
+    @PositiveOrZero
     @Column(name = "total_refunds")
     private int totalRefunds;
 

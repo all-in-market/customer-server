@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.address.service;
 
 import com.example.allinmarket.buyer.address.dto.request.AddressCreateRequest;
+import com.example.allinmarket.buyer.address.dto.request.AddressUpdateRequest;
 import com.example.allinmarket.buyer.address.dto.response.AddressDetailResponse;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -65,5 +67,49 @@ public class BuyerAddressService {
         return addresses.stream()
                 .map(AddressDetailResponse::from)
                 .toList();
+    }
+
+    /**
+     * 배송지 내용 수정
+     */
+    @Transactional
+    public AddressDetailResponse updateAddress(Long currentUserId, Long addressId, AddressUpdateRequest request) {
+
+        Address address = addressRepository.findByIdAndBuyerId(addressId, currentUserId).orElseThrow(
+                () -> new BaseException(ErrorEnum.ADDRESS_NOT_FOUND)
+        );
+
+        if (StringUtils.hasText(request.recipient())) {
+            address.updateRecipient(request.recipient());
+        }
+
+        if (StringUtils.hasText(request.phone())) {
+            address.updatePhone(request.phone());
+        }
+
+        if (StringUtils.hasText(request.detail())) {
+            address.updateDetail(request.detail());
+        }
+
+        updateDefaultAddress(currentUserId, addressId, address, request.isDefault());
+
+        return AddressDetailResponse.from(address);
+    }
+
+    private void updateDefaultAddress(Long currentUserId, Long addressId, Address address, Boolean isDefault) {
+        if (isDefault == null || isDefault == address.isDefault()) {
+            return;
+        }
+
+        // default 배송지 -> 일반 배송지
+        if (Boolean.FALSE.equals(isDefault)) {
+            address.unsetDefault();
+            return;
+        }
+
+        // 일반 배송지 -> default 배송지
+        // 해당 구매자의 다른 배송지를 먼저 일반 배송지로 만든 후 현재 배송지를 default 설정
+        addressRepository.unsetOtherDefaultsByBuyerId(currentUserId, addressId);
+        address.makeDefault();
     }
 }

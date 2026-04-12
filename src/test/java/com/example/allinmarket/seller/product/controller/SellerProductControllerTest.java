@@ -6,6 +6,7 @@ import com.example.allinmarket.common.security.JwtProvider;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
+import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
 import com.example.allinmarket.seller.product.service.SellerProductService;
 import org.junit.jupiter.api.Test;
@@ -347,6 +348,127 @@ public class SellerProductControllerTest {
 
         // when & then
         restTestClient.delete().uri("/seller/products/1")
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
+    @Test
+    void 판매자_상품_재고수정_성공_테스트() {
+        // given
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        ProductDetailResponse response = new ProductDetailResponse(
+                1L, 1L, 1L, "테스트 상품",
+                BigDecimal.valueOf(10000), 100,
+                ProductStatus.ON_SALE, "상품 설명"
+        );
+
+        when(sellerProductService.stockUpdate(any(Long.class), any(Long.class), any(SellerProductStockUpdateRequest.class)))
+                .thenReturn(response);
+
+        String requestBody = """
+        {
+            "stock": 100
+        }
+        """;
+
+        // when & then
+        restTestClient.put().uri("/seller/products/1/stock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.status").isEqualTo(200)
+                .jsonPath("$.data.stock").isEqualTo(100);
+    }
+
+    @Test
+    void 판매자_상품_재고수정_상품없음_실패_테스트() {
+        // given
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(sellerProductService.stockUpdate(any(Long.class), any(Long.class), any(SellerProductStockUpdateRequest.class)))
+                .thenThrow(new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+
+        String requestBody = """
+        {
+            "stock": 100
+        }
+        """;
+
+        // when & then
+        restTestClient.put().uri("/seller/products/999/stock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .exchange()
+                .expectStatus().is4xxClientError();
+    }
+
+    @Test
+    void 판매자_상품_재고수정_권한없음_실패_테스트() {
+        // given
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(sellerProductService.stockUpdate(any(Long.class), any(Long.class), any(SellerProductStockUpdateRequest.class)))
+                .thenThrow(new BaseException(ErrorEnum.FORBIDDEN));
+
+        String requestBody = """
+        {
+            "stock": 100
+        }
+        """;
+
+        // when & then
+        restTestClient.put().uri("/seller/products/1/stock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    @WithMockUser
+    void 판매자_상품_재고수정_유효성검사_음수_실패_테스트() {
+        // given - 음수 재고
+        String requestBody = """
+        {
+            "stock": -1
+        }
+        """;
+
+        // when & then
+        restTestClient.put().uri("/seller/products/1/stock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .exchange()
+                .expectStatus().is4xxClientError();
+    }
+
+    @Test
+    @WithMockUser
+    void 판매자_상품_재고수정_500에러_실패_테스트() {
+        // given
+        when(sellerProductService.stockUpdate(any(Long.class), any(Long.class), any(SellerProductStockUpdateRequest.class)))
+                .thenThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
+
+        String requestBody = """
+        {
+            "stock": 100
+        }
+        """;
+
+        // when & then
+        restTestClient.put().uri("/seller/products/1/stock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
                 .exchange()
                 .expectStatus().is5xxServerError();
     }

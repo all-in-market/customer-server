@@ -5,6 +5,7 @@ import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
+import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
 import com.example.allinmarket.seller.product.service.SellerProductService;
 import jakarta.validation.Valid;
@@ -37,9 +38,10 @@ public class SellerProductController {
         Long sellerId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(SuccessEnum.DELETE_SUCCESS, sellerProductService.delete(sellerId, productId)));
     }
-//
-//    @PutMapping("/{productId}/stock")
-//    public ResponseEntity<ApiResponse<ProductDetailResponse>> stockUpdate(@PathVariable(name = "productId") Long productId, @Valid @RequestBody SellerProductStockUpdateRequest request) {
-//        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.UPDATE_SUCCESS, sellerProductService.stockUpdate(productId, request)));
-//    }
+
+    @PutMapping("/{productId}/stock")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> stockUpdate(@PathVariable(name = "productId") Long productId, @Valid @RequestBody SellerProductStockUpdateRequest request) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.UPDATE_SUCCESS, sellerProductService.stockUpdate(sellerId, productId, request)));
+    }
 }

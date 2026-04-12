@@ -10,6 +10,8 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;
+import com.example.allinmarket.domain.cart.entity.Cart;
+import com.example.allinmarket.domain.cart.repository.CartRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +41,9 @@ public class BuyerAuthServiceTest {
     @Mock
     private JwtProvider jwtProvider;
 
+    @Mock
+    private CartRepository cartRepository;
+
     @Test
     void 회원_가입_성공_테스트() {
         // given
@@ -60,6 +65,10 @@ public class BuyerAuthServiceTest {
         );
 
         given(buyerRepository.save(any(Buyer.class))).willReturn(savedBuyer);
+
+        Cart savedCart = Cart.of(savedBuyer);
+
+        given(cartRepository.save(any(Cart.class))).willReturn(savedCart);
 
         // when
         BuyerAuthResponse response = buyerAuthService.signup(request);

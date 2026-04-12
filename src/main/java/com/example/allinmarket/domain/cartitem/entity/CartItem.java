@@ -56,4 +56,11 @@ public class CartItem extends ModifiableEntity {
         }
         this.quantity -= quantity;
     }
+
+    public void updateQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new BaseException(ErrorEnum.INVALID_INPUT);
+        }
+        this.quantity = quantity;
+    }
 }

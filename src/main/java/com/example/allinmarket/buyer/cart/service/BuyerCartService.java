@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.cart.service;
 
 import com.example.allinmarket.buyer.cart.dto.request.AddProductToCartRequest;
+import com.example.allinmarket.buyer.cart.dto.request.UpdateCartItemQuantityRequest;
 import com.example.allinmarket.buyer.cart.dto.response.CartDetailResponse;
 import com.example.allinmarket.buyer.cartitem.dto.CartItemDetailResponse;
 import com.example.allinmarket.common.enums.ErrorEnum;
@@ -11,6 +12,7 @@ import com.example.allinmarket.domain.cartitem.entity.CartItem;
 import com.example.allinmarket.domain.cartitem.repository.CartItemRepository;
 import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,5 +93,32 @@ public class BuyerCartService {
         Page<CartItemDetailResponse> responsePage = items.map(CartItemDetailResponse::from);
 
         return CartDetailResponse.from(cart, responsePage);
+    }
+
+    // 장바구니 수량 변경
+    @Transactional
+    public CartDetailResponse updateCartItemQuantity(Long currentUserId, Long productId, UpdateCartItemQuantityRequest request, Pageable pageable) {
+        Cart cart = cartRepository.findByBuyerId(currentUserId)
+                .orElseThrow(() -> new BaseException(ErrorEnum.CART_NOT_FOUND));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+
+        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> new BaseException(ErrorEnum.CART_ITEMS_NOT_FOUND));
+
+        if (request.quantity() > product.getStock()) {
+            throw new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK);
+        }
+
+        cartItem.updateQuantity(request.quantity());
+
+        cartItemRepository.save(cartItem);
+
+        Page<CartItem> items = cartItemRepository.findByCartId(cart.getId(), pageable);
+
+        Page<CartItemDetailResponse> cartItemDetailResponsePage = items.map(CartItemDetailResponse::from);
+
+        return CartDetailResponse.from(cart, cartItemDetailResponsePage);
     }
 }

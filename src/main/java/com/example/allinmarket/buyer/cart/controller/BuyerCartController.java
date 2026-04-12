@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.cart.controller;
 
 import com.example.allinmarket.buyer.cart.dto.request.AddProductToCartRequest;
+import com.example.allinmarket.buyer.cart.dto.request.UpdateCartItemQuantityRequest;
 import com.example.allinmarket.buyer.cart.dto.response.CartDetailResponse;
 import com.example.allinmarket.buyer.cart.service.BuyerCartService;
 import com.example.allinmarket.common.enums.SuccessEnum;
@@ -40,6 +41,19 @@ public class BuyerCartController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessEnum.READ_SUCCESS, buyerCartService.getCart(SecurityUtils.getCurrentUserId(), pageable))
+        );
+    }
+
+    @PutMapping("/items/{productId}")
+    public ResponseEntity<ApiResponse<CartDetailResponse>> updateCartItemQuantity(
+            @PathVariable Long productId,
+            @Valid @RequestBody UpdateCartItemQuantityRequest request,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessEnum.UPDATE_SUCCESS,
+                buyerCartService.updateCartItemQuantity(SecurityUtils.getCurrentUserId(), productId, request, pageable)
+                )
         );
     }
 }

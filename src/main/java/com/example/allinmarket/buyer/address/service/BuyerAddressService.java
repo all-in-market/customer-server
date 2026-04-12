@@ -96,6 +96,9 @@ public class BuyerAddressService {
         return AddressDetailResponse.from(address);
     }
 
+    /**
+     * 요청된 isDefault 값에 따라 현재 주소지의 기본 주소지 설정을 변경
+     */
     private void updateDefaultAddress(Long currentUserId, Long addressId, Address address, Boolean isDefault) {
         if (isDefault == null || isDefault == address.isDefault()) {
             return;

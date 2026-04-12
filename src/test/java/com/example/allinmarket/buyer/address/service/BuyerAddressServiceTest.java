@@ -14,7 +14,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -110,6 +113,100 @@ class BuyerAddressServiceTest {
 
             assertThat(result).isNotNull();
         }
-
     }
+
+    @Nested
+    @DisplayName("주소지 목록 조회")
+    class GetAllAddressesTest {
+
+        @Test
+        @DisplayName("구매자 본인 배송지 목록 조회 성공")
+        void getAllAddresses_success() {
+            // given
+            Long currentUserId = 1L;
+
+            Buyer buyer = createBuyer(currentUserId);
+
+            Address address1 = createAddress(
+                    1L, buyer, "홍길동", "010-1111-2222", "서울시 강남구", true
+            );
+            Address address2 = createAddress(
+                    2L, buyer, "김철수", "010-3333-4444", "서울시 서초구", false
+            );
+
+            given(addressRepository.findAllByBuyerId(currentUserId))
+                    .willReturn(List.of(address1, address2));
+
+            // when
+            List<AddressDetailResponse> result = buyerAddressService.getAllAddresses(currentUserId);
+
+            // then
+            assertThat(result).hasSize(2);
+
+            AddressDetailResponse res1 = result.get(0);
+            assertThat(res1.addressId()).isEqualTo(1L);
+            assertThat(res1.buyerId()).isEqualTo(currentUserId);
+            assertThat(res1.recipient()).isEqualTo("홍길동");
+            assertThat(res1.phone()).isEqualTo("010-1111-2222");
+            assertThat(res1.detail()).isEqualTo("서울시 강남구");
+            assertThat(res1.isDefault()).isTrue();
+
+            AddressDetailResponse res2 = result.get(1);
+            assertThat(res2.addressId()).isEqualTo(2L);
+            assertThat(res2.buyerId()).isEqualTo(currentUserId);
+            assertThat(res2.recipient()).isEqualTo("김철수");
+            assertThat(res2.phone()).isEqualTo("010-3333-4444");
+            assertThat(res2.detail()).isEqualTo("서울시 서초구");
+            assertThat(res2.isDefault()).isFalse();
+
+            verify(addressRepository).findAllByBuyerId(currentUserId);
+        }
+
+        @Test
+        @DisplayName("배송지가 없으면 빈 리스트를 반환한다")
+        void getAllAddresses_empty() {
+            // given
+            Long currentUserId = 1L;
+
+            given(addressRepository.findAllByBuyerId(currentUserId))
+                    .willReturn(Collections.emptyList());
+
+            // when
+            List<AddressDetailResponse> result = buyerAddressService.getAllAddresses(currentUserId);
+
+            // then
+            assertThat(result).isEmpty();
+            verify(addressRepository).findAllByBuyerId(currentUserId);
+        }
+    }
+
+    private Buyer createBuyer(Long id) {
+        Buyer buyer = Buyer.of(
+                "test@test.com",
+                "1234",
+                "홍길동",
+                "010-0000-0000"
+        );
+        ReflectionTestUtils.setField(buyer, "id", id);
+        return buyer;
+    }
+
+    private Address createAddress(
+            Long addressId,
+            Buyer buyer,
+            String recipient,
+            String phone,
+            String detail,
+            boolean isDefault
+    ) {
+        Address address = Address.of(buyer, recipient, phone, detail);
+        ReflectionTestUtils.setField(address, "id", addressId);
+
+        if (isDefault) {
+            address.makeDefault();
+        }
+
+        return address;
+    }
+
 }

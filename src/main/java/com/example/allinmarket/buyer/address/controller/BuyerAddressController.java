@@ -10,10 +10,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,7 +21,10 @@ public class BuyerAddressController {
 
     private final BuyerAddressService buyerAddressService;
 
-    @GetMapping
+    /**
+     * 구매자 배송지 추가
+     */
+    @PostMapping
     public ResponseEntity<ApiResponse<AddressDetailResponse>> createAddress(
             @RequestBody @Valid AddressCreateRequest request
     ) {
@@ -33,4 +35,18 @@ public class BuyerAddressController {
                         result
                 ));
     }
+
+    /**
+     * 구매자 본인 배송지 목록 조회
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<AddressDetailResponse>>> getAllAddresses() {
+        List<AddressDetailResponse> result = buyerAddressService.getAllAddresses(SecurityUtils.getCurrentUserId());
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        SuccessEnum.READ_SUCCESS,
+                        result
+                ));
+    }
+
 }

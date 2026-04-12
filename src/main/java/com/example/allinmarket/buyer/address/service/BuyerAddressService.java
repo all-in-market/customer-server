@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -50,5 +53,17 @@ public class BuyerAddressService {
         addressRepository.save(address);
 
         return AddressDetailResponse.from(address);
+    }
+
+    /**
+     * 구매자 본인 배송지 목록 조회
+     */
+    public List<AddressDetailResponse> getAllAddresses(Long currentUserId) {
+
+        List<Address> addresses = addressRepository.findAllByBuyerId(currentUserId);
+
+        return addresses.stream()
+                .map(AddressDetailResponse::from)
+                .toList();
     }
 }

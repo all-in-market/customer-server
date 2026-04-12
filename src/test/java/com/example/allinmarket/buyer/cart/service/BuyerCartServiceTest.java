@@ -1,5 +1,6 @@
 package com.example.allinmarket.buyer.cart.service;
 
+import com.example.allinmarket.buyer.cart.dto.request.AddProductToCartRequest;
 import com.example.allinmarket.buyer.cart.dto.response.CartDetailResponse;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.common.exception.BaseException;
@@ -8,6 +9,7 @@ import com.example.allinmarket.domain.cart.repository.CartRepository;
 import com.example.allinmarket.domain.cartitem.entity.CartItem;
 import com.example.allinmarket.domain.cartitem.repository.CartItemRepository;
 import com.example.allinmarket.domain.product.entity.Product;
+import com.example.allinmarket.domain.product.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +41,9 @@ public class BuyerCartServiceTest {
 
     @InjectMocks
     private BuyerCartService buyerCartService;
+
+    @Mock
+    private ProductRepository productRepository;
 
     @Test
     void 장바구니_조회_성공_테스트() {
@@ -85,5 +90,64 @@ public class BuyerCartServiceTest {
         // when & then
         assertThrows(BaseException.class,
                 () -> buyerCartService.getCart(99L, PageRequest.of(0, 10)));
+    }
+
+    @Test
+    void 장바구니_상품_추가_성공_테스트() {
+        // given
+        Buyer buyer = Buyer.of("test@test.com", "pw", "홍길동", "010-1234-5678");
+
+        ReflectionTestUtils.setField(buyer, "id", 1L);
+
+        Cart cart = Cart.of(buyer);
+
+        ReflectionTestUtils.setField(cart, "id", 1L);
+
+        Product product = Product.of(null, null, "노트북", BigDecimal.valueOf(1200000), 10, "노트북 설명");
+
+        ReflectionTestUtils.setField(product, "id", 1L);
+
+        CartItem item = CartItem.of(cart, product);
+
+        Page<CartItem> page = new PageImpl<>(List.of(item));
+
+        AddProductToCartRequest request = new AddProductToCartRequest(1L, 2);
+
+        given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
+        given(productRepository.findById(request.productId())).willReturn(Optional.of(product));
+        given(cartItemRepository.findByCartIdAndProductId(cart.getId(), request.productId())).willReturn(Optional.empty());
+        given(cartItemRepository.findByCartId(eq(cart.getId()), any(Pageable.class))).willReturn(page);
+
+        // when
+        CartDetailResponse response = buyerCartService.addProductToCart(buyer.getId(), request, PageRequest.of(0, 10));
+
+        // then
+        assertEquals(cart.getId(), response.id());
+        assertEquals(buyer.getId(), response.buyerId());
+    }
+
+    @Test
+    void 장바구니_상품_추가_실패_테스트() {
+        // given
+        Buyer buyer = Buyer.of("test@test.com", "pw", "홍길동", "010-1234-5678");
+
+        ReflectionTestUtils.setField(buyer, "id", 1L);
+
+        Cart cart = Cart.of(buyer);
+
+        ReflectionTestUtils.setField(cart, "id", 1L);
+
+        Product product = Product.of(null, null, "노트북", BigDecimal.valueOf(1200000), 1, "노트북 설명");
+
+        ReflectionTestUtils.setField(product, "id", 1L);
+
+        AddProductToCartRequest request = new AddProductToCartRequest(1L, 5);
+
+        given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
+        given(productRepository.findById(request.productId())).willReturn(Optional.of(product));
+
+        // when & then
+        assertThrows(BaseException.class,
+                () -> buyerCartService.addProductToCart(buyer.getId(), request, PageRequest.of(0, 10)));
     }
 }

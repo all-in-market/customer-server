@@ -51,7 +51,7 @@ public class BuyerCartService {
                 () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
         );
 
-        if (product.getStock() <= 0) {
+        if (product.getStock() <= 0 || product.getStock() < request.quantity()) {
             throw new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK);
         }
 

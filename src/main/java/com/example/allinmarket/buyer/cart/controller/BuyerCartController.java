@@ -9,6 +9,8 @@ import com.example.allinmarket.common.security.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +22,10 @@ public class BuyerCartController {
     private final BuyerCartService buyerCartService;
 
     @PostMapping("/items")
-    public ResponseEntity<ApiResponse<CartDetailResponse>> addProductToCart(@Valid @RequestBody AddProductToCartRequest request, Pageable pageable) {
+    public ResponseEntity<ApiResponse<CartDetailResponse>> addProductToCart(
+            @Valid @RequestBody AddProductToCartRequest request,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         SuccessEnum.CREATE_SUCCESS,
@@ -30,7 +35,9 @@ public class BuyerCartController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<CartDetailResponse>> getCart(Pageable pageable) {
+    public ResponseEntity<ApiResponse<CartDetailResponse>> getCart(
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessEnum.READ_SUCCESS, buyerCartService.getCart(SecurityUtils.getCurrentUserId(), pageable))
         );

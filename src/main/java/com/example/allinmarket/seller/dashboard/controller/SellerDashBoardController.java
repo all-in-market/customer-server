@@ -4,7 +4,7 @@ import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import com.example.allinmarket.seller.dashboard.dto.response.SellerDashboardResponse;
-import com.example.allinmarket.seller.dashboard.service.SellerDashBoardService;
+import com.example.allinmarket.seller.dashboard.service.SellerDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/seller/dashboard")
 public class SellerDashBoardController {
 
-    private final SellerDashBoardService sellerDashBoardService;
+    private final SellerDashboardService sellerDashBoardService;
 
-    public ResponseEntity<ApiResponse<SellerDashboardResponse>> getSellerDashboard () {
+    public ResponseEntity<ApiResponse<SellerDashboardResponse>> getSellerDashboard() {
         Long sellerId = SecurityUtils.getCurrentUserId();
         SellerDashboardResponse response = sellerDashBoardService.getSellerDashboard(sellerId);
         return ResponseEntity.ok(ApiResponse.success(

@@ -47,7 +47,7 @@ public class SellerAuthService {
     }
 
     public SellerLoginResponse login(SellerLoginRequest request) {
-        Seller seller = sellerRepository.findByEmail(request.email()).orElseThrow(
+        Seller seller = sellerRepository.findByEmailAndDeletedAtIsNull(request.email()).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
         );
 

@@ -10,12 +10,14 @@ import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
+import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +68,7 @@ public class SellerProductService {
             product.updateCategory(category);
         }
 
-        if (request.name() != null && !request.name().isBlank()) {
+        if (StringUtils.hasText(request.name())) {
             product.updateName(request.name());
         }
 
@@ -78,7 +80,7 @@ public class SellerProductService {
             product.updateStatus(request.status());
         }
 
-        if (request.description() != null && !request.description().isBlank()) {
+        if (StringUtils.hasText(request.description())) {
             product.updateDescription(request.description());
         }
 
@@ -98,10 +100,22 @@ public class SellerProductService {
         return ProductDetailResponse.from(product);
     }
 
+    @Transactional
+    public ProductDetailResponse stockUpdate(Long sellerId, Long productId, SellerProductStockUpdateRequest request) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
+
+        validationForbidden(sellerId, product);
+
+        product.updateStock(request.stock());
+
+        return ProductDetailResponse.from(product);
+    }
+
     private void validationForbidden(Long sellerId, Product product) {
         if(!product.getSeller().getId().equals(sellerId)) {
             throw new BaseException(ErrorEnum.FORBIDDEN);
         }
     }
-
 }

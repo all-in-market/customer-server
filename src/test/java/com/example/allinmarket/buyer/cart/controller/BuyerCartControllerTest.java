@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -232,5 +233,47 @@ public class BuyerCartControllerTest {
                 .jsonPath("$.success").isEqualTo(false)
                 .jsonPath("$.status").isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus())
                 .jsonPath("$.message").isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getMessage());
+    }
+
+    @Test
+    @WithMockUser
+    void 장바구니_상품_삭제_성공_테스트() {
+        // given
+        CartDetailResponse response = new CartDetailResponse(
+                1L,
+                1L,
+                new PageResponse<>(List.of(), 1, 1, 1, 10, true));
+
+        given(buyerCartService.removeCartItem(anyLong(), eq(1L), any(Pageable.class)))
+                .willReturn(response);
+
+        // when & then
+        restTestClient.delete().uri("/carts/items/{productId}", 1L)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.status").isEqualTo(200)
+                .jsonPath("$.message").isEqualTo(SuccessEnum.DELETE_SUCCESS.getMessage())
+                .jsonPath("$.data.buyerId").isEqualTo(1)
+                .jsonPath("$.data.items.content").isEmpty();
+    }
+
+    @Test
+    @WithMockUser
+    void 장바구니_상품_삭제_실패_테스트() {
+        // given
+        given(buyerCartService.removeCartItem(anyLong(), eq(1L), any(Pageable.class)))
+                .willThrow(new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+
+        // when & then
+        restTestClient.delete()
+                .uri("/carts/items/{productId}", 1L)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.status").isEqualTo(ErrorEnum.PRODUCT_NOT_FOUND.getStatus())
+                .jsonPath("$.message").isEqualTo(ErrorEnum.PRODUCT_NOT_FOUND.getMessage());
     }
 }

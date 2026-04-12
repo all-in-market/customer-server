@@ -214,4 +214,55 @@ public class BuyerCartServiceTest {
         assertThrows(BaseException.class,
                 () -> buyerCartService.updateCartItemQuantity(buyer.getId(), product.getId(), request, PageRequest.of(0, 10)));
     }
+
+    @Test
+    void 장바구니_상품_삭제_성공_테스트() {
+        // given
+        Buyer buyer = Buyer.of("test@test.com", "12345678", "홍길동", "010-1234-5678");
+
+        ReflectionTestUtils.setField(buyer, "id", 1L);
+
+        Cart cart = Cart.of(buyer);
+
+        ReflectionTestUtils.setField(cart, "id", 1L);
+
+        Product product = Product.of(null, null, "노트북", BigDecimal.valueOf(1200000), 1, "노트북 설명");
+
+        ReflectionTestUtils.setField(product, "id", 1L);
+
+        CartItem cartItem = CartItem.of(cart, product);
+
+        ReflectionTestUtils.setField(cartItem, "id", 1L);
+
+        given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
+        given(productRepository.findById(product.getId())).willReturn(Optional.of(product));
+        given(cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId())).willReturn(Optional.of(cartItem));
+        given(cartItemRepository.findByCartId(eq(cart.getId()), any(Pageable.class)))
+                .willReturn(new PageImpl<>(List.of()));
+
+        // when
+        CartDetailResponse response = buyerCartService.removeCartItem(buyer.getId(), product.getId(), PageRequest.of(0, 10));
+
+        // then
+        assertEquals(0, response.items().content().size());
+    }
+
+    @Test
+    void 장바구니_상품_삭제_실패_테스트() {
+        // given
+        Buyer buyer = Buyer.of("test@test.com", "12345678", "홍길동", "010-1234-5678");
+
+        ReflectionTestUtils.setField(buyer, "id", 1L);
+
+        Cart cart = Cart.of(buyer);
+
+        ReflectionTestUtils.setField(cart, "id", 1L);
+
+        given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
+        given(productRepository.findById(1L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThrows(BaseException.class,
+                () -> buyerCartService.removeCartItem(buyer.getId(), 1L, PageRequest.of(0, 10)));
+    }
 }

@@ -96,6 +96,9 @@ public class BuyerAddressService {
         return AddressDetailResponse.from(address);
     }
 
+    /**
+     * 배송지 삭제
+     */
     @Transactional
     public AddressDetailResponse removeAddress(Long currentUserId, Long addressId) {
         Address address = addressRepository.findByIdAndBuyerId(addressId, currentUserId).orElseThrow(

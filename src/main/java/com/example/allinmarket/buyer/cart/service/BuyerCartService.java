@@ -12,7 +12,6 @@ import com.example.allinmarket.domain.cartitem.entity.CartItem;
 import com.example.allinmarket.domain.cartitem.repository.CartItemRepository;
 import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,9 +30,7 @@ public class BuyerCartService {
 
     // 장바구니 조회
     public CartDetailResponse getCart(Long currentUserId, Pageable pageable) {
-        Cart cart = cartRepository.findByBuyerId(currentUserId).orElseThrow(
-                () -> new BaseException(ErrorEnum.CART_NOT_FOUND)
-        );
+        Cart cart = findCartOrThrow(currentUserId);
 
         Page<CartItem> items = cartItemRepository.findByCartId(cart.getId(), pageable);
 
@@ -45,13 +42,9 @@ public class BuyerCartService {
     // 장바구니 상품 추가
     @Transactional
     public CartDetailResponse addProductToCart(Long currentUserId, AddProductToCartRequest request, Pageable pageable) {
-        Cart cart = cartRepository.findByBuyerId(currentUserId).orElseThrow(
-                () -> new BaseException(ErrorEnum.CART_NOT_FOUND)
-        );
+        Cart cart = findCartOrThrow(currentUserId);
 
-        Product product = productRepository.findById(request.productId()).orElseThrow(
-                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
-        );
+        Product product = findProductOrThrow(request.productId());
 
         if (product.getStock() <= 0 || product.getStock() < request.quantity()) {
             throw new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK);
@@ -98,14 +91,11 @@ public class BuyerCartService {
     // 장바구니 수량 변경
     @Transactional
     public CartDetailResponse updateCartItemQuantity(Long currentUserId, Long productId, UpdateCartItemQuantityRequest request, Pageable pageable) {
-        Cart cart = cartRepository.findByBuyerId(currentUserId)
-                .orElseThrow(() -> new BaseException(ErrorEnum.CART_NOT_FOUND));
+        Cart cart = findCartOrThrow(currentUserId);
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+        Product product = findProductOrThrow(productId);
 
-        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
-                .orElseThrow(() -> new BaseException(ErrorEnum.CART_ITEMS_NOT_FOUND));
+        CartItem cartItem = findCartItemOrThrow(cart.getId(), productId);
 
         if (request.quantity() > product.getStock()) {
             throw new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK);
@@ -120,5 +110,41 @@ public class BuyerCartService {
         Page<CartItemDetailResponse> cartItemDetailResponsePage = items.map(CartItemDetailResponse::from);
 
         return CartDetailResponse.from(cart, cartItemDetailResponsePage);
+    }
+
+    // 장바구니 상품 삭제
+    @Transactional
+    public CartDetailResponse removeCartItem(Long currentUserId, Long productId, Pageable pageable) {
+        Cart cart = findCartOrThrow(currentUserId);
+
+        Product product = findProductOrThrow(productId);
+
+        CartItem cartItem = findCartItemOrThrow(cart.getId(), productId);
+
+        cartItemRepository.delete(cartItem);
+
+        Page<CartItem> items = cartItemRepository.findByCartId(cart.getId(), pageable);
+
+        Page<CartItemDetailResponse> cartItemDetailResponsePage = items.map(CartItemDetailResponse::from);
+
+        return CartDetailResponse.from(cart, cartItemDetailResponsePage);
+    }
+
+    private Cart findCartOrThrow(Long buyerId) {
+        return cartRepository.findByBuyerId(buyerId).orElseThrow(
+                () -> new BaseException(ErrorEnum.CART_NOT_FOUND)
+        );
+    }
+
+    private Product findProductOrThrow(Long productId) {
+        return productRepository.findById(productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
+    }
+
+    private CartItem findCartItemOrThrow(Long cartId, Long productId) {
+        return cartItemRepository.findByCartIdAndProductId(cartId, productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.CART_ITEMS_NOT_FOUND)
+        );
     }
 }

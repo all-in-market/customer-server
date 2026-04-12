@@ -56,4 +56,16 @@ public class BuyerCartController {
                 )
         );
     }
+
+    @DeleteMapping("/items/{productId}")
+    public ResponseEntity<ApiResponse<CartDetailResponse>> removeCartItem(
+            @PathVariable Long productId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessEnum.DELETE_SUCCESS,
+                buyerCartService.removeCartItem(SecurityUtils.getCurrentUserId(), productId, pageable)
+                )
+        );
+    }
 }

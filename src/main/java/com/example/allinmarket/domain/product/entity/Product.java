@@ -69,4 +69,28 @@ public class Product extends DeletableEntity {
         }
         stock -= amount;
     }
+
+    public void updateCategory(Category category) {
+        this.category = category;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updatePrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public void updateStock(int stock) {
+        this.stock = stock;
+    }
+
+    public void updateStatus(ProductStatus status) {
+        this.status = status;
+    }
+
+    public void updateDescription(String description) {
+        this.description = description;
+    }
 }

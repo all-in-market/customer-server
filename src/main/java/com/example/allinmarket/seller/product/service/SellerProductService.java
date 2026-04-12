@@ -10,24 +10,31 @@ import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
+import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
+import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SellerProductService {
+
     private final SellerRepository sellerRepository;
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
-    public ProductDetailResponse create(@Valid SellerProductCreateRequest request) {
-        Long sellerId = SecurityUtils.getCurrentUserId();
-        Seller seller = sellerRepository.findById(sellerId).orElseThrow(
+    @Transactional
+    public ProductDetailResponse create(Long sellerId, SellerProductCreateRequest request) {
+
+        Seller seller = sellerRepository.findByIdAndDeletedAtIsNull(sellerId).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
         );
-        Category category = categoryRepository.findById(request.categoryId()).orElseThrow(
+        Category category = categoryRepository.findByIdAndDeletedAtIsNull(request.categoryId()).orElseThrow(
                 () -> new BaseException(ErrorEnum.CATEGORY_NOT_FOUND)
         );
 
@@ -43,5 +50,72 @@ public class SellerProductService {
         Product savedProduct = productRepository.save(product);
 
         return ProductDetailResponse.from(savedProduct);
+    }
+
+    @Transactional
+    public ProductDetailResponse update(Long sellerId, Long productId, SellerProductUpdateRequest request) {
+
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
+
+        validationForbidden(sellerId, product);
+
+        if(request.categoryId() != null) {
+            Category category = categoryRepository.findByIdAndDeletedAtIsNull(request.categoryId()).orElseThrow(
+                    () -> new BaseException(ErrorEnum.CATEGORY_NOT_FOUND)
+            );
+            product.updateCategory(category);
+        }
+
+        if (StringUtils.hasText(request.name())) {
+            product.updateName(request.name());
+        }
+
+        if (request.price() != null) {
+            product.updatePrice(request.price());
+        }
+
+        if (request.status() != null) {
+            product.updateStatus(request.status());
+        }
+
+        if (StringUtils.hasText(request.description())) {
+            product.updateDescription(request.description());
+        }
+
+        return ProductDetailResponse.from(product);
+    }
+
+    @Transactional
+    public ProductDetailResponse delete(Long sellerId, Long productId) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
+
+        validationForbidden(sellerId, product);
+
+        product.delete();
+
+        return ProductDetailResponse.from(product);
+    }
+
+    @Transactional
+    public ProductDetailResponse stockUpdate(Long sellerId, Long productId, SellerProductStockUpdateRequest request) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
+
+        validationForbidden(sellerId, product);
+
+        product.updateStock(request.stock());
+
+        return ProductDetailResponse.from(product);
+    }
+
+    private void validationForbidden(Long sellerId, Product product) {
+        if(!product.getSeller().getId().equals(sellerId)) {
+            throw new BaseException(ErrorEnum.FORBIDDEN);
+        }
     }
 }

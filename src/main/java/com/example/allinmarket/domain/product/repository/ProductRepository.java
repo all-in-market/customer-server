@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
+    Optional<Product> findByIdAndDeletedAtIsNull(Long productId);
+
     @Query("SELECT p FROM Product p WHERE p.status != 'HIDDEN' AND p.deletedAt IS NULL")
     Page<Product> findAllVisibleProducts(Pageable pageable);
 

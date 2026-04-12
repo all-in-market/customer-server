@@ -7,6 +7,7 @@ import com.example.allinmarket.seller.dashboard.dto.response.SellerDashboardResp
 import com.example.allinmarket.seller.dashboard.service.SellerDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +18,7 @@ public class SellerDashBoardController {
 
     private final SellerDashboardService sellerDashBoardService;
 
+    @GetMapping
     public ResponseEntity<ApiResponse<SellerDashboardResponse>> getSellerDashboard() {
         Long sellerId = SecurityUtils.getCurrentUserId();
         SellerDashboardResponse response = sellerDashBoardService.getSellerDashboard(sellerId);

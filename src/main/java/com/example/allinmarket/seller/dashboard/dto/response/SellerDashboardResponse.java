@@ -27,7 +27,7 @@ public record SellerDashboardResponse(
         BigDecimal feeAmount
 ) {
     public static SellerDashboardResponse from(SellerDashboard sellerDashboard) {
-        SellerDashboardResponse response = new SellerDashboardResponse(
+        return new SellerDashboardResponse(
                 sellerDashboard.getSeller().getId(),
                 sellerDashboard.getStatDate(),
                 sellerDashboard.getTotalOrders(),
@@ -38,7 +38,5 @@ public record SellerDashboardResponse(
                 sellerDashboard.getSettlementAmount(),
                 sellerDashboard.getFeeAmount()
         );
-
-        return response;
     }
 }

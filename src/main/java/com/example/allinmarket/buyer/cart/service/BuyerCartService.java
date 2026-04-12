@@ -67,8 +67,6 @@ public class BuyerCartService {
 
             existingItem.increaseQuantity(request.quantity());
 
-            cartItemRepository.save(existingItem);
-
         } else { // 없으면 해당 수량 만큼 생성(default 수량이 1이라 1보다 클 경우 -1로 처리)
 
             CartItem newItem = CartItem.of(cart, product);
@@ -102,8 +100,6 @@ public class BuyerCartService {
         }
 
         cartItem.updateQuantity(request.quantity());
-
-        cartItemRepository.save(cartItem);
 
         Page<CartItem> items = cartItemRepository.findByCartId(cart.getId(), pageable);
 

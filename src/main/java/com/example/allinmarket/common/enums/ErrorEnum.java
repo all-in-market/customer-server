@@ -25,6 +25,8 @@ public enum ErrorEnum {
     // Cart
     CART_ITEMS_EMPTY(404, "주문할 장바구니 상품이 없습니다."),
     INVALID_CART_ITEM_OWNER(403, "다른 사용자의 장바구니 상품이 포함되어 있습니다."),
+    CART_NOT_FOUND(404, "장바구니가 존재하지 않습니다."),
+    CART_ITEMS_NOT_FOUND(404, "장바구니에 해당 상품이 존재하지 않습니다."),
 
     // Product
     PRODUCT_NOT_FOUND(404, "존재하지 않는 상품입니다."),

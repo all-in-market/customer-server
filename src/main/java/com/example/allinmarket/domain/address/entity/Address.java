@@ -5,6 +5,7 @@ import com.example.allinmarket.common.entity.ModifiableEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,4 +50,25 @@ public class Address extends ModifiableEntity {
 
         return address;
     }
+
+    public void makeDefault() {
+        this.isDefault = true;
+    }
+
+    public void unsetDefault() {
+        this.isDefault = false;
+    }
+
+    public void updateRecipient(String recipient) {
+        this.recipient = recipient;
+    }
+
+    public void updatePhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void updateDetail(String detail) {
+        this.detail = detail;
+    }
+
 }

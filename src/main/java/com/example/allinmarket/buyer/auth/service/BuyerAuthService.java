@@ -10,6 +10,8 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;
 import com.example.allinmarket.common.security.SecurityUtils;
+import com.example.allinmarket.domain.cart.entity.Cart;
+import com.example.allinmarket.domain.cart.repository.CartRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +25,7 @@ public class BuyerAuthService {
     private final BuyerRepository buyerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final CartRepository cartRepository;
 
     public BuyerAuthResponse signup(BuyerSignupRequest request) {
         boolean existence = buyerRepository.existsByEmail(request.email());
@@ -39,6 +42,10 @@ public class BuyerAuthService {
         );
 
         Buyer savedBuyer = buyerRepository.save(buyer);
+
+        Cart cart = Cart.of(buyer);
+
+        Cart savedCart = cartRepository.save(cart);
 
         return BuyerAuthResponse.from(savedBuyer);
     }

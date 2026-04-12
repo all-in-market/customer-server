@@ -42,6 +42,7 @@ public class Seller extends DeletableEntity {
     @Column(name = "biz_number", length = 20, unique = true)
     private String bizNumber;
 
+    @NotBlank
     @Column(name = "bank_account", length = 50)
     private String bankAccount;
 
@@ -74,5 +75,33 @@ public class Seller extends DeletableEntity {
         seller.role = UserRole.SELLER;
 
         return seller;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updatePhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void updateStoreName(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public void updateBizNumber(String bizNumber) {
+        this.bizNumber = bizNumber;
+    }
+
+    public void updateBankAccount(String bankAccount) {
+        this.bankAccount = bankAccount;
     }
 }

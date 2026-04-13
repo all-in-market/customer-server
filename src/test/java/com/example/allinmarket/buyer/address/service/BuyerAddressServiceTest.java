@@ -5,6 +5,8 @@ import com.example.allinmarket.buyer.address.dto.request.AddressUpdateRequest;
 import com.example.allinmarket.buyer.address.dto.response.AddressDetailResponse;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.address.entity.Address;
 import com.example.allinmarket.domain.address.repository.AddressRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -274,6 +277,57 @@ class BuyerAddressServiceTest {
             // then
             assertThat(address.isDefault()).isFalse();
             verify(addressRepository, never()).unsetOtherDefaultsByBuyerId(anyLong(), anyLong());
+        }
+    }
+
+    @Nested
+    @DisplayName("주소 삭제")
+    class DeleteAddressTest {
+        @Test
+        @DisplayName("주소 삭제 성공")
+        void removeAddress_success() {
+            // given
+            Long userId = 1L;
+            Long addressId = 10L;
+
+            Buyer buyer = createBuyer(userId);
+
+            Address address = createAddress(
+                    10L, buyer, "홍길동", "010-1111-2222", "서울시 강남구", true
+            );
+
+            given(addressRepository.findByIdAndBuyerId(addressId, userId))
+                    .willReturn(Optional.of(address));
+
+            // when
+            AddressDetailResponse response =
+                    buyerAddressService.removeAddress(userId, addressId);
+
+            // then
+            verify(addressRepository).delete(address); // 삭제 호출 검증
+
+            assertThat(response).isNotNull();
+            assertThat(response.addressId()).isEqualTo(addressId); // DTO 값 검증
+        }
+
+        @Test
+        @DisplayName("주소가 없으면 예외 발생")
+        void removeAddress_fail_notFound() {
+            // given
+            Long userId = 1L;
+            Long addressId = 10L;
+
+            given(addressRepository.findByIdAndBuyerId(addressId, userId))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() ->
+                    buyerAddressService.removeAddress(userId, addressId)
+            )
+                    .isInstanceOf(BaseException.class)
+                    .hasMessage(ErrorEnum.ADDRESS_NOT_FOUND.getMessage());
+
+            verify(addressRepository, never()).delete(any());
         }
     }
 

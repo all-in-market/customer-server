@@ -70,7 +70,7 @@ public class SellerDashboard extends ModifiableEntity {
         SellerDashboard dashboard = new SellerDashboard();
 
         dashboard.seller = seller;
-        dashboard.statDate = statDate;
+        dashboard.statDate = statDate == null ? LocalDate.now() : statDate;
         dashboard.totalOrders =  totalOrders;
         dashboard.totalProductsSold = totalProductsSold;
         dashboard.totalRefunds = totalRefunds;

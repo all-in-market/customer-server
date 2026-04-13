@@ -1,5 +1,8 @@
 package com.example.allinmarket.seller.order.service;
 
+import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -26,25 +29,37 @@ public class SellerOrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
-    public PageResponse<SellerOrderGetResponse> findAll(Long sellerId, Pageable pageable) {
+    public PageResponse<OrderDetailResponse> findAll(Long sellerId, Pageable pageable) {
         List<OrderItem> orderItems  = orderItemRepository.findAllBySellerId(sellerId, pageable);
 
         Map<Order, List<OrderItem>> groupedByOrder = orderItems.stream()
                 .collect(Collectors.groupingBy(OrderItem::getOrder));
 
-        List<SellerOrderGetResponse> responses = groupedByOrder.entrySet().stream()
-                .map(entry -> SellerOrderGetResponse.from(
-                        entry.getKey(),
-                        entry.getValue().stream().map(OrderItemDetailResponse::from).toList()
-                ))
+        List<OrderDetailResponse> responses = groupedByOrder.entrySet().stream()
+                .map(entry -> OrderDetailResponse.from(entry.getKey()))
                 .toList();
 
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), responses.size());
-        Page<SellerOrderGetResponse> page = new PageImpl<>(
+        Page<OrderDetailResponse> page = new PageImpl<>(
                 responses.subList(start, end), pageable, responses.size()
         );
 
         return PageResponse.register(page);
+    }
+
+    public SellerOrderGetResponse findOne(Long sellerId, Long orderId) {
+        List<OrderItem> orderItems = orderItemRepository.findAllBySellerIdAndOrderId(sellerId, orderId);
+
+        if (orderItems.isEmpty()) {
+            throw new BaseException(ErrorEnum.ORDER_NOT_FOUND);
+        }
+
+        Order order = orderItems.get(0).getOrder();
+        List<OrderItemDetailResponse> items = orderItems.stream()
+                .map(OrderItemDetailResponse::from)
+                .toList();
+
+        return SellerOrderGetResponse.from(order, items);
     }
 }

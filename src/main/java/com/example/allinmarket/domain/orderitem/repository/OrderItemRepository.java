@@ -14,4 +14,12 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     WHERE oi.seller.id = :sellerId
     """)
     List<OrderItem> findAllBySellerId(Long sellerId, Pageable pageable);
+
+    @Query("""
+    SELECT oi FROM OrderItem oi
+    JOIN FETCH oi.order o
+    WHERE oi.seller.id = :sellerId
+    AND o.id = :orderId
+    """)
+    List<OrderItem> findAllBySellerIdAndOrderId(Long sellerId, Long orderId);
 }

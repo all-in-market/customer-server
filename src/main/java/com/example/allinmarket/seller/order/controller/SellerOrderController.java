@@ -1,5 +1,6 @@
 package com.example.allinmarket.seller.order.controller;
 
+import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.response.PageResponse;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,10 +25,18 @@ public class SellerOrderController {
     private final SellerOrderService sellerOrderService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<SellerOrderGetResponse>>> findAll(
+    public ResponseEntity<ApiResponse<PageResponse<OrderDetailResponse>>> findAll(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
             ) {
         Long sellerId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(SuccessEnum.READ_SUCCESS, sellerOrderService.findAll(sellerId, pageable)));
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<ApiResponse<SellerOrderGetResponse>> findById(
+            @PathVariable(name = "orderId") Long orderId
+    ) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.READ_SUCCESS, sellerOrderService.findOne(sellerId, orderId)));
     }
 }

@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static com.example.allinmarket.seller.consts.sellerConsts.COMMISSION_RATE;
+
 @Getter
 @Entity
 @Table(name = "seller_dashboard")
@@ -49,12 +51,11 @@ public class SellerDashboard extends ModifiableEntity {
     private BigDecimal refundAmount;
 
     @PositiveOrZero
-    @Column(name = "settlement_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal settlementAmount;
-
-    @PositiveOrZero
     @Column(name = "fee_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal feeAmount;
+    private BigDecimal feeAmount = totalSales.multiply(COMMISSION_RATE);
+
+    @Column(name = "settlement_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal settlementAmount = totalSales.subtract(refundAmount.add(feeAmount));
 
     public static SellerDashboard of(
             Seller seller,
@@ -63,21 +64,17 @@ public class SellerDashboard extends ModifiableEntity {
             int totalProductsSold,
             int totalRefunds,
             BigDecimal totalSales,
-            BigDecimal refundAmount,
-            BigDecimal settlementAmount,
-            BigDecimal feeAmount
+            BigDecimal refundAmount
     ) {
         SellerDashboard dashboard = new SellerDashboard();
 
         dashboard.seller = seller;
         dashboard.statDate = statDate == null ? LocalDate.now() : statDate;
-        dashboard.totalOrders =  totalOrders;
+        dashboard.totalOrders = totalOrders;
         dashboard.totalProductsSold = totalProductsSold;
         dashboard.totalRefunds = totalRefunds;
         dashboard.totalSales = totalSales != null ? totalSales : BigDecimal.ZERO;
         dashboard.refundAmount = refundAmount != null ? refundAmount : BigDecimal.ZERO;
-        dashboard.settlementAmount = settlementAmount != null ? settlementAmount : BigDecimal.ZERO;
-        dashboard.feeAmount = feeAmount != null ? feeAmount : BigDecimal.ZERO;
         return dashboard;
     }
 }

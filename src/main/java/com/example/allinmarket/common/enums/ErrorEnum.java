@@ -71,7 +71,10 @@ public enum ErrorEnum {
     TOKEN_INVALID(401, "유효하지 않은 토큰입니다."),
 
     // Category
-    CATEGORY_NOT_FOUND(404, "존재하지 않는 카테고리입니다.");
+    CATEGORY_NOT_FOUND(404, "존재하지 않는 카테고리입니다."),
+
+    // Dashboard
+    DASHBOARD_NOT_FOUND(404, "대시보드가 존재하지 않습니다.");
 
     private final int status;
     private final String message;

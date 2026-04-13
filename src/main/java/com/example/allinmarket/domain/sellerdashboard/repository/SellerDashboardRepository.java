@@ -1,7 +1,11 @@
 package com.example.allinmarket.domain.sellerdashboard.repository;
 
 import com.example.allinmarket.domain.sellerdashboard.entity.SellerDashboard;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SellerDashboardRepository extends CrudRepository<SellerDashboard, Long> {
+import java.time.LocalDate;
+import java.util.Optional;
+
+public interface SellerDashboardRepository extends JpaRepository<SellerDashboard, Long> {
+    Optional<SellerDashboard> findBySellerIdAndStatDate(Long id, LocalDate day);
 }

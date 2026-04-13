@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.order.service;
 
 import com.example.allinmarket.buyer.entity.Buyer;
+import com.example.allinmarket.buyer.order.dto.response.OrderWithOrderItemDetailResponse;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
@@ -12,12 +13,12 @@ import com.example.allinmarket.domain.cartitem.repository.CartItemRepository;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
+import com.example.allinmarket.domain.orderitem.dto.OrderItemDetailResponse;
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
 import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.buyer.order.dto.request.OrderCreateRequest;
 import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
-import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -131,12 +132,18 @@ public class BuyerOrderService {
     /**
      * 주문 내역 단건 조회
      */
-    public OrderDetailResponse findOrder(Long orderId, Long buyerId) {
+    public OrderWithOrderItemDetailResponse findOrder(Long orderId, Long buyerId) {
         Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId).orElseThrow(
                 () -> new BaseException(ErrorEnum.ORDER_NOT_FOUND)
         );
 
-        return OrderDetailResponse.from(order);
+        List<OrderItem> orderItems = orderItemRepository.findAllByBuyerIdAndOrderId(buyerId, orderId);
+
+        List<OrderItemDetailResponse> orderItemDetailResponseList = orderItems.stream()
+                .map(OrderItemDetailResponse::from)
+                .toList();
+
+        return OrderWithOrderItemDetailResponse.from(order, orderItemDetailResponseList);
     }
 
 

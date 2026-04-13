@@ -3,6 +3,8 @@ package com.example.allinmarket.seller.auth.service;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;
+import com.example.allinmarket.domain.sellerdashboard.entity.SellerDashboard;
+import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboardRepository;
 import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
 import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
 import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
@@ -16,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -25,6 +29,7 @@ public class SellerAuthService {
     private final SellerRepository sellerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final SellerDashboardRepository sellerDashboardRepository;
 
     public SellerCreateResponse signup(SellerCreateRequest request) {
 
@@ -42,7 +47,11 @@ public class SellerAuthService {
                 request.bizNumber(),
                 request.bankAccount()
         );
-        sellerRepository.save(seller);
+        Seller savedSeller = sellerRepository.save(seller);
+
+        SellerDashboard dashboard = SellerDashboard.of(savedSeller, LocalDate.now(), 0,0,0,null, null);
+        sellerDashboardRepository.save(dashboard);
+
         return SellerCreateResponse.from(seller);
     }
 

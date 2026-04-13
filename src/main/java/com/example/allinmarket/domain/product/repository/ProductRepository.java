@@ -29,4 +29,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.status != 'HIDDEN' AND p.deletedAt IS NULL")
     Optional<Product> findVisibleProductById(Long productId);
+
+    Page<Product> findAllBySellerIdAndDeletedAtIsNull(Long sellerId, Pageable pageable);
 }

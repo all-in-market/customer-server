@@ -85,6 +85,6 @@ public class SellerDashboardServiceTest {
                 () -> sellerDashboardService.getSellerDashboard(sellerId)
         );
 
-        assertEquals(ErrorEnum.NOT_FOUND, exception.getErrorEnum());
+        assertEquals(ErrorEnum.DASHBOARD_NOT_FOUND, exception.getErrorEnum());
     }
 }

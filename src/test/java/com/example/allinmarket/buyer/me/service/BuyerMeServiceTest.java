@@ -45,7 +45,12 @@ class BuyerMeServiceTest {
         void updateMe_success() {
             // given
             Long buyerId = 1L;
-            BuyerUpdateRequest request = new BuyerUpdateRequest("수정이름", "010-9999-8888");
+            BuyerUpdateRequest request = new BuyerUpdateRequest(
+                    null,
+                    null,
+                    "수정이름",
+                    "010-9999-8888"
+            );
 
             Buyer buyer = createBuyer(buyerId, "기존이름", "010-1111-2222");
 
@@ -69,7 +74,12 @@ class BuyerMeServiceTest {
         void updateMe_fail_whenBuyerNotFound() {
             // given
             Long buyerId = 1L;
-            BuyerUpdateRequest request = new BuyerUpdateRequest("수정이름", "010-9999-8888");
+            BuyerUpdateRequest request = new BuyerUpdateRequest(
+                    null,
+                    null,
+                    "수정이름",
+                    "010-9999-8888"
+            );
 
             given(buyerRepository.findByIdAndDeletedAtIsNull(buyerId))
                     .willReturn(Optional.empty());
@@ -90,17 +100,54 @@ class BuyerMeServiceTest {
 
             Buyer buyer = createBuyer(buyerId, "기존이름", "010-1111-2222");
 
-            BuyerUpdateRequest request = new BuyerUpdateRequest("홍길동", null);
+            BuyerUpdateRequest request = new BuyerUpdateRequest(
+                    null,
+                    null,
+                    "홍길동",
+                    null
+            );
 
             given(buyerRepository.findByIdAndDeletedAtIsNull(buyerId))
                     .willReturn(Optional.of(buyer));
 
             // when
-            buyerMeService.updateMyProfile(buyerId, request);
+            BuyerDetailResponse result = buyerMeService.updateMyProfile(buyerId, request);
 
             // then
+            assertThat(result.name()).isEqualTo("홍길동");
+            assertThat(result.phone()).isEqualTo("010-1111-2222");
             assertThat(buyer.getName()).isEqualTo("홍길동");
             assertThat(buyer.getPhone()).isEqualTo("010-1111-2222");
+
+            verify(buyerRepository).findByIdAndDeletedAtIsNull(buyerId);
+        }
+
+        @Test
+        @DisplayName("변경하려는 이메일이 이미 존재하면 예외 발생")
+        void updateMyProfile_fail_whenEmailAlreadyExists() {
+            // given
+            Long buyerId = 1L;
+            Buyer buyer = createBuyer(buyerId, "기존이름", "010-1111-2222");
+
+            BuyerUpdateRequest request = new BuyerUpdateRequest(
+                    "new@example.com",
+                    null,
+                    null,
+                    null
+            );
+
+            given(buyerRepository.findByIdAndDeletedAtIsNull(buyerId))
+                    .willReturn(Optional.of(buyer));
+            given(buyerRepository.existsByEmail("new@example.com"))
+                    .willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> buyerMeService.updateMyProfile(buyerId, request))
+                    .isInstanceOf(BaseException.class)
+                    .hasFieldOrPropertyWithValue("errorEnum", ErrorEnum.EMAIL_ALREADY_EXISTS);
+
+            verify(buyerRepository).findByIdAndDeletedAtIsNull(buyerId);
+            verify(buyerRepository).existsByEmail("new@example.com");
         }
 
         private Buyer createBuyer(Long id, String name, String phone) {

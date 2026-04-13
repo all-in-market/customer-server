@@ -49,6 +49,13 @@ public class Buyer extends DeletableEntity {
         return buyer;
     }
 
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
     public void updateName(String name) {
         this.name = name;
     }

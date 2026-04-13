@@ -19,6 +19,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     SELECT oi FROM OrderItem oi
     JOIN FETCH oi.order o
     WHERE o.id = :orderId
+    AND o.buyer.id = :buyerId
     """)
     List<OrderItem> findAllByBuyerIdAndOrderId(Long buyerId, Long orderId);
 }

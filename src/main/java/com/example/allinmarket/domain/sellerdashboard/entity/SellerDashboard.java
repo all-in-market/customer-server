@@ -52,10 +52,10 @@ public class SellerDashboard extends ModifiableEntity {
 
     @PositiveOrZero
     @Column(name = "fee_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal feeAmount = totalSales.multiply(COMMISSION_RATE);
+    private BigDecimal feeAmount;
 
     @Column(name = "settlement_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal settlementAmount = totalSales.subtract(refundAmount.add(feeAmount));
+    private BigDecimal settlementAmount;
 
     public static SellerDashboard of(
             Seller seller,
@@ -75,6 +75,8 @@ public class SellerDashboard extends ModifiableEntity {
         dashboard.totalRefunds = totalRefunds;
         dashboard.totalSales = totalSales != null ? totalSales : BigDecimal.ZERO;
         dashboard.refundAmount = refundAmount != null ? refundAmount : BigDecimal.ZERO;
+        dashboard.feeAmount = dashboard.totalSales.multiply(COMMISSION_RATE);
+        dashboard.settlementAmount = dashboard.totalSales.subtract(dashboard.refundAmount.add(dashboard.feeAmount));
         return dashboard;
     }
 }

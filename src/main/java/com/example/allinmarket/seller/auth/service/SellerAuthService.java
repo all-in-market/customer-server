@@ -49,7 +49,7 @@ public class SellerAuthService {
         );
         Seller savedSeller = sellerRepository.save(seller);
 
-        SellerDashboard dashboard = SellerDashboard.of(savedSeller, LocalDate.now(), 0,0,0,null, null, null, null);
+        SellerDashboard dashboard = SellerDashboard.of(savedSeller, LocalDate.now(), 0,0,0,null, null);
         sellerDashboardRepository.save(dashboard);
 
         return SellerCreateResponse.from(seller);

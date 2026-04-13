@@ -48,9 +48,7 @@ public class SellerDashboardServiceTest {
                 8,
                 2,
                 BigDecimal.valueOf(500000),
-                BigDecimal.valueOf(30000),
-                BigDecimal.valueOf(455000),
-                BigDecimal.valueOf(15000)
+                BigDecimal.valueOf(30000)
         );
         ReflectionTestUtils.setField(dashboard, "id", 1L);
 
@@ -69,8 +67,8 @@ public class SellerDashboardServiceTest {
         assertEquals(8, response.totalProductsSold());
         assertEquals(2, response.totalRefunds());
         assertEquals(BigDecimal.valueOf(30000), response.refundAmount());
-        assertEquals(BigDecimal.valueOf(455000), response.settlementAmount());
-        assertEquals(BigDecimal.valueOf(15000), response.feeAmount());
+        assertEquals(0, BigDecimal.valueOf(445000).compareTo(response.settlementAmount()));
+        assertEquals(0, BigDecimal.valueOf(25000).compareTo(response.feeAmount()));
     }
 
     @Test

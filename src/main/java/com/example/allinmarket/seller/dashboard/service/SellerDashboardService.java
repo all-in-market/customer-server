@@ -21,7 +21,7 @@ public class SellerDashboardService {
     public SellerDashboardResponse getSellerDashboard(Long sellerId) {
 
         SellerDashboard sellerDashboard = sellerDashboardRepository.findBySellerIdAndStatDate(sellerId, LocalDate.now())
-                .orElseThrow(() -> new BaseException(ErrorEnum.NOT_FOUND));
+                .orElseThrow(() -> new BaseException(ErrorEnum.DASHBOARD_NOT_FOUND));
 
         return SellerDashboardResponse.from(sellerDashboard);
     }

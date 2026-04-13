@@ -1,7 +1,7 @@
 package com.example.allinmarket.buyer.order.service;
 
 import com.example.allinmarket.buyer.entity.Buyer;
-import com.example.allinmarket.buyer.order.dto.response.OrderGetOneDetailResponse;
+import com.example.allinmarket.buyer.order.dto.response.OrderWithOrderItemDetailResponse;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
@@ -19,7 +19,6 @@ import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
 import com.example.allinmarket.domain.product.entity.Product;
 import com.example.allinmarket.buyer.order.dto.request.OrderCreateRequest;
 import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
-import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -133,7 +132,7 @@ public class BuyerOrderService {
     /**
      * 주문 내역 단건 조회
      */
-    public OrderGetOneDetailResponse findOrder(Long orderId, Long buyerId) {
+    public OrderWithOrderItemDetailResponse findOrder(Long orderId, Long buyerId) {
         Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId).orElseThrow(
                 () -> new BaseException(ErrorEnum.ORDER_NOT_FOUND)
         );
@@ -144,7 +143,7 @@ public class BuyerOrderService {
                 .map(OrderItemDetailResponse::from)
                 .toList();
 
-        return OrderGetOneDetailResponse.from(order, orderItemDetailResponseList);
+        return OrderWithOrderItemDetailResponse.from(order, orderItemDetailResponseList);
     }
 
 

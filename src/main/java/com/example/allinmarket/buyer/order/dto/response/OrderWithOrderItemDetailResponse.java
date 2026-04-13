@@ -7,7 +7,7 @@ import com.example.allinmarket.domain.orderitem.dto.OrderItemDetailResponse;
 import java.math.BigDecimal;
 import java.util.List;
 
-public record OrderGetOneDetailResponse(
+public record OrderWithOrderItemDetailResponse(
         Long orderId,
         Long buyerId,
         BigDecimal totalAmount,
@@ -17,8 +17,8 @@ public record OrderGetOneDetailResponse(
         String address,
         List<OrderItemDetailResponse> items
 ) {
-    public static OrderGetOneDetailResponse from(Order order, List<OrderItemDetailResponse> items) {
-        return new OrderGetOneDetailResponse(
+    public static OrderWithOrderItemDetailResponse from(Order order, List<OrderItemDetailResponse> items) {
+        return new OrderWithOrderItemDetailResponse(
                 order.getId(),
                 order.getBuyer().getId(),
                 order.getTotalAmount(),

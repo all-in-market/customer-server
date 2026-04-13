@@ -1,7 +1,9 @@
 package com.example.allinmarket.buyer.entity;
 
 import com.example.allinmarket.common.entity.DeletableEntity;
+import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.UserRole;
+import com.example.allinmarket.common.exception.BaseException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
@@ -45,5 +47,20 @@ public class Buyer extends DeletableEntity {
         buyer.phone = phone;
         buyer.role = UserRole.BUYER;
         return buyer;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updatePhone(String phone) {
+        this.phone = phone;
     }
 }

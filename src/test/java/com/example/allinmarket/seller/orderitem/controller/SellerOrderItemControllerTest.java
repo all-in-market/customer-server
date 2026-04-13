@@ -2,7 +2,7 @@ package com.example.allinmarket.seller.orderitem.controller;
 
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.JwtProvider;
-import com.example.allinmarket.domain.orderitem.dto.response.OrderItemDetailResponse;
+import com.example.allinmarket.domain.orderitem.dto.OrderItemDetailResponse;
 import com.example.allinmarket.seller.orderitem.service.SellerOrderItemService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

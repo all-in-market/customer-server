@@ -57,7 +57,7 @@ public class SellerOrderItemControllerTest {
                 .thenReturn(pageResponse);
 
         // when & then
-        restTestClient.get().uri("/seller/orders")
+        restTestClient.get().uri("/seller/orderitems")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
@@ -84,7 +84,7 @@ public class SellerOrderItemControllerTest {
                 .thenReturn(emptyPage);
 
         // when & then
-        restTestClient.get().uri("/seller/orders")
+        restTestClient.get().uri("/seller/orderitems")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
@@ -106,7 +106,7 @@ public class SellerOrderItemControllerTest {
                 .thenReturn(pageResponse);
 
         // when & then
-        restTestClient.get().uri("/seller/orders?page=1&size=10")
+        restTestClient.get().uri("/seller/orderitems?page=1&size=10")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()

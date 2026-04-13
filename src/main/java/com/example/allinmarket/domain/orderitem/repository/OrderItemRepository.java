@@ -1,6 +1,7 @@
 package com.example.allinmarket.domain.orderitem.repository;
 
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +14,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     JOIN FETCH oi.order o
     WHERE oi.seller.id = :sellerId
     """)
-    List<OrderItem> findAllBySellerId(Long sellerId, Pageable pageable);
+    Page<OrderItem> findAllBySellerId(Long sellerId, Pageable pageable);
 
     @Query("""
     SELECT oi FROM OrderItem oi

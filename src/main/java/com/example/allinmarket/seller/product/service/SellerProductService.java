@@ -2,6 +2,7 @@ package com.example.allinmarket.seller.product.service;
 
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
@@ -15,6 +16,7 @@ import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateReq
 import com.example.allinmarket.seller.repository.SellerRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -50,6 +52,13 @@ public class SellerProductService {
         Product savedProduct = productRepository.save(product);
 
         return ProductDetailResponse.from(savedProduct);
+    }
+
+    public PageResponse<ProductDetailResponse> findAll(Long sellerId, Pageable pageable) {
+        return PageResponse.register(
+                productRepository.findAllBySellerIdAndDeletedAtIsNull(sellerId, pageable)
+                        .map(ProductDetailResponse::from)
+        );
     }
 
     @Transactional

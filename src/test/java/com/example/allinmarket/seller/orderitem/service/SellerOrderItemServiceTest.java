@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -59,8 +61,9 @@ class SellerOrderItemServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         OrderItem orderItem = createOrderItemMock(1L, 10L, "신발", BigDecimal.valueOf(30000), 1);
+        Page<OrderItem> page = new PageImpl<>(List.of(orderItem), pageable, 1);
 
-        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(List.of(orderItem));
+        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(page);
 
         // when
         PageResponse<OrderItemDetailResponse> result = sellerOrderItemService.findAll(sellerId, pageable);
@@ -83,14 +86,15 @@ class SellerOrderItemServiceTest {
         OrderItem item1 = createOrderItemMock(1L, 10L, "신발", BigDecimal.valueOf(30000), 1);
         OrderItem item2 = createOrderItemMock(2L, 10L, "양말", BigDecimal.valueOf(20000), 2);
         OrderItem item3 = createOrderItemMock(3L, 11L, "모자", BigDecimal.valueOf(15000), 1);
+        Page<OrderItem> page = new PageImpl<>(List.of(item1, item2, item3), pageable, 3);
 
-        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(List.of(item1, item2, item3));
+        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(page);
 
         // when
         PageResponse<OrderItemDetailResponse> result = sellerOrderItemService.findAll(sellerId, pageable);
 
         // then
-        assertEquals(3, result.totalElements()); // 그룹핑 없이 OrderItem 3개 그대로
+        assertEquals(3, result.totalElements());
         assertEquals(3, result.content().size());
     }
 
@@ -100,7 +104,9 @@ class SellerOrderItemServiceTest {
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
 
-        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(List.of());
+        Page<OrderItem> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(emptyPage);
 
         // when
         PageResponse<OrderItemDetailResponse> result = sellerOrderItemService.findAll(sellerId, pageable);
@@ -120,9 +126,9 @@ class SellerOrderItemServiceTest {
 
         OrderItem item1 = createOrderItemMock(1L, 10L, "상품1", BigDecimal.valueOf(10000), 1);
         OrderItem item2 = createOrderItemMock(2L, 10L, "상품2", BigDecimal.valueOf(20000), 1);
-        OrderItem item3 = createOrderItemMock(3L, 11L, "상품3", BigDecimal.valueOf(30000), 1);
+        Page<OrderItem> page = new PageImpl<>(List.of(item1, item2), pageable, 3);
 
-        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(List.of(item1, item2, item3));
+        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(page);
 
         // when
         PageResponse<OrderItemDetailResponse> result = sellerOrderItemService.findAll(sellerId, pageable);
@@ -140,11 +146,10 @@ class SellerOrderItemServiceTest {
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(1, 2);
 
-        OrderItem item1 = createOrderItemMock(1L, 10L, "상품1", BigDecimal.valueOf(10000), 1);
-        OrderItem item2 = createOrderItemMock(2L, 10L, "상품2", BigDecimal.valueOf(20000), 1);
         OrderItem item3 = createOrderItemMock(3L, 11L, "상품3", BigDecimal.valueOf(30000), 1);
+        Page<OrderItem> page = new PageImpl<>(List.of(item3), pageable, 3);
 
-        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(List.of(item1, item2, item3));
+        given(orderItemRepository.findAllBySellerId(sellerId, pageable)).willReturn(page);
 
         // when
         PageResponse<OrderItemDetailResponse> result = sellerOrderItemService.findAll(sellerId, pageable);

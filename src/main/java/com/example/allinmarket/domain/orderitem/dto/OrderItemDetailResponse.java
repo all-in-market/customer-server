@@ -1,4 +1,4 @@
-package com.example.allinmarket.domain.orderitem.dto.response;
+package com.example.allinmarket.domain.orderitem.dto;
 
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
 

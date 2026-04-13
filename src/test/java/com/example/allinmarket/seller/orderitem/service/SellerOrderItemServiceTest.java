@@ -2,7 +2,7 @@ package com.example.allinmarket.seller.orderitem.service;
 
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
-import com.example.allinmarket.domain.orderitem.dto.response.OrderItemDetailResponse;
+import com.example.allinmarket.domain.orderitem.dto.OrderItemDetailResponse;
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
 import com.example.allinmarket.domain.product.entity.Product;

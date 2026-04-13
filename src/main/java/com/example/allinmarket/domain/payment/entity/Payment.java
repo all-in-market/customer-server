@@ -28,7 +28,7 @@ public class Payment extends ModifiableEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String impUid;
 
     @PositiveOrZero
@@ -46,10 +46,10 @@ public class Payment extends ModifiableEntity {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
-    public static Payment of(Order order, BigDecimal amount, MethodEnum method) {
+    public static Payment of(Order order, String impUid, BigDecimal amount, MethodEnum method) {
         Payment payment = new Payment();
         payment.order = order;
-        payment.impUid = null;
+        payment.impUid = impUid;
         payment.amount = amount != null ? amount : BigDecimal.ZERO;
         payment.method = method;
         payment.status = TransactionStatus.PENDING;
@@ -57,17 +57,22 @@ public class Payment extends ModifiableEntity {
         return payment;
     }
 
-    public void complete(String impUid) {
-        this.impUid = impUid;
-        this.status = TransactionStatus.SUCCESS;
-        this.paidAt = LocalDateTime.now();
+    public void success(LocalDateTime paidAt) {
+        if (this.status.paymentCanTransitToTargetStatus(TransactionStatus.SUCCESS)) {
+            this.status = TransactionStatus.SUCCESS;
+            this.paidAt = paidAt;
+        }
     }
 
     public void fail() {
-        this.status = TransactionStatus.FAILED;
+        if (this.status.paymentCanTransitToTargetStatus(TransactionStatus.FAILED)) {
+            this.status = TransactionStatus.FAILED;
+        }
     }
 
-    public void cancel() {
-        this.status = TransactionStatus.REFUNDED;
+    public void refund() {
+        if (this.status.paymentCanTransitToTargetStatus(TransactionStatus.REFUNDED)) {
+            this.status = TransactionStatus.REFUNDED;
+        }
     }
 }

@@ -60,4 +60,10 @@ public class Order extends ModifiableEntity {
         order.address = address;
         return order;
     }
+
+    public void paid() {
+        if (this.status.canTransitToTargetStatus(OrderStatus.PAID)) {
+            this.status = OrderStatus.PAID;
+        }
+    }
 }

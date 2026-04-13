@@ -14,5 +14,19 @@ public enum OrderStatus {
     FAILED("FAILED");
 
     private final String status;
+
+    public boolean canTransitToTargetStatus(OrderStatus targetStatus) {
+        if(targetStatus == null){
+            return false;
+        }
+
+        return switch (this) {
+            case CREATED -> targetStatus == PAID || targetStatus == FAILED;
+            case PAID -> targetStatus == SHIPPED || targetStatus == REFUNDED;
+            case SHIPPED -> targetStatus == DELIVERED;
+            case DELIVERED -> targetStatus == REFUNDED;
+            case REFUNDED, FAILED -> false;
+        };
+    }
 }
 

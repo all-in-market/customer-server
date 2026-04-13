@@ -1,5 +1,6 @@
 package com.example.allinmarket.buyer.order.controller;
 
+import com.example.allinmarket.buyer.order.dto.response.OrderGetOneDetailResponse;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.response.PageResponse;
@@ -57,7 +58,7 @@ public class BuyerOrderController {
      * 주문 내역 단건 조회
      */
     @GetMapping("/{orderId}")
-    public ResponseEntity<ApiResponse<OrderDetailResponse>> findOrder(
+    public ResponseEntity<ApiResponse<OrderGetOneDetailResponse>> findOrder(
             @PathVariable Long orderId
     ) {
         OrderDetailResponse result = buyerOrderService.findOrder(orderId, SecurityUtils.getCurrentUserId());

@@ -18,8 +18,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     @Query("""
     SELECT oi FROM OrderItem oi
     JOIN FETCH oi.order o
-    WHERE oi.seller.id = :sellerId
-    AND o.id = :orderId
+    WHERE o.id = :orderId
     """)
-    List<OrderItem> findAllBySellerIdAndOrderId(Long sellerId, Long orderId);
+    List<OrderItem> findAllByBuyerIdAndOrderId(Long buyerId, Long orderId);
 }

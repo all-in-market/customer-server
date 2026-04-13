@@ -1,30 +1,32 @@
-package com.example.allinmarket.domain.order.dto.response;
+package com.example.allinmarket.buyer.order.dto.response;
 
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
+import com.example.allinmarket.domain.orderitem.dto.OrderItemDetailResponse;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-public record OrderDetailResponse(
-        Long id,
+public record OrderGetOneDetailResponse(
+        Long orderId,
         Long buyerId,
         BigDecimal totalAmount,
         OrderStatus status,
         String trackingNumber,
         String recipient,
-        String phone,
-        String address
+        String address,
+        List<OrderItemDetailResponse> items
 ) {
-    public static OrderDetailResponse from(Order order) {
-        return new OrderDetailResponse(
+    public static OrderGetOneDetailResponse from(Order order, List<OrderItemDetailResponse> items) {
+        return new OrderGetOneDetailResponse(
                 order.getId(),
                 order.getBuyer().getId(),
                 order.getTotalAmount(),
                 order.getStatus(),
                 order.getTrackingNumber(),
                 order.getRecipient(),
-                order.getPhone(),
-                order.getAddress()
+                order.getAddress(),
+                items
         );
     }
 }

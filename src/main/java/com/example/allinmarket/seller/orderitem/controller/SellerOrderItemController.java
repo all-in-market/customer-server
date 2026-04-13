@@ -4,7 +4,7 @@ import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
-import com.example.allinmarket.domain.orderitem.dto.response.OrderItemDetailResponse;
+import com.example.allinmarket.domain.orderitem.dto.OrderItemDetailResponse;
 import com.example.allinmarket.seller.orderitem.service.SellerOrderItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;

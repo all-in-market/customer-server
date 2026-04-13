@@ -33,7 +33,7 @@ public class BuyerMeController {
     }
 
     /**
-     * 구매자 내 정보 수정 (비밀번호 수정 x)
+     * 구매자 내 정보 수정
      */
     @PutMapping
     public ResponseEntity<ApiResponse<BuyerDetailResponse>> updateMyProfile(

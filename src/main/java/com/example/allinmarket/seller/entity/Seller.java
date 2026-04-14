@@ -104,4 +104,8 @@ public class Seller extends DeletableEntity {
     public void updateBankAccount(String bankAccount) {
         this.bankAccount = bankAccount;
     }
+
+    public void updateStatus(SellerStatus status) {
+        this.status = status;
+    }
 }

@@ -34,3 +34,7 @@ jwt:
 
 server:
   port: 8080
+
+seller:
+  email: ${SELLER_ID}
+  password: ${SELLER_PASSWORD}

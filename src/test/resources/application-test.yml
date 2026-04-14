@@ -35,3 +35,8 @@ spring:
 jwt:
   secret: VtHcoEqCTwJ981b7wHL5yb57mwhlE8UjzYhFu3vd5M1 # 테스트 전용 고정값 사용
   expiration: 86400000  # 토큰 만료 시간 (단위: ms, 86400000 = 24시간)
+
+app:
+  init:
+    admin:
+      enabled: false

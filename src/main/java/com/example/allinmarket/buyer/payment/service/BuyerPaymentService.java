@@ -6,6 +6,7 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -13,6 +14,7 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,9 +101,19 @@ public class BuyerPaymentService {
     }
 
     /**
+     * 결제 목록 페이지로 조회
+     */
+    public PageResponse<PaymentDetailResponse> getPayments(Long buyerId, Pageable pageable) {
+        return PageResponse.register(
+                paymentRepository.findAllByOrderBuyerId(buyerId, pageable)
+                        .map(PaymentDetailResponse::from)
+        );
+    }
+
+    /**
      * 결제 확인 요청을 보낸 주체가 해당 결제의 주인이 맞는지 검증
      */
-    private void validatePaymentOwner(Long  currentUserId, Payment dbPayment) {
+    private void validatePaymentOwner(Long currentUserId, Payment dbPayment) {
         if (!dbPayment.getOrder().getBuyer().getId().equals(currentUserId)) {
             throw new BaseException(ErrorEnum.PAYMENT_FORBIDDEN);
         }
@@ -170,7 +182,7 @@ public class BuyerPaymentService {
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
         }
 
-        if(dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
+        if (dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
 
             // 환불 로직 발생 시 먼저 fail 처리 후
             // 관리자 서버에서 환불이 진행되면 refunded 처리

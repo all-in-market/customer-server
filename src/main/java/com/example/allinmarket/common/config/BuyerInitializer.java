@@ -2,6 +2,8 @@ package com.example.allinmarket.common.config;
 
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
+import com.example.allinmarket.domain.cart.entity.Cart;
+import com.example.allinmarket.domain.cart.repository.CartRepository;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
@@ -37,6 +39,7 @@ public class BuyerInitializer implements ApplicationRunner {
 
     private final BuyerRepository buyerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CartRepository cartRepository;
     private final SellerRepository sellerRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
@@ -76,6 +79,9 @@ public class BuyerInitializer implements ApplicationRunner {
             Buyer buyer = Buyer.of(email, passwordEncoder.encode(password), name, phone);
             buyerRepository.save(buyer);
             log.info("구매자 계정이 생성되었습니다: {}", email);
+
+            cartRepository.save(Cart.of(buyer));
+            log.info("장바구니가 생성되었습니다: buyer={}", email);
 
             Product product = products.get(i % products.size());
 

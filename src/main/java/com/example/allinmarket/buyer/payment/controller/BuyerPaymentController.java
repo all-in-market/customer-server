@@ -46,13 +46,12 @@ public class BuyerPaymentController {
                         buyerPaymentService.getPayments(SecurityUtils.getCurrentUserId(), pageable)
                 )
         );
+    }
     /**
      * 결제 단건 상세 조회
      */
     @GetMapping("/{paymentId}")
-    public ResponseEntity<ApiResponse<PaymentDetailResponse>> findPayment(
-            @PathVariable Long paymentId
-    ) {
+    public ResponseEntity<ApiResponse<PaymentDetailResponse>> findPayment (@PathVariable Long paymentId){
         PaymentDetailResponse result = buyerPaymentService.findPayment(SecurityUtils.getCurrentUserId(), paymentId);
         return ResponseEntity.ok(
                 ApiResponse.success(

@@ -109,6 +109,8 @@ public class BuyerPaymentService {
                 paymentRepository.findAllByOrderBuyerId(buyerId, pageable)
                         .map(PaymentDetailResponse::from)
         );
+    }
+     /**
      * 결제 단건 조회
      */
     public PaymentDetailResponse findPayment(Long currentUserId, Long paymentId) {

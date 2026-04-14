@@ -42,10 +42,12 @@ public class BuyerRefundController {
                 SuccessEnum.READ_SUCCESS,
                 buyerRefundService.getRefunds(SecurityUtils.getCurrentUserId(), pageable)
         ));
+    }
+
     @GetMapping("/refunds/{refundId}")
     public ResponseEntity<ApiResponse<RefundDetailResponse>> getRefund(
             @PathVariable Long refundId
-    ){
+    ) {
         RefundDetailResponse result = buyerRefundService.getRefund(SecurityUtils.getCurrentUserId(), refundId);
         return ResponseEntity.ok(
                 ApiResponse.success(

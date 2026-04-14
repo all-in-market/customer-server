@@ -1,5 +1,7 @@
 package com.example.allinmarket.common.config;
 
+import com.example.allinmarket.domain.category.entity.Category;
+import com.example.allinmarket.domain.category.repository.CategoryRepository;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import com.example.allinmarket.seller.repository.SellerRepository;
@@ -20,6 +22,7 @@ public class SellerInitializer implements ApplicationRunner {
 
     private final SellerRepository sellerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CategoryRepository categoryRepository;
 
     @Value("${seller.email}")
     private String email;
@@ -47,5 +50,14 @@ public class SellerInitializer implements ApplicationRunner {
         sellerRepository.save(seller);
 
         log.info("판매자 계정이 생성되었습니다: {}", email);
+
+        Category category = Category.of(
+                "전자제품",
+                0
+        );
+
+        categoryRepository.save(category);
+
+        log.info("카테고리가 생성되었습니다: {}", category.getName());
     }
 }

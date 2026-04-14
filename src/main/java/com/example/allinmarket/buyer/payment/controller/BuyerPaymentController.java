@@ -24,7 +24,7 @@ public class BuyerPaymentController {
     private final BuyerPaymentFacade buyerPaymentFacade;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<PaymentDetailResponse>> createPayment(
+    public ResponseEntity<ApiResponse<PaymentDetailResponse>> processPayment(
             @RequestBody @Valid PaymentCreateRequest request
     ) {
         PaymentDetailResponse result = buyerPaymentFacade.processPayment(SecurityUtils.getCurrentUserId(), request);

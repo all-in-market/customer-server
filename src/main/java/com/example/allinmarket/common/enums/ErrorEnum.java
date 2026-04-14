@@ -22,6 +22,7 @@ public enum ErrorEnum {
     ORDER_ALREADY_COMPLETED(400, "이미 결제 완료된 주문입니다."),
     ORDER_NOT_CANCELLABLE(400, "취소할 수 없는 주문 상태입니다."),
     ORDER_NOT_PAYABLE(400, "해당 주문 상태에서는 결제가 불가능합니다."),
+    ORDER_NOT_REFUNDABLE(409, "해당 주문은 환불할 수 없는 상태입니다."),
 
     // Cart
     CART_ITEMS_EMPTY(404, "주문할 장바구니 상품이 없습니다."),
@@ -41,12 +42,18 @@ public enum ErrorEnum {
     PAYMENT_AMOUNT_MISMATCH(400, "결제 금액이 주문 금액과 일치하지 않습니다."),
     PAYMENT_MISMATCH(400, "결제 정보가 유효하지 않습니다."),
     PAYMENT_AMOUNT_INVALID(400, "결제 금액이 올바르지 않습니다."),
+    PAYMENT_NOT_REFUNDABLE(400, "환불이 불가능한 상태의 결제입니다."),
     PAYMENT_FORBIDDEN(403, "해당 결제에 대한 접근 권한이 없습니다."),
     PAYMENT_ALREADY_PROCESSED(409, "이미 처리된 결제입니다."),
     PAYMENT_ALREADY_FAILED(409, "이미 실패 처리된 결제입니다."),
     PAYMENT_ALREADY_REFUNDED(409, "이미 환불 처리된 결제입니다."),
     PAYMENT_FAILED(500, "결제 처리 중 오류가 발생했습니다."),
     PAYMENT_NOT_FOUND(404, "결제 내역이 없습니다."),
+
+    // Refund
+    REFUND_ALREADY_EXISTS(409, "이미 환불이 진행 중이거나 처리된 결제입니다."),
+    REFUND_FORBIDDEN(403, "해당 결제에 대한 환불 신청 권한이 없습니다."),
+    REFUND_AMOUNT_MISMATCH_NOT_FOUND(400, "결제 금액이 주문 금액과 일치하여 금액 불일치 환불을 생성할 수 없습니다."),
 
     // Address
     ADDRESS_NOT_FOUND(404, "존재하지 않는 주소입니다."),

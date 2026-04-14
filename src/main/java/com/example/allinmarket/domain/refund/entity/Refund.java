@@ -27,16 +27,14 @@ public class Refund extends ModifiableEntity {
     @JoinColumn(name = "buyer_id", nullable = false)
     private Buyer buyer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_id", nullable = false, unique = true)
     private Payment payment;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private ReasonEnum reason;
 
-    @NotBlank
-    @Column(nullable = false)
     private String description;
 
     @Column(name = "denied_reason")
@@ -61,16 +59,36 @@ public class Refund extends ModifiableEntity {
         return refund;
     }
 
-    public void complete(String impUid) {
-        this.status = TransactionStatus.SUCCESS;
-        this.processedAt = LocalDateTime.now();
+    public void updateReason(ReasonEnum reason) {
+        this.reason = reason;
+    }
+
+    public void updateDescription(String description) {
+        this.description = description;
+    }
+
+    public void success() {
+        if(this.status.refundCanTransitToTargetStatus(TransactionStatus.SUCCESS)) {
+            this.status = TransactionStatus.SUCCESS;
+            this.processedAt = LocalDateTime.now();
+        }
+    }
+
+    public void pending() {
+        if(this.status.refundCanTransitToTargetStatus(TransactionStatus.PENDING)) {
+            this.status = TransactionStatus.PENDING;
+        }
     }
 
     public void fail() {
-        this.status = TransactionStatus.FAILED;
+        if(this.status.refundCanTransitToTargetStatus(TransactionStatus.FAILED)) {
+            this.status = TransactionStatus.FAILED;
+        }
     }
 
     public void denied() {
-        this.status = TransactionStatus.DENIED;
+        if(this.status.refundCanTransitToTargetStatus(TransactionStatus.DENIED)) {
+            this.status = TransactionStatus.DENIED;
+        }
     }
 }

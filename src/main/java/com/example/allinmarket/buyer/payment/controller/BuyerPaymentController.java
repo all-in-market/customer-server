@@ -38,6 +38,14 @@ public class BuyerPaymentController {
         );
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<PaymentDetailResponse>>> getPayments(Pageable pageable) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        SuccessEnum.READ_SUCCESS,
+                        buyerPaymentService.getPayments(SecurityUtils.getCurrentUserId(), pageable)
+                )
+        );
     /**
      * 결제 단건 상세 조회
      */

@@ -102,6 +102,13 @@ public class BuyerPaymentService {
     }
 
     /**
+     * 결제 목록 페이지로 조회
+     */
+    public PageResponse<PaymentDetailResponse> getPayments(Long buyerId, Pageable pageable) {
+        return PageResponse.register(
+                paymentRepository.findAllByOrderBuyerId(buyerId, pageable)
+                        .map(PaymentDetailResponse::from)
+        );
      * 결제 단건 조회
      */
     public PaymentDetailResponse findPayment(Long currentUserId, Long paymentId) {
@@ -115,7 +122,7 @@ public class BuyerPaymentService {
     /**
      * 결제 확인 요청을 보낸 주체가 해당 결제의 주인이 맞는지 검증
      */
-    private void validatePaymentOwner(Long  currentUserId, Payment dbPayment) {
+    private void validatePaymentOwner(Long currentUserId, Payment dbPayment) {
         if (!dbPayment.getOrder().getBuyer().getId().equals(currentUserId)) {
             throw new BaseException(ErrorEnum.PAYMENT_FORBIDDEN);
         }
@@ -184,7 +191,7 @@ public class BuyerPaymentService {
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
         }
 
-        if(dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
+        if (dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
 
             // 환불 로직 발생 시 먼저 fail 처리 후
             // 관리자 서버에서 환불이 진행되면 refunded 처리

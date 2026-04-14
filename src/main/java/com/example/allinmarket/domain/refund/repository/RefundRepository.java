@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface RefundRepository extends JpaRepository<Refund,Long> {
     Optional<Refund> findByPayment(Payment payment);
     Page<Refund> findAllByBuyerId(Long buyerId, Pageable pageable);
+
+    Optional<Refund> findByIdAndBuyerId(Long refundId, Long currentUserId);
 }

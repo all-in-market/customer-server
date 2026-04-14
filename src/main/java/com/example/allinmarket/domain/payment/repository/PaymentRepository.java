@@ -3,6 +3,8 @@ package com.example.allinmarket.domain.payment.repository;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -32,4 +34,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
           and p.status = :status
     """)
     Optional<Payment> findByOrderIdAndStatusForUpdate(@Param("orderId") Long orderId, @Param("status") TransactionStatus status);
+
+    Page<Payment> findAllByOrderBuyerId(Long buyerId, Pageable pageable);
+    Optional<Payment> findByIdAndOrderBuyerId(Long paymentId, Long currentUserId);
 }

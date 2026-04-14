@@ -127,6 +127,18 @@ public class BuyerRefundService {
     }
 
     /**
+     * 환불 단건 조회
+     */
+    public RefundDetailResponse getRefund(Long currentUserId, Long refundId) {
+        Refund refund = refundRepository.findByIdAndBuyerId(refundId, currentUserId).orElseThrow(
+                () -> new BaseException(ErrorEnum.REFUND_NOT_FOUND)
+        );
+
+        return RefundDetailResponse.from(refund);
+    }
+
+
+    /**
      * 주문이 환불 가능한 상태인지 검증
      */
     private void validateOrderRefundable(Order order) {

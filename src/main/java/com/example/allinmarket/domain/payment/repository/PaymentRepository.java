@@ -32,4 +32,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
           and p.status = :status
     """)
     Optional<Payment> findByOrderIdAndStatusForUpdate(@Param("orderId") Long orderId, @Param("status") TransactionStatus status);
+
+    Optional<Payment> findByIdAndOrderBuyerId(Long paymentId, Long currentUserId);
 }

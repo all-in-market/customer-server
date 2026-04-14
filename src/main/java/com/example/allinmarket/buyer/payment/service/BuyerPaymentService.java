@@ -6,6 +6,7 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -13,6 +14,8 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,6 +99,17 @@ public class BuyerPaymentService {
         // todo: transaction_histories 업데이트
 
         return PaymentDetailResponse.from(dbPayment);
+    }
+
+    /**
+     * 결제 단건 조회
+     */
+    public PaymentDetailResponse findPayment(Long currentUserId, Long paymentId) {
+        Payment payment = paymentRepository.findByIdAndOrderBuyerId(paymentId, currentUserId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
+        );
+
+        return PaymentDetailResponse.from(payment);
     }
 
     /**

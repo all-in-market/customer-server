@@ -46,6 +46,6 @@ public class SellerInitializer implements ApplicationRunner {
         seller.updateStatus(SellerStatus.APPROVED);
         sellerRepository.save(seller);
 
-        log.info("슈퍼 관리자 계정이 생성되었습니다: {}", email);
+        log.info("판매자 계정이 생성되었습니다: {}", email);
     }
 }

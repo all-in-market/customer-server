@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:1.8
+    container_name: k6-influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb/init.iql:/docker-entrypoint-initdb.d/init.iql
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: k6-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+
+  k6:
+    image: grafana/k6:latest
+    container_name: k6-runner
+    volumes:
+      - ./k6:/k6
+    depends_on:
+      - influxdb
+    entrypoint: ["k6"]
+
+

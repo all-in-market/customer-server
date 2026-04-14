@@ -6,15 +6,16 @@ import com.example.allinmarket.buyer.payment.facade.BuyerPaymentFacade;
 import com.example.allinmarket.buyer.payment.service.BuyerPaymentService;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BuyerPaymentController {
 
     private final BuyerPaymentFacade buyerPaymentFacade;
+    private final BuyerPaymentService buyerPaymentService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<PaymentDetailResponse>> processPayment(
@@ -34,5 +36,20 @@ public class BuyerPaymentController {
                         result
                 )
         );
+    }
+
+    /**
+     * 결제 단건 상세 조회
+     */
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<ApiResponse<PaymentDetailResponse>> findPayment(
+            @PathVariable Long paymentId
+    ) {
+        PaymentDetailResponse result = buyerPaymentService.findPayment(SecurityUtils.getCurrentUserId(), paymentId);
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        SuccessEnum.READ_SUCCESS,
+                        result
+                ));
     }
 }

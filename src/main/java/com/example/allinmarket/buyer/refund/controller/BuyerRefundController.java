@@ -5,9 +5,11 @@ import com.example.allinmarket.buyer.refund.dto.response.RefundDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +34,14 @@ public class BuyerRefundController {
         );
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<RefundDetailResponse>>> getRefunds(
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessEnum.READ_SUCCESS,
+                buyerRefundService.getRefunds(SecurityUtils.getCurrentUserId(), pageable)
+        ));
     @GetMapping("/refunds/{refundId}")
     public ResponseEntity<ApiResponse<RefundDetailResponse>> getRefund(
             @PathVariable Long refundId

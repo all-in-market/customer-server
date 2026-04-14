@@ -5,6 +5,7 @@ import com.example.allinmarket.buyer.refund.dto.request.RefundCreateRequest;
 import com.example.allinmarket.buyer.refund.dto.response.RefundDetailResponse;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -15,8 +16,10 @@ import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.repository.RefundRepository;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Optional;
 
 @Service
@@ -114,6 +117,13 @@ public class BuyerRefundService {
         refundRepository.save(refund);
 
         // todo: refund_histories 또는 transaction_histories 업데이트
+    }
+
+    public PageResponse<RefundDetailResponse> getRefunds(Long buyerId, Pageable pageable) {
+        return PageResponse.register(
+                refundRepository.findAllByBuyerId(buyerId, pageable)
+                        .map(RefundDetailResponse::from)
+        );
     }
 
     /**

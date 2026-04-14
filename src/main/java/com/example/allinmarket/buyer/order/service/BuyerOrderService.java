@@ -22,6 +22,7 @@ import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class BuyerOrderService {
 
     private final OrderRepository orderRepository;
@@ -176,8 +178,10 @@ public class BuyerOrderService {
                 .sorted()
                 .toList();
 
-        List<Product> products = productRepository.findAllByIdInWithSellerWithLock(productIds);
 
+        log.info("productMap size: {}", productIds.size());
+        List<Product> products = productRepository.findAllByIdInWithSellerWithLock(productIds);
+        log.info("products size: {}", products.size());
         if(products.size() != productIds.size()) {
             throw new BaseException(ErrorEnum.INVALID_ORDER_PRODUCT);
         }

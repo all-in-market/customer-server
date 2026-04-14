@@ -17,9 +17,9 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
         SELECT ci FROM CartItem ci
         JOIN FETCH ci.cart c
         JOIN FETCH ci.product p
-        WHERE ci.id IN :ids
+        WHERE ci.id IN :cartItemIds
     """)
-    List<CartItem> findAllByIdsWithCartAndProduct(@Param("ids") List<Long> ids);
+    List<CartItem> findAllByIdsWithCartAndProduct(@Param("cartItemIds") List<Long> cartItemIds);
 
     @EntityGraph(attributePaths = {"product"})
     @Query("SELECT ci FROM CartItem ci WHERE ci.cart.id = :cartId AND ci.product.status != 'HIDDEN' AND ci.product.deletedAt IS NULL")

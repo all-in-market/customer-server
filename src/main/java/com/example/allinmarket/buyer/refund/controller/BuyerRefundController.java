@@ -34,7 +34,7 @@ public class BuyerRefundController {
         );
     }
 
-    @GetMapping
+    @GetMapping("/refunds")
     public ResponseEntity<ApiResponse<PageResponse<RefundDetailResponse>>> getRefunds(
             Pageable pageable
     ) {

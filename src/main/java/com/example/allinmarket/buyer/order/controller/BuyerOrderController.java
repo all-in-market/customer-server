@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/orders")
 public class BuyerOrderController {
 
-    private BuyerOrderService buyerOrderService;
+    private final BuyerOrderService buyerOrderService;
 
     /**
      * 주문 생성

@@ -5,15 +5,14 @@ import com.example.allinmarket.buyer.refund.dto.response.RefundDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,5 +32,15 @@ public class BuyerRefundController {
                         result
                 )
         );
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<RefundDetailResponse>>> getRefunds(
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessEnum.READ_SUCCESS,
+                buyerRefundService.getRefunds(SecurityUtils.getCurrentUserId(), pageable)
+        ));
     }
 }

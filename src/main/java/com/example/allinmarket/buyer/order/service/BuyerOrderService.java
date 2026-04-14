@@ -176,8 +176,6 @@ public class BuyerOrderService {
                 .sorted()
                 .toList();
 
-
-
         List<Product> products = productRepository.findAllByIdInWithSellerWithLock(productIds);
 
         if(products.size() != productIds.size()) {
@@ -186,5 +184,4 @@ public class BuyerOrderService {
 
         return products;
     }
-
 }

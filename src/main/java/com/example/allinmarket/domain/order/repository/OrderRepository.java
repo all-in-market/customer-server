@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -29,4 +28,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
           and o.buyer.id = :buyerId
     """)
     Optional<Order> findByIdAndBuyerIdWithLock(@Param("orderId") Long orderId, @Param("buyerId") Long buyerId);
+
+    @Query("""
+        select o
+        from Order o
+        join fetch o.buyer b
+        where o.id = :orderId
+          and b.id = :currentUserId
+    """)
+    Optional<Order> findByIdAndBuyerIdWithBuyer(Long orderId, Long currentUserId);
 }

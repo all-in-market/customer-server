@@ -3,6 +3,7 @@ package com.example.allinmarket.buyer.payment.service;
 import com.example.allinmarket.buyer.payment.client.dto.PortOnePaymentResponse;
 import com.example.allinmarket.buyer.payment.dto.request.PaymentCreateRequest;
 import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
+import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.order.entity.Order;
@@ -25,6 +26,8 @@ public class BuyerPaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+
+    private final BuyerRefundService buyerRefundService;
 
     /**
      * 결제 생성 및 DB 저장
@@ -84,7 +87,7 @@ public class BuyerPaymentService {
         validatePaymentNonProcessableStatus(dbPayment);
 
         validatePaymentResult(payment, dbPayment);
-        validatePaymentAmount(payment, dbPayment);
+        validatePaymentAmount(currentUserId, payment, dbPayment);
 
         dbPayment.success(LocalDateTime.now());
         dbPayment.getOrder().paid();
@@ -156,7 +159,7 @@ public class BuyerPaymentService {
      * 주문 금액과 실제 결제 금액이 일치하는지 확인
      * 상이할 경우 결제를 실패 처리하고 환불 대상으로 남김
      */
-    private void validatePaymentAmount(PortOnePaymentResponse payment, Payment dbPayment) {
+    private void validatePaymentAmount(Long currentUerId, PortOnePaymentResponse payment, Payment dbPayment) {
 
         // 주문 금액과 실결제 금액이 다를 때
         if (payment.getTotalAmount() == null) {
@@ -173,7 +176,7 @@ public class BuyerPaymentService {
             // 관리자 서버에서 환불이 진행되면 refunded 처리
             dbPayment.fail();
 
-            // todo: 환불 객체 생성 후 저장 로직 추후에 추가
+            buyerRefundService.createRefundForAmountMismatch(currentUerId, dbPayment, payment);
             // todo: transaction_histories 업데이트
 
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);

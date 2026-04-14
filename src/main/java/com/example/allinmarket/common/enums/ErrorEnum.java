@@ -54,6 +54,7 @@ public enum ErrorEnum {
     REFUND_ALREADY_EXISTS(409, "이미 환불이 진행 중이거나 처리된 결제입니다."),
     REFUND_FORBIDDEN(403, "해당 결제에 대한 환불 신청 권한이 없습니다."),
     REFUND_AMOUNT_MISMATCH_NOT_FOUND(400, "결제 금액이 주문 금액과 일치하여 금액 불일치 환불을 생성할 수 없습니다."),
+    REFUND_NOT_FOUND(404, "존재하지 않는 환불내역 입니다."),
 
     // Address
     ADDRESS_NOT_FOUND(404, "존재하지 않는 주소입니다."),

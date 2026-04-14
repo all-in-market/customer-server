@@ -8,4 +8,6 @@ import java.util.Optional;
 
 public interface RefundRepository extends JpaRepository<Refund,Long> {
     Optional<Refund> findByPayment(Payment payment);
+
+    Optional<Refund> findByIdAndBuyerId(Long refundId, Long currentUserId);
 }

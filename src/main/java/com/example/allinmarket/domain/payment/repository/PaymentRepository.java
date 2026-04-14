@@ -36,4 +36,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByOrderIdAndStatusForUpdate(@Param("orderId") Long orderId, @Param("status") TransactionStatus status);
 
     Page<Payment> findAllByOrderBuyerId(Long buyerId, Pageable pageable);
+    Optional<Payment> findByIdAndOrderBuyerId(Long paymentId, Long currentUserId);
 }

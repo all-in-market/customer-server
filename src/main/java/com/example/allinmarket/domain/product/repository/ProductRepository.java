@@ -22,7 +22,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
          SELECT p
          FROM Product p
-         JOIN FETCH Seller s
+         JOIN FETCH p.seller
          WHERE p.id In :productIds
     """)
     List<Product> findAllByIdInWithSellerWithLock(@Param("productIds") List<Long> productIds);

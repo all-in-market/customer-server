@@ -20,8 +20,8 @@ public class DummyDataRunner implements ApplicationRunner {
         if(!properties.isEnabled()) return;
 
         dummyDataService.createDummyCategory(properties.getCategoryCount());
-        dummyDataService.createDummySeller(properties.getSellerCount());
-        dummyDataService.createDummyProduct(properties.getProductCount());
-        dummyDataService.createDummyBuyer(properties.getBuyerCount());
+//        dummyDataService.createDummySeller(properties.getSellerCount());
+//        dummyDataService.createDummyProduct(properties.getProductCount());
+//        dummyDataService.createDummyBuyer(properties.getBuyerCount());
     }
 }

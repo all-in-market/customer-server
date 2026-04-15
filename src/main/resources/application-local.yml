@@ -1,7 +1,7 @@
 dummy:
   enabled: true
-  mode: SELLER_ONLY
-  member-count: 40000
-  item-count: 1000
-  member-item-count: 300000
-  market-listing-count: 300000
+  batch-type:
+  category-count: 100
+  seller-count: 0
+  buyer-count: 0
+  cart-item-count: 0

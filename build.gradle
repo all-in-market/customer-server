@@ -52,6 +52,9 @@ dependencies {
     // Retry
     implementation 'org.springframework.retry:spring-retry:2.0.9'
 
+    // datafaker
+    implementation 'net.datafaker:datafaker:2.0.2'
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'

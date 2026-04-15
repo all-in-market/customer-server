@@ -5,7 +5,7 @@ spring:
     init:
       mode: always
   datasource: # 환경 변수가 설정되어 있으면 그 값을 쓰고, 없으면 기본값을 쓴다.
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:allinmarket}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:allinmarket}?reWriteBatchedInserts=true
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -38,3 +38,9 @@ server:
 seller:
   email: ${SELLER_ID}
   password: ${SELLER_PASSWORD}
+
+app:
+  init:
+    admin:
+      enabled: false
+

@@ -1,0 +1,8 @@
+dummy:
+  enabled: true
+  batch-type:
+  category-count: 100
+  seller-count: 100
+  buyer-count: 3000
+  cart-item-count: 9000
+  product-count: 10000

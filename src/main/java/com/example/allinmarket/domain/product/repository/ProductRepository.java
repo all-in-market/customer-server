@@ -27,7 +27,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     """)
     List<Product> findAllByIdInWithSellerWithLock(@Param("productIds") List<Long> productIds);
 
-    @Query("SELECT p FROM Product p WHERE p.status != 'HIDDEN' AND p.deletedAt IS NULL")
+    @Query("SELECT p FROM Product p WHERE p.id = :productId AND p.status != 'HIDDEN' AND p.deletedAt IS NULL")
     Optional<Product> findVisibleProductById(Long productId);
 
     Page<Product> findAllBySellerIdAndDeletedAtIsNull(Long sellerId, Pageable pageable);

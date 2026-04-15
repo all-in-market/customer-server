@@ -95,7 +95,7 @@ public class DummyDataService {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now())
             """;
 
-        String password = passwordEncoder.encode("12345678");
+        String password = passwordEncoder.encode("1234567890");
 
         for (int i = 0; i < totalSellerCount; i++) {
 
@@ -194,7 +194,7 @@ public class DummyDataService {
         VALUES (?, ?, ?, ?, ?, now(), now())
         """;
 
-        String password = passwordEncoder.encode("12345678");
+        String password = passwordEncoder.encode("1234567890");
 
         for (int i = 0; i < totalBuyerCount; i++) {
 

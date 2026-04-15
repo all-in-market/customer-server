@@ -40,6 +40,9 @@ public class DummyDataService {
     private static final int CATEGORY_BATCH_SIZE = 100;
     private static final int SELLER_BATCH_SIZE = 1000;
     private static final int PRODUCT_BATCH_SIZE = 10000;
+    private static final int BUYER_BATCH_SIZE = 1000;
+    private static final int CART_BATCH_SIZE = 1000;
+    private static final int ADDRESS_BATCH_SIZE = 1000;
 
     /**
      * 카테고리 더미 데이터 생성
@@ -152,8 +155,8 @@ public class DummyDataService {
             Long categoryId = categoryIdList.get(random.nextInt(categoryIdList.size()));
 
             String name = faker.commerce().productName() + "_" + i;
-            BigDecimal price = BigDecimal.valueOf(10000);
-            int stock = 1000;
+            BigDecimal price = BigDecimal.valueOf(random.nextInt(3000, 30000));
+            int stock = random.nextInt(50000, 100000);
             String status = ProductStatus.ON_SALE.name();
             String description = "description_" + i;
 
@@ -175,5 +178,132 @@ public class DummyDataService {
 
         long finished = System.currentTimeMillis() - start;
         log.info("product batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 구매자 더미 데이터 생성
+     */
+    public void createDummyBuyer(int totalBuyerCount) {
+        long start = System.currentTimeMillis();
+
+        List<Object[]> batchBuyers = new ArrayList<>(BUYER_BATCH_SIZE);
+
+        String sql = """
+        INSERT INTO buyers
+        (email, password, name, phone, role, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, now(), now())
+        """;
+
+        String password = passwordEncoder.encode("12345678");
+
+        for (int i = 0; i < totalBuyerCount; i++) {
+
+            String email = "user" + i + "@test.com";
+            String name = faker.name().fullName() + "_" + i;
+            String phone = faker.phoneNumber().phoneNumber();
+            String role = UserRole.BUYER.name();
+
+            batchBuyers.add(new Object[]{email, password, name, phone, role});
+
+            if(batchBuyers.size() == BUYER_BATCH_SIZE){
+                jdbcTemplate.batchUpdate(sql, batchBuyers);
+                batchBuyers.clear();
+
+                long elapsed = System.currentTimeMillis() - start;
+
+                log.info("create {} buyer in {} s", i + 1, elapsed / 1000.0);
+            }
+        }
+
+        if(!batchBuyers.isEmpty()){
+            jdbcTemplate.batchUpdate(sql, batchBuyers);
+        }
+
+        long finished = System.currentTimeMillis() - start;
+
+        log.info("sell batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 카트 데이터 생성
+     */
+    public void createDummyCart(int totalCartCount) {
+
+        long start = System.currentTimeMillis();
+
+        List<Long> buyerIdList = jdbcTemplate.queryForList("SELECT id FROM buyers", Long.class);
+
+        List<Object[]> batchCarts = new ArrayList<>(CART_BATCH_SIZE);
+
+        String sql = """
+            INSERT INTO carts
+            (buyer_id, created_at, updated_at)
+            VALUES (?, now(), now())
+            """;
+
+        for (int i = 0; i < totalCartCount; i++) {
+
+            Long buyerId = buyerIdList.get(i);
+
+            batchCarts.add(new Object[]{buyerId});
+
+            if(batchCarts.size() == CART_BATCH_SIZE){
+                jdbcTemplate.batchUpdate(sql, batchCarts);
+                batchCarts.clear();
+
+                long elapsed = System.currentTimeMillis() - start;
+
+                log.info("create {} cart in {} s", i + 1, elapsed / 1000.0);
+            }
+        }
+
+        if(!batchCarts.isEmpty()){
+            jdbcTemplate.batchUpdate(sql, batchCarts);
+        }
+
+        long finished = System.currentTimeMillis() - start;
+        log.info("cart batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 주소 더미 데이터 생성
+     */
+    public void createDummyAddress(int totalAddressCount) {
+        long start = System.currentTimeMillis();
+
+        List<Object[]> batchAddress = new ArrayList<>(ADDRESS_BATCH_SIZE);
+
+        String sql = """
+        INSERT INTO addresses
+        (buyer_id, recipient, phone, detail, is_default, created_at, updated_at)
+        VALUES (?, ?, ?, ?, false, now(), now())
+        """;
+
+        for (int i = 0; i < totalAddressCount; i++) {
+
+            long buyerId = i + 1;
+            String recipient = faker.name().fullName() + "_" + i;
+            String phone = faker.phoneNumber().phoneNumber();
+            String detail = faker.address().fullAddress();
+
+            batchAddress.add(new Object[]{buyerId, recipient, phone, detail});
+
+            if(batchAddress.size() == ADDRESS_BATCH_SIZE){
+                jdbcTemplate.batchUpdate(sql, batchAddress);
+                batchAddress.clear();
+
+                long elapsed = System.currentTimeMillis() - start;
+
+                log.info("create {} addresses in {} s", i + 1, elapsed / 1000.0);
+            }
+        }
+
+        if(!batchAddress.isEmpty()){
+            jdbcTemplate.batchUpdate(sql, batchAddress);
+        }
+
+        long finished = System.currentTimeMillis() - start;
+
+        log.info("address batchUpdate finished in {} s", finished / 1000.0);
     }
 }

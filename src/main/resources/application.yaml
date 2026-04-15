@@ -38,3 +38,9 @@ server:
 seller:
   email: ${SELLER_ID}
   password: ${SELLER_PASSWORD}
+
+app:
+  init:
+    admin:
+      enabled: false
+

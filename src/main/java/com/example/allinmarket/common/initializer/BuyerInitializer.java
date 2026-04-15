@@ -1,4 +1,4 @@
-package com.example.allinmarket.common.config;
+package com.example.allinmarket.common.initializer;
 
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;

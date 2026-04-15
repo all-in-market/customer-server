@@ -1,4 +1,4 @@
-package com.example.allinmarket.common.config;
+package com.example.allinmarket.common.initializer;
 
 import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;

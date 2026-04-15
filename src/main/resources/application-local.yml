@@ -3,6 +3,6 @@ dummy:
   batch-type:
   category-count: 100
   seller-count: 100
-  buyer-count: 3000
-  cart-item-count: 9000
+  buyer-cart-count: 3000
   product-count: 10000
+  address-count: 3000

@@ -5,6 +5,7 @@ import com.example.allinmarket.buyer.order.dto.response.OrderWithOrderItemDetail
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.redis.RedisLock;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.address.entity.Address;
 import com.example.allinmarket.domain.address.repository.AddressRepository;
@@ -49,17 +50,15 @@ public class BuyerOrderService {
      * 주문 생성
      */
     @Transactional
-    public OrderDetailResponse createOrder(Long buyerId, OrderCreateRequest request) {
+    public OrderDetailResponse createOrder(Long buyerId, List<CartItem> cartItems, Long addressId) {
 
         Buyer buyer = buyerRepository.findById(buyerId).orElseThrow(
                 () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
         );
 
-        Address address = addressRepository.findByIdAndBuyerId(request.addressId(), buyerId).orElseThrow(
+        Address address = addressRepository.findByIdAndBuyerId(addressId, buyerId).orElseThrow(
                 () -> new BaseException(ErrorEnum.ADDRESS_NOT_FOUND)
         );
-
-        List<CartItem> cartItems = cartItemRepository.findAllByIdsWithCartAndProduct(request.cartItemIds());
 
         orderValidator.validateCartItemsNotEmpty(cartItems);
         orderValidator.validateCartItemsOwnedByBuyer(cartItems, buyerId);

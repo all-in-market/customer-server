@@ -1,6 +1,7 @@
 package com.example.allinmarket.buyer.order.controller;
 
 import com.example.allinmarket.buyer.order.dto.response.OrderWithOrderItemDetailResponse;
+import com.example.allinmarket.buyer.order.facade.BuyerPaymentOrderFacade;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.response.PageResponse;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class BuyerOrderController {
 
     private final BuyerOrderService buyerOrderService;
+    private final BuyerPaymentOrderFacade buyerPaymentOrderFacade;
 
     /**
      * 주문 생성
@@ -30,7 +32,7 @@ public class BuyerOrderController {
     public ResponseEntity<ApiResponse<OrderDetailResponse>> createOrder(
             @RequestBody @Valid OrderCreateRequest request
             ) {
-        OrderDetailResponse result = buyerOrderService.createOrder(SecurityUtils.getCurrentUserId(), request);
+        OrderDetailResponse result = buyerPaymentOrderFacade.createOrder(SecurityUtils.getCurrentUserId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ApiResponse.success(
                         SuccessEnum.CREATE_SUCCESS,

@@ -2,15 +2,13 @@ package com.example.allinmarket.common.scheduler;
 
 import com.example.allinmarket.domain.sellerdashboard.entity.SellerDashboard;
 import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboardRepository;
-import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
+
 import java.util.List;
 
 @Component

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/categories")
@@ -19,9 +21,8 @@ public class BuyerCategoryController {
     private final BuyerCategoryService buyerCategoryService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<CategoryDetailResponse>>> findAllCategory(Pageable pageable) {
-        PageResponse<CategoryDetailResponse> response = buyerCategoryService.findAllCategory(pageable);
+    public ResponseEntity<ApiResponse<List<CategoryDetailResponse>>> findAllCategory() {
 
-        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.READ_SUCCESS, response));
+        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.READ_SUCCESS, buyerCategoryService.findAllCategory()));
     }
 }

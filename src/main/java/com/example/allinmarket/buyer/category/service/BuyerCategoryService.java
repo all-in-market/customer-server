@@ -22,36 +22,24 @@ public class BuyerCategoryService {
     private final CategoryRepository categoryRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public PageResponse<CategoryDetailResponse> findAllCategory(Pageable pageable) {
-        PageRequest pageRequest = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.ASC, "sortOrder")
-        );
+    public List<CategoryDetailResponse> findAllCategory() {
+        String key = "categories:all";
 
-        if (pageable.getPageNumber() == 0) {
-            String key = "categories:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":sortOrder:ASC";
+        Object cachedObject = redisTemplate.opsForValue().get(key);
 
-            Object cachedObject = redisTemplate.opsForValue().get(key);
+        if (cachedObject instanceof List<?> cached) {
 
-            if (cachedObject instanceof PageResponse<?> cached) {
-
-                return (PageResponse<CategoryDetailResponse>) cached;
-            }
-
-            Page<Category> categories = categoryRepository.findAll(pageRequest);
-
-            Page<CategoryDetailResponse> responses = categories.map(CategoryDetailResponse::from);
-
-            PageResponse<CategoryDetailResponse> pageResponse = PageResponse.register(responses);
-
-            redisTemplate.opsForValue().set(key, pageResponse, Duration.ofMinutes(10));
-
-            return pageResponse;
+            return (List<CategoryDetailResponse>) cached;
         }
 
-        Page<Category> categories = categoryRepository.findAll(pageRequest);
+        List<Category> categories = categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "sortOrder"));
 
-        return PageResponse.register(categories.map(CategoryDetailResponse::from));
+        List<CategoryDetailResponse> responses = categories.stream()
+                .map(CategoryDetailResponse::from)
+                .toList();
+
+        redisTemplate.opsForValue().set(key, responses, Duration.ofMinutes(10));
+
+        return responses;
     }
 }

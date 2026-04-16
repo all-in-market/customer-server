@@ -38,11 +38,9 @@ public class BuyerCategoryControllerTest {
         // given
         CategoryDetailResponse response = new CategoryDetailResponse(1L, "전자제품", 1);
 
-        PageResponse<CategoryDetailResponse> pageResponse =
-                PageResponse.register(new PageImpl<>(List.of(response)));
+        List<CategoryDetailResponse> responseList = List.of(response);
 
-        given(buyerCategoryService.findAllCategory(any(Pageable.class)))
-                .willReturn(pageResponse);
+        given(buyerCategoryService.findAllCategory()).willReturn(responseList);
 
         // when & then
         restTestClient.get().uri("/categories")
@@ -52,13 +50,13 @@ public class BuyerCategoryControllerTest {
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.status").isEqualTo(200)
                 .jsonPath("$.message").isEqualTo(SuccessEnum.READ_SUCCESS.getMessage())
-                .jsonPath("$.data.content[0].name").isEqualTo("전자제품");
+                .jsonPath("$.data[0].name").isEqualTo("전자제품");
     }
 
     @Test
     void 카테고리_목록_조회_실패_테스트() {
         // given
-        given(buyerCategoryService.findAllCategory(any(Pageable.class)))
+        given(buyerCategoryService.findAllCategory())
                 .willThrow(new BaseException(ErrorEnum.CATEGORY_NOT_FOUND));
 
         // when & then

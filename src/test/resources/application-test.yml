@@ -26,11 +26,7 @@ spring:
     exclude:
       # 테스트 환경에서는 Redis/Kafka를 사용하지 않으므로 관련 자동설정 전부 비활성화
       # 실제 서버 연결을 시도하지 않아 테스트가 외부 인프라 없이 독립적으로 실행됨
-      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
-      - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
       - org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration
-      - org.redisson.spring.starter.RedissonAutoConfigurationV2
-      - org.redisson.spring.starter.RedissonAutoConfigurationV4
 
 jwt:
   secret: VtHcoEqCTwJ981b7wHL5yb57mwhlE8UjzYhFu3vd5M1 # 테스트 전용 고정값 사용

@@ -14,7 +14,15 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "seller_daily_statistics")
+@Table(
+        name = "seller_daily_statistics",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_seller_stat_date",
+                        columnNames = {"seller_id", "stat_date"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SellerDailyStatistics extends CreatableEntity {
 

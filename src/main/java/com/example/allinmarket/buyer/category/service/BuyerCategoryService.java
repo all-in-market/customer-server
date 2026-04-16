@@ -23,38 +23,34 @@ public class BuyerCategoryService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     public PageResponse<CategoryDetailResponse> findAllCategory(Pageable pageable) {
+        PageRequest pageRequest = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.ASC, "sortOrder")
+        );
+
         if (pageable.getPageNumber() == 0) {
-            String key = "categories:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+            String key = "categories:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":sortOrder:ASC";
 
             Object cachedObject = redisTemplate.opsForValue().get(key);
 
             if (cachedObject instanceof PageResponse<?> cached) {
 
-                return new PageImpl<>(
-                        (List<CategoryDetailResponse>) cached.content(),
-                        pageable,
-                        cached.totalElements()
-                );
+                return (PageResponse<CategoryDetailResponse>) cached;
             }
 
-            Page<Category> categories = categoryRepository..findAllVisibleProducts(pageable);
+            Page<Category> categories = categoryRepository.findAll(pageRequest);
 
-            Page<ProductDetailResponse> responses = products.map(ProductDetailResponse::from);
+            Page<CategoryDetailResponse> responses = categories.map(CategoryDetailResponse::from);
 
-            PageResponse<ProductDetailResponse> pageResponse = PageResponse.register(responses);
+            PageResponse<CategoryDetailResponse> pageResponse = PageResponse.register(responses);
 
             redisTemplate.opsForValue().set(key, pageResponse, Duration.ofMinutes(10));
 
-            return responses;
+            return pageResponse;
         }
 
-        Page<Category> categories = categoryRepository.findAll(
-                PageRequest.of(
-                        pageable.getPageNumber(),
-                        pageable.getPageSize(),
-                        Sort.by(Sort.Direction.ASC, "sortOrder") // sortOrder 기준 오름차순 정렬
-                )
-        );
+        Page<Category> categories = categoryRepository.findAll(pageRequest);
 
         return PageResponse.register(categories.map(CategoryDetailResponse::from));
     }

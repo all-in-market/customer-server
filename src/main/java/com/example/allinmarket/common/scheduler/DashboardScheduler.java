@@ -22,20 +22,10 @@ public class DashboardScheduler {
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void resetDashboards() {
-        List<Seller> sellers = sellerRepository.findAll();
+        List<SellerDashboard> sellerDashboards = sellerDashboardRepository.findAll();
 
-        for (Seller seller : sellers) {
-            SellerDashboard dashboard = sellerDashboardRepository.findBySellerId(seller.getId())
-                    .orElseGet(() -> SellerDashboard.of(
-                            seller,
-                            LocalDate.now(),
-                            0,
-                            0,
-                            0,
-                            BigDecimal.ZERO,
-                            BigDecimal.ZERO
-                    ));
-            dashboard.reset();
+        for (SellerDashboard sellerDashboard : sellerDashboards) {
+            sellerDashboard.reset();
         }
     }
 }

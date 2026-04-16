@@ -8,6 +8,4 @@ import java.util.Optional;
 
 public interface SellerDashboardRepository extends JpaRepository<SellerDashboard, Long> {
     Optional<SellerDashboard> findBySellerIdAndStatDate(Long id, LocalDate day);
-
-    Optional<SellerDashboard> findBySellerId(Long sellerId);
 }

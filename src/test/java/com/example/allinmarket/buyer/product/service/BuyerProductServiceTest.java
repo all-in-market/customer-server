@@ -11,11 +11,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -35,6 +38,9 @@ public class BuyerProductServiceTest {
 
     @InjectMocks
     private BuyerProductService buyerProductService;
+
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Test
     void 구매자_상품_목록_조회_성공_테스트() {
@@ -58,6 +64,8 @@ public class BuyerProductServiceTest {
 
         given(productRepository.findAllVisibleProducts(pageable)).willReturn(productPage);
 
+        given(redisTemplate.opsForValue()).willReturn(Mockito.mock(ValueOperations.class));
+
         // when
         Page<ProductDetailResponse> responses = buyerProductService.findAllProducts(pageable);
 
@@ -70,6 +78,8 @@ public class BuyerProductServiceTest {
     void 구매자_상품_목록_조회_실패_테스트() {
         //given
         given(productRepository.findAllVisibleProducts(any(Pageable.class))).willThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
+
+        given(redisTemplate.opsForValue()).willReturn(Mockito.mock(ValueOperations.class));
 
         // when & then
         assertThrows(BaseException.class, () -> buyerProductService.findAllProducts(PageRequest.of(0, 10)));

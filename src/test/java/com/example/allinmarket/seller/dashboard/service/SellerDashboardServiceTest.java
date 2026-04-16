@@ -134,4 +134,50 @@ public class SellerDashboardServiceTest {
 
         assertEquals(ErrorEnum.DASHBOARD_NOT_FOUND, exception.getErrorEnum());
     }
+
+    @Test
+    void 판매자_대시보드_갱신_성공_테스트() {
+        // given
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(sellerId), any(LocalDate.class)))
+                .willReturn(Optional.of(dashboard));
+
+        // when
+        SellerDashboardResponse response = sellerDashboardService.refreshSellerDashboard(sellerId);
+
+        // then
+        assertNotNull(response);
+        assertEquals(LocalDate.now(), response.statDate());
+        assertEquals(10, response.totalOrders());
+        assertEquals(BigDecimal.valueOf(500000), response.totalSales());
+        assertEquals(8, response.totalProductsSold());
+        assertEquals(2, response.totalRefunds());
+        assertEquals(BigDecimal.valueOf(30000), response.refundAmount());
+
+        // 기존 캐시 삭제 검증
+        verify(redisTemplate).delete(expectedKey);
+        // DB 조회 검증
+        verify(sellerDashboardRepository).findBySellerIdAndStatDate(eq(sellerId), any(LocalDate.class));
+        // 새 캐시 저장 검증
+        verify(valueOperations).set(eq(expectedKey), any(SellerDashboardResponse.class), any());
+    }
+
+    @Test
+    void 판매자_대시보드_갱신_데이터없음_실패_테스트() {
+        // given
+        given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(sellerId), any(LocalDate.class)))
+                .willReturn(Optional.empty());
+
+        // when & then
+        BaseException exception = assertThrows(
+                BaseException.class,
+                () -> sellerDashboardService.refreshSellerDashboard(sellerId)
+        );
+
+        assertEquals(ErrorEnum.DASHBOARD_NOT_FOUND, exception.getErrorEnum());
+
+        // 캐시 삭제는 됐지만 새로 저장은 안 됐는지 검증
+        verify(redisTemplate).delete(expectedKey);
+        verify(valueOperations, never()).set(any(), any(), any());
+    }
 }

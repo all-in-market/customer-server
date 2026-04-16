@@ -82,7 +82,10 @@ public enum ErrorEnum {
     CATEGORY_NOT_FOUND(404, "존재하지 않는 카테고리입니다."),
 
     // Dashboard
-    DASHBOARD_NOT_FOUND(404, "대시보드가 존재하지 않습니다.");
+    DASHBOARD_NOT_FOUND(404, "대시보드가 존재하지 않습니다."),
+
+    // Statistics
+    STATISTICS_NOT_FOUND(404, "존재하지 않는 통계 데이터입니다.");
 
     private final int status;
     private final String message;

@@ -15,6 +15,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  redis:
+    image: redis:7.0
+    container_name: my-redis
+    ports:
+      - "6379:6379"
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -27,6 +32,8 @@ services:
     depends_on:
       postgresql:
         condition: service_healthy
+      redis:
+        condition: service_started
 
 volumes:
   postgresql-data:

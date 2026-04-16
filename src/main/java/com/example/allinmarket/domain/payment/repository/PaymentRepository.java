@@ -15,7 +15,6 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     boolean existsByOrderIdAndStatus(Long orderId, TransactionStatus status);
 
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select p
         from Payment p

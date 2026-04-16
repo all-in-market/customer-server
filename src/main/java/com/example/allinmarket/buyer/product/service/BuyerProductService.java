@@ -25,28 +25,34 @@ public class BuyerProductService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     public Page<ProductDetailResponse> findAllProducts(Pageable pageable) {
-        String key = "products:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+        if (pageable.getPageNumber() == 0) {
+            String key = "products:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
 
-        Object cachedObject = redisTemplate.opsForValue().get(key);
+            Object cachedObject = redisTemplate.opsForValue().get(key);
 
-        if (cachedObject instanceof PageResponse<?> cached) {
+            if (cachedObject instanceof PageResponse<?> cached) {
 
-            return new PageImpl<>(
-                    (List<ProductDetailResponse>) cached.content(),
-                    pageable,
-                    cached.totalElements()
-            );
+                return new PageImpl<>(
+                        (List<ProductDetailResponse>) cached.content(),
+                        pageable,
+                        cached.totalElements()
+                );
+            }
+
+            Page<Product> products = productRepository.findAllVisibleProducts(pageable);
+
+            Page<ProductDetailResponse> responses = products.map(ProductDetailResponse::from);
+
+            PageResponse<ProductDetailResponse> pageResponse = PageResponse.register(responses);
+
+            redisTemplate.opsForValue().set(key, pageResponse, Duration.ofMinutes(10));
+
+            return responses;
         }
 
         Page<Product> products = productRepository.findAllVisibleProducts(pageable);
 
-        Page<ProductDetailResponse> responses = products.map(ProductDetailResponse::from);
-
-        PageResponse<ProductDetailResponse> pageResponse = PageResponse.register(responses);
-
-        redisTemplate.opsForValue().set(key, pageResponse, Duration.ofMinutes(10));
-
-        return responses;
+        return products.map(ProductDetailResponse::from);
     }
 
     public ProductDetailResponse findOneProduct(Long productId) {

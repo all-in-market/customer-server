@@ -115,4 +115,75 @@ public class SellerDashBoardControllerTest {
                 .jsonPath("$.status").isEqualTo(404)
                 .jsonPath("$.message").isEqualTo(ErrorEnum.NOT_FOUND.getMessage());
     }
+
+    @Test
+    void 판매자_대시보드_갱신_성공_테스트() {
+        // given
+        setAuthContext(1L);
+
+        LocalDate today = LocalDate.now();
+        SellerDashboardResponse response = new SellerDashboardResponse(
+                1L,
+                today,
+                10,
+                BigDecimal.valueOf(500000),
+                8,
+                2,
+                BigDecimal.valueOf(30000),
+                BigDecimal.valueOf(455000),
+                BigDecimal.valueOf(15000)
+        );
+
+        when(sellerDashboardService.refreshSellerDashboard(1L)).thenReturn(response);
+
+        // when & then
+        restTestClient.post().uri("/seller/dashboard/refresh")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.status").isEqualTo(200)
+                .jsonPath("$.message").isEqualTo("데이터 조회에 성공하였습니다.")
+                .jsonPath("$.data.sellerId").isEqualTo(1)
+                .jsonPath("$.data.statDate").isEqualTo(today.toString())
+                .jsonPath("$.data.totalOrders").isEqualTo(10)
+                .jsonPath("$.data.totalSales").isEqualTo(500000)
+                .jsonPath("$.data.totalProductsSold").isEqualTo(8)
+                .jsonPath("$.data.totalRefunds").isEqualTo(2)
+                .jsonPath("$.data.refundAmount").isEqualTo(30000)
+                .jsonPath("$.data.settlementAmount").isEqualTo(455000)
+                .jsonPath("$.data.feeAmount").isEqualTo(15000);
+    }
+
+    @Test
+    void 판매자_대시보드_갱신_미인증_예외_테스트() {
+        // given
+        SecurityContextHolder.clearContext();
+
+        // when & then
+        restTestClient.post().uri("/seller/dashboard/refresh")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.status").isEqualTo(401);
+    }
+
+    @Test
+    void 판매자_대시보드_갱신_데이터없음_예외_테스트() {
+        // given
+        setAuthContext(999L);
+
+        when(sellerDashboardService.refreshSellerDashboard(999L))
+                .thenThrow(new BaseException(ErrorEnum.DASHBOARD_NOT_FOUND));
+
+        // when & then
+        restTestClient.post().uri("/seller/dashboard/refresh")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.status").isEqualTo(404)
+                .jsonPath("$.message").isEqualTo(ErrorEnum.DASHBOARD_NOT_FOUND.getMessage());
+    }
 }

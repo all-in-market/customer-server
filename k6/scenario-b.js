@@ -17,11 +17,11 @@ const stages = {
         { target: 0,  duration: '30s' },  // 쿨다운
     ],
     stress: [
-        { target: 5,   duration: '1m' },
-        { target: 20,  duration: '1m' },
-        { target: 50,  duration: '1m' },
-        { target: 100, duration: '1m' },
-        { target: 200, duration: '1m' },
+        { target: 15,   duration: '1m' },
+        { target: 60,  duration: '1m' },
+        { target: 150,  duration: '1m' },
+        { target: 300, duration: '1m' },
+        { target: 600, duration: '1m' },
         { target: 0,   duration: '30s' },
     ],
 };

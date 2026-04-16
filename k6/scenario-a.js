@@ -28,7 +28,7 @@ export const options = {
             executor: 'ramping-arrival-rate',
             startRate: 1,
             timeUnit: '1s',
-            preAllocatedVUs: 100,
+            preAllocatedVUs: 400,
             maxVUs: 3000,
             stages: stages[__ENV.TEST_TYPE || 'smoke'],
         },

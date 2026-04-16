@@ -15,14 +15,13 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     boolean existsByOrderIdAndStatus(Long orderId, TransactionStatus status);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select p
         from Payment p
         join fetch p.order o
         where p.impUid = :paymentId
     """)
-    Optional<Payment> findByImpUidWithOrderForUpdate(String paymentId);
+    Optional<Payment> findByImpUidWithOrder(String paymentId);
 
     Optional<Payment> findByImpUid(String paymentId);
 

@@ -14,7 +14,6 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,8 +72,8 @@ public class BuyerPaymentService {
     @Transactional
     public PaymentDetailResponse confirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) {
 
-        // 비관적 락 적용
-        Payment dbPayment = paymentRepository.findByImpUidWithOrderForUpdate(paymentId).orElseThrow(
+        // 낙관적 락 적용
+        Payment dbPayment = paymentRepository.findByImpUidWithOrder(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
         );
 
@@ -98,6 +97,8 @@ public class BuyerPaymentService {
         // todo: seller_dashboard 업데이트
         // todo: transaction_histories 업데이트
 
+        // flush를 commit 직전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생하도록 수정
+        paymentRepository.saveAndFlush(dbPayment);
         return PaymentDetailResponse.from(dbPayment);
     }
 
@@ -110,7 +111,8 @@ public class BuyerPaymentService {
                         .map(PaymentDetailResponse::from)
         );
     }
-     /**
+
+    /**
      * 결제 단건 조회
      */
     public PaymentDetailResponse findPayment(Long currentUserId, Long paymentId) {

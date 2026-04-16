@@ -14,9 +14,9 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -29,7 +29,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -40,6 +40,8 @@ class BuyerPaymentServiceTest {
     @InjectMocks
     private BuyerPaymentService buyerPaymentService;
 
+    private PaymentRetryService paymentRetryService;
+
     @Mock
     private PaymentRepository paymentRepository;
 
@@ -48,6 +50,11 @@ class BuyerPaymentServiceTest {
 
     @Mock
     private BuyerRefundService buyerRefundService;
+
+    @BeforeEach
+    void setUp() {
+        paymentRetryService = new PaymentRetryService(buyerPaymentService);
+    }
 
     @Nested
     @DisplayName("결제 생성")
@@ -197,7 +204,6 @@ class BuyerPaymentServiceTest {
         }
 
 
-
     }
 
     @Nested
@@ -221,12 +227,12 @@ class BuyerPaymentServiceTest {
             given(pgResponse.isPaid()).willReturn(true);
             given(pgResponse.getTotalAmount()).willReturn(new BigDecimal("15000"));
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             PaymentDetailResponse response =
-                    buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse);
+                    paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
 
             // then
             assertThat(response).isNotNull();
@@ -235,6 +241,7 @@ class BuyerPaymentServiceTest {
 
             verify(buyerRefundService, never())
                     .createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
+            verify(paymentRepository).saveAndFlush(dbPayment);
         }
 
         @Test
@@ -255,12 +262,12 @@ class BuyerPaymentServiceTest {
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn(paymentId);
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             PaymentDetailResponse response =
-                    buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse);
+                    paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
 
             // then
             assertThat(response).isNotNull();
@@ -279,13 +286,13 @@ class BuyerPaymentServiceTest {
             String paymentId = "payment_10_abc";
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.empty());
 
             // when
             BaseException ex = assertThrows(
                     BaseException.class,
-                    () -> buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse)
+                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
             );
 
             // then
@@ -304,13 +311,13 @@ class BuyerPaymentServiceTest {
             Payment dbPayment = createPayment(order, paymentId, new BigDecimal("15000"), MethodEnum.MOCK);
 
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             BaseException ex = assertThrows(
                     BaseException.class,
-                    () -> buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse)
+                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
             );
 
             // then
@@ -331,13 +338,13 @@ class BuyerPaymentServiceTest {
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn("different_payment_id");
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             BaseException ex = assertThrows(
                     BaseException.class,
-                    () -> buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse)
+                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
             );
 
             // then
@@ -360,13 +367,13 @@ class BuyerPaymentServiceTest {
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn(paymentId);
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             BaseException ex = assertThrows(
                     BaseException.class,
-                    () -> buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse)
+                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
             );
 
             // then
@@ -389,13 +396,13 @@ class BuyerPaymentServiceTest {
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn(paymentId);
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             BaseException ex = assertThrows(
                     BaseException.class,
-                    () -> buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse)
+                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
             );
 
             // then
@@ -417,13 +424,13 @@ class BuyerPaymentServiceTest {
             given(pgResponse.getPaymentId()).willReturn(paymentId);
             given(pgResponse.isPaid()).willReturn(false);
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             BaseException ex = assertThrows(
                     BaseException.class,
-                    () -> buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse)
+                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
             );
 
             // then
@@ -448,13 +455,13 @@ class BuyerPaymentServiceTest {
             given(pgResponse.isPaid()).willReturn(true);
             given(pgResponse.getTotalAmount()).willReturn(null);
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             BaseException ex = assertThrows(
                     BaseException.class,
-                    () -> buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse)
+                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
             );
 
             // then
@@ -480,13 +487,13 @@ class BuyerPaymentServiceTest {
             given(pgResponse.isPaid()).willReturn(true);
             given(pgResponse.getTotalAmount()).willReturn(new BigDecimal("10000"));
 
-            given(paymentRepository.findByImpUidWithOrderForUpdate(paymentId))
+            given(paymentRepository.findByImpUidWithOrder(paymentId))
                     .willReturn(Optional.of(dbPayment));
 
             // when
             BaseException ex = assertThrows(
                     BaseException.class,
-                    () -> buyerPaymentService.confirmPayment(currentUserId, paymentId, pgResponse)
+                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
             );
 
             // then

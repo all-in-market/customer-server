@@ -3,7 +3,6 @@ package com.example.allinmarket.seller.product.service;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.PageResponse;
-import com.example.allinmarket.common.security.SecurityUtils;
 import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
@@ -14,12 +13,15 @@ import com.example.allinmarket.seller.product.dto.request.SellerProductCreateReq
 import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
 import com.example.allinmarket.seller.repository.SellerRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,7 @@ public class SellerProductService {
     private final SellerRepository sellerRepository;
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Transactional
     public ProductDetailResponse create(Long sellerId, SellerProductCreateRequest request) {
@@ -55,9 +58,30 @@ public class SellerProductService {
     }
 
     public PageResponse<ProductDetailResponse> findAll(Long sellerId, Pageable pageable) {
+        if (pageable.getPageNumber() < 2) {
+            String key = "sellerProducts:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+
+            Object cachedObject = redisTemplate.opsForValue().get(key);
+
+            if (cachedObject instanceof PageResponse<?> cached) {
+                return (PageResponse<ProductDetailResponse>) cached;
+            }
+
+            Page<Product> products = productRepository.findAllBySellerIdAndDeletedAtIsNull(sellerId, pageable);
+
+            Page<ProductDetailResponse> responses = products.map(ProductDetailResponse::from);
+
+            PageResponse<ProductDetailResponse> pageResponse = PageResponse.register(responses);
+
+            redisTemplate.opsForValue().set(key, pageResponse, Duration.ofMinutes(5));
+
+            return pageResponse;
+        }
+
+        Page<Product> products = productRepository.findAllBySellerIdAndDeletedAtIsNull(sellerId, pageable);
+
         return PageResponse.register(
-                productRepository.findAllBySellerIdAndDeletedAtIsNull(sellerId, pageable)
-                        .map(ProductDetailResponse::from)
+                products.map(ProductDetailResponse::from)
         );
     }
 

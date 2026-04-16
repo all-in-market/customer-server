@@ -33,6 +33,7 @@ public class DailyStatisticsScheduler {
         LocalDateTime start = yesterday.atStartOfDay();
         LocalDateTime end = yesterday.plusDays(1).atStartOfDay();
 
+        // 전일 판매가 있었던 판매자만 조회
         List<Long> activeSellerIds = orderItemRepository.findActiveSellerIds(start, end);
 
         List<SellerDailyStatistics> statisticsList = new ArrayList<>();
@@ -40,10 +41,11 @@ public class DailyStatisticsScheduler {
         for (Long sellerId : activeSellerIds) {
             boolean exists = sellerDailyStatisticsRepository.existsBySellerIdAndStatDate(sellerId, yesterday);
 
-            if (exists) {
+            if (exists) { // 중복 검증 추가
                 continue;
             }
 
+            // seller 의 값이 없을 경우를 대비해서 검증 추가
             Optional<Seller> optionalSeller = sellerRepository.findById(sellerId);
 
             if (optionalSeller.isEmpty()) {
@@ -54,6 +56,7 @@ public class DailyStatisticsScheduler {
 
             DailyStatsResponse dailyStatsResponse = orderItemRepository.aggregateStats(sellerId, start, end);
 
+            //쿼리문에서 반환 값이 int 가 아닌 Long으로 지정 되어 null 검증 및 타입 변환 추가
             int totalOrders = dailyStatsResponse.totalOrders() != null ? dailyStatsResponse.totalOrders().intValue() : 0;
             int totalItems = dailyStatsResponse.totalItems() != null ? dailyStatsResponse.totalItems().intValue() : 0;
             int totalRefunds = dailyStatsResponse.totalRefunds() != null ? dailyStatsResponse.totalRefunds().intValue() : 0;

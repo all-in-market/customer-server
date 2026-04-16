@@ -16,10 +16,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
         name = "seller_daily_statistics",
-        uniqueConstraints = {
+        uniqueConstraints = { // 테이블에 유니크 제약 조건 추가
                 @UniqueConstraint(
-                        name = "uk_seller_stat_date",
-                        columnNames = {"seller_id", "stat_date"}
+                        name = "uk_seller_stat_date", // 유니크 제약 조건 이름 지정
+                        columnNames = {"seller_id", "stat_date"} // 유니크 제약 조건 조합
                 )
         }
 )

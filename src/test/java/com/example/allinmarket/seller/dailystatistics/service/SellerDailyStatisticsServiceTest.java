@@ -5,6 +5,7 @@ import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.sellerdailystatistics.dto.response.DailyStatisticsResponse;
 import com.example.allinmarket.domain.sellerdailystatistics.entity.SellerDailyStatistics;
 import com.example.allinmarket.domain.sellerdailystatistics.repository.SellerDailyStatisticsRepository;
+import com.example.allinmarket.seller.entity.Seller;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,9 +29,12 @@ class SellerDailyStatisticsServiceTest {
     @InjectMocks
     private SellerDailyStatisticsService sellerDailyStatisticsService;
 
-    // getId(), getSeller() 제거 - DailyStatisticsResponse.from()에서 미사용
     private SellerDailyStatistics createStatsMock(LocalDate date) {
+        Seller seller = mock(Seller.class);
+        given(seller.getId()).willReturn(1L);
+
         SellerDailyStatistics stats = mock(SellerDailyStatistics.class);
+        given(stats.getSeller()).willReturn(seller);  // 추가
         given(stats.getStatDate()).willReturn(date);
         given(stats.getTotalOrders()).willReturn(5);
         given(stats.getTotalItems()).willReturn(10);
@@ -56,7 +60,8 @@ class SellerDailyStatisticsServiceTest {
 
         // then
         assertNotNull(result);
-        assertEquals(date, result.statDate());
+        assertEquals(sellerId, result.sellerId());
+        assertEquals(result.from(), result.to());
         assertEquals(5, result.totalOrders());
         assertEquals(10, result.totalItems());
         assertEquals(1, result.totalRefunds());
@@ -96,7 +101,9 @@ class SellerDailyStatisticsServiceTest {
 
         // then
         assertNotNull(result);
-        assertEquals(today, result.statDate());
+        assertEquals(today, result.from());
+        assertEquals(today, result.to());
+        assertEquals(result.from(), result.to());
     }
 
     @Test
@@ -105,8 +112,11 @@ class SellerDailyStatisticsServiceTest {
         Long sellerId = 1L;
         LocalDate date = LocalDate.of(2025, 4, 10);
 
-        // seller, seller.getId() stub 제거 - from()에서 미사용
+        Seller seller = mock(Seller.class);          // 추가
+        given(seller.getId()).willReturn(sellerId);  // 추가
+
         SellerDailyStatistics emptyStats = mock(SellerDailyStatistics.class);
+        given(emptyStats.getSeller()).willReturn(seller);  // 추가
         given(emptyStats.getStatDate()).willReturn(date);
         given(emptyStats.getTotalOrders()).willReturn(0);
         given(emptyStats.getTotalItems()).willReturn(0);
@@ -123,6 +133,7 @@ class SellerDailyStatisticsServiceTest {
 
         // then
         assertNotNull(result);
+        assertEquals(sellerId, result.sellerId());
         assertEquals(0, result.totalOrders());
         assertEquals(BigDecimal.ZERO, result.totalSales());
         assertEquals(BigDecimal.ZERO, result.netSales());

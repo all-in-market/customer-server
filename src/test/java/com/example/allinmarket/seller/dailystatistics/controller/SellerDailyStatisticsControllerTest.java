@@ -49,6 +49,8 @@ class SellerDailyStatisticsControllerTest {
         LocalDate date = LocalDate.of(2025, 4, 10);
 
         DailyStatisticsResponse response = new DailyStatisticsResponse(
+                1L,
+                date,
                 date,
                 5,
                 10,
@@ -84,6 +86,8 @@ class SellerDailyStatisticsControllerTest {
         LocalDate date = LocalDate.of(2025, 4, 10);
 
         DailyStatisticsResponse response = new DailyStatisticsResponse(
+                1L,
+                date,
                 date,
                 0,
                 0,

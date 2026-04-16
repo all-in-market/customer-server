@@ -7,10 +7,7 @@ import com.example.allinmarket.domain.sellerdailystatistics.dto.DailyStatisticsR
 import com.example.allinmarket.domain.sellerdailystatistics.repository.SellerDailyStatisticsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +22,7 @@ public class SellerDailyStatisticsController {
 
     // 특정 기간 조회
     ///  TODO : 특정 기간 조회
+    @GetMapping("/summary")
     public ResponseEntity<ApiResponse<DailyStatisticsResponse>> getRangedStatistics(
             @RequestParam String from,
             @RequestParam String to
@@ -34,7 +32,6 @@ public class SellerDailyStatisticsController {
                 SuccessEnum.LOGIN_SUCCESS,
                 sellerDailyStatisticsService.getRangedStatistics(
                         sellerId, from, to
-                )
                 )
         );
     }

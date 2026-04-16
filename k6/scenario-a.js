@@ -6,19 +6,18 @@ const BASE_URL = __ENV.BASE_URL || 'http://host.docker.internal:8080';
 // 각 단계별 목표 RPS (iterations/s 기준, 1 iteration = 목록 + 상세 2건)
 const stages = {
     smoke: [
-        { target: 5,   duration: '30s' },
+        { target: 50,   duration: '30s' },
     ],
     load: [
-        { target: 100, duration: '1m'  },  // 워밍업: 100 RPS까지 증가
-        { target: 100, duration: '5m'  },  // 안정 상태 유지: 개선 전후 비교 기준값
+        { target: 150, duration: '1m'  },  // 워밍업: 100 RPS까지 증가
+        { target: 250, duration: '5m'  },  // 안정 상태 유지: 개선 전후 비교 기준값
         { target: 0,   duration: '30s' },  // 쿨다운
     ],
     stress: [
-        { target: 20,  duration: '1m' },
-        { target: 100,  duration: '1m' },
-        { target: 200, duration: '1m' },
-        { target: 600, duration: '1m' },
-        { target: 1000, duration: '1m' },
+        { target: 50,  duration: '1m' },
+        { target: 150,  duration: '1m' },
+        { target: 300, duration: '1m' },
+        { target: 500, duration: '1m' },
         { target: 0,   duration: '30s' },
     ],
 };
@@ -42,7 +41,7 @@ export const options = {
 
 export default function () {
     // 1. 상품 목록 조회 (랜덤 페이지)
-    const page = Math.floor(Math.random() * 100);
+    const page = Math.floor(Math.random() * 10);
     const listRes = http.get(`${BASE_URL}/products?page=${page}&size=20`);
 
     check(listRes, {

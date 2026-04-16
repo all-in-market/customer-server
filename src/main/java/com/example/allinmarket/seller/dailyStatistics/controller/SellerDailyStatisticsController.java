@@ -4,10 +4,13 @@ import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import com.example.allinmarket.domain.sellerdailystatistics.dto.DailyStatisticsResponse;
-import com.example.allinmarket.domain.sellerdailystatistics.repository.SellerDailyStatisticsRepository;
+import com.example.allinmarket.seller.dailyStatistics.service.SellerDailyStatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ public class SellerDailyStatisticsController {
 
 
     // 특정 기간 조회
+
     ///  TODO : 특정 기간 조회
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<DailyStatisticsResponse>> getRangedStatistics(
@@ -29,9 +33,8 @@ public class SellerDailyStatisticsController {
     ) {
         Long sellerId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(
-                SuccessEnum.LOGIN_SUCCESS,
-                sellerDailyStatisticsService.getRangedStatistics(
-                        sellerId, from, to
+                        SuccessEnum.READ_SUCCESS,
+                        sellerDailyStatisticsService.getRangedStatistics(sellerId, from, to)
                 )
         );
     }

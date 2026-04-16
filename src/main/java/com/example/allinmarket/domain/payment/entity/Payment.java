@@ -46,6 +46,9 @@ public class Payment extends ModifiableEntity {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
+    @Version
+    private Long version;
+
     public static Payment of(Order order, String impUid, BigDecimal amount, MethodEnum method) {
         Payment payment = new Payment();
         payment.order = order;

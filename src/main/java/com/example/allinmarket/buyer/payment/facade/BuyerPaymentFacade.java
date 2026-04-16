@@ -5,6 +5,7 @@ import com.example.allinmarket.buyer.payment.client.dto.PortOnePaymentResponse;
 import com.example.allinmarket.buyer.payment.dto.request.PaymentCreateRequest;
 import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.payment.service.BuyerPaymentService;
+import com.example.allinmarket.buyer.payment.service.PaymentRetryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class BuyerPaymentFacade {
 
     private final BuyerPaymentService buyerPaymentService;
+    private final PaymentRetryService paymentRetryService;
     private final PaymentGateway paymentGateway;
 
     public PaymentDetailResponse processPayment(Long currentUserId, PaymentCreateRequest request) {
@@ -24,6 +26,6 @@ public class BuyerPaymentFacade {
         // 결제 이력 조회
         PortOnePaymentResponse payment = paymentGateway.getPayment(paymentCreateResult.impUid());
 
-        return buyerPaymentService.confirmPayment(currentUserId, paymentCreateResult.impUid(), payment);
+        return paymentRetryService.retryConfirmPayment(currentUserId, paymentCreateResult.impUid(), payment);
     }
 }

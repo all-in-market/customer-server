@@ -5,20 +5,16 @@ import com.example.allinmarket.buyer.category.service.BuyerCategoryService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.JwtProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @WebMvcTest(BuyerCategoryController.class)

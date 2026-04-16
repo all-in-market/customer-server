@@ -1,11 +1,8 @@
 package com.example.allinmarket.buyer.category.service;
 
 import com.example.allinmarket.buyer.category.dto.CategoryDetailResponse;
-import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
-import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
-import com.example.allinmarket.domain.product.entity.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.redis.core.RedisTemplate;

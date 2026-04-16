@@ -79,4 +79,15 @@ public class SellerDashboard extends ModifiableEntity {
         dashboard.settlementAmount = dashboard.totalSales.subtract(dashboard.refundAmount.add(dashboard.feeAmount));
         return dashboard;
     }
+
+    public void reset() {
+        this.totalOrders = 0;
+        this.totalProductsSold = 0;
+        this.totalRefunds = 0;
+        this.totalSales = BigDecimal.ZERO;
+        this.refundAmount = BigDecimal.ZERO;
+        this.feeAmount = BigDecimal.ZERO;
+        this.settlementAmount = BigDecimal.ZERO;
+        this.statDate = LocalDate.now();
+    }
 }

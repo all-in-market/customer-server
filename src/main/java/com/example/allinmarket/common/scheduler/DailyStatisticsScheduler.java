@@ -63,7 +63,6 @@ public class DailyStatisticsScheduler {
             BigDecimal totalSales = dailyStatsResponse.totalSales() != null ? dailyStatsResponse.totalSales() : BigDecimal.ZERO;
             BigDecimal refundAmount = dailyStatsResponse.refundAmount() != null ? dailyStatsResponse.refundAmount() : BigDecimal.ZERO;
 
-
             SellerDailyStatistics yesterdayStatistics = SellerDailyStatistics.of(
                     seller,
                     yesterday,

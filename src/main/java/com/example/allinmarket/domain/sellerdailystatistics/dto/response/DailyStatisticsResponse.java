@@ -6,7 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record DailyStatisticsResponse(
-        LocalDate statDate,
+        Long sellerId,
+        LocalDate from,
+        LocalDate to,
         int totalOrders,
         int totalItems,
         BigDecimal totalSales,
@@ -16,6 +18,8 @@ public record DailyStatisticsResponse(
 ) {
     public static DailyStatisticsResponse from(SellerDailyStatistics sellerDailyStatistics) {
         return new DailyStatisticsResponse(
+                sellerDailyStatistics.getSeller().getId(),
+                sellerDailyStatistics.getStatDate(),
                 sellerDailyStatistics.getStatDate(),
                 sellerDailyStatistics.getTotalOrders(),
                 sellerDailyStatistics.getTotalItems(),

@@ -39,4 +39,18 @@ public class SellerDashboardService {
 
         return response;
     }
+
+    @Transactional
+    public SellerDashboardResponse refreshSellerDashboard(Long sellerId) {
+        String key = "dashboard:" + sellerId + ":" + LocalDate.now();
+        redisTemplate.delete(key);
+
+        SellerDashboard sellerDashboard = sellerDashboardRepository.findBySellerIdAndStatDate(sellerId, LocalDate.now())
+                .orElseThrow(() -> new BaseException(ErrorEnum.DASHBOARD_NOT_FOUND));
+
+        SellerDashboardResponse response = SellerDashboardResponse.from(sellerDashboard);
+        redisTemplate.opsForValue().set(key, response, Duration.ofMinutes(5));
+
+        return response;
+    }
 }

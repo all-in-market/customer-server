@@ -3,7 +3,7 @@ package com.example.allinmarket.seller.dailystatistics.controller;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;
-import com.example.allinmarket.domain.sellerdailystatistics.dto.response.DailyStatisticsResponse;
+import com.example.allinmarket.seller.dailystatistics.dto.DailyStatisticsResponse;
 import com.example.allinmarket.seller.dailystatistics.service.SellerDailyStatisticsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

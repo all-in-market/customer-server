@@ -2,7 +2,6 @@ package com.example.allinmarket.domain.order.repository;
 
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
-import com.example.allinmarket.seller.dailyStatistics.dto.DailyStatsResponse;
 import jakarta.persistence.LockModeType;
 
 import org.springframework.data.domain.Page;

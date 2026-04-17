@@ -2,7 +2,7 @@ package com.example.allinmarket.seller.dailystatistics.service;
 
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.domain.sellerdailystatistics.dto.response.DailyStatisticsResponse;
+import com.example.allinmarket.seller.dailystatistics.dto.DailyStatisticsResponse;
 import com.example.allinmarket.domain.sellerdailystatistics.entity.SellerDailyStatistics;
 import com.example.allinmarket.domain.sellerdailystatistics.repository.SellerDailyStatisticsRepository;
 import com.example.allinmarket.seller.entity.Seller;

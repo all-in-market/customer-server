@@ -1,6 +1,6 @@
 package com.example.allinmarket.domain.sellerdailystatistics.repository;
 
-import com.example.allinmarket.domain.sellerdailystatistics.dto.DailyStatisticsResponse;
+import com.example.allinmarket.seller.dailystatistics.dto.DailyStatisticsResponse;
 
 import java.time.LocalDate;
 

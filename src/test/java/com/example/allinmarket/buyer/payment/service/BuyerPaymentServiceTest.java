@@ -14,6 +14,7 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
+import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,6 +51,9 @@ class BuyerPaymentServiceTest {
 
     @Mock
     private BuyerRefundService buyerRefundService;
+
+    @Mock
+    private TransactionHistoryService transactionHistoryService;
 
     @BeforeEach
     void setUp() {

@@ -15,7 +15,23 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SellerDailyStatisticsService {
+
     private final SellerDailyStatisticsRepository sellerDailyStatisticsRepository;
+    private final SellerRepository sellerRepository;
+
+    public DailyStatisticsResponse getRangedStatistics(Long sellerId, String from, String to) {
+
+        if(!sellerRepository.existsByIdAndDeletedAtIsNull(sellerId)) {
+            throw new BaseException(ErrorEnum.SELLER_NOT_FOUND);
+        }
+
+        LocalDate startTime = from != null ?
+                LocalDate.parse(from) : null;
+        LocalDate endTime = to != null ?
+                LocalDate.parse(to) : null;
+
+        return sellerDailyStatisticsRepository.findRangedStatistics(sellerId, startTime, endTime);
+    }
 
     public DailyStatisticsResponse getDailyStatistics(Long sellerId, LocalDate date) {
         SellerDailyStatistics statistics = sellerDailyStatisticsRepository.findBySellerIdAndStatDate(sellerId, date).orElseThrow(

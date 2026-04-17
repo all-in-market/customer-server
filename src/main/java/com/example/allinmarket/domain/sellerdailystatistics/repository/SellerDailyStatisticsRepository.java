@@ -5,9 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.time.LocalDate;
 
-public interface SellerDailyStatisticsRepository extends JpaRepository<SellerDailyStatistics, Long> {
+public interface SellerDailyStatisticsRepository extends JpaRepository<SellerDailyStatistics, Long>, CustomSellerDailyStatisticsRepository{
     boolean existsBySellerIdAndStatDate(Long sellerId, LocalDate statDate);
-
-public interface SellerDailyStatisticsRepository extends JpaRepository<SellerDailyStatistics, Long> {
     Optional<SellerDailyStatistics> findBySellerIdAndStatDate(Long sellerId, LocalDate statDate);
 }

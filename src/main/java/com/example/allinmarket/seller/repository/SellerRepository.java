@@ -8,5 +8,6 @@ import java.util.Optional;
 public interface SellerRepository extends JpaRepository<Seller, Long> {
     Optional<Seller> findByIdAndDeletedAtIsNull(Long id);
     boolean existsByEmail(String email);
+    boolean existsByIdAndDeletedAtIsNull(Long id);
     Optional<Seller> findByEmailAndDeletedAtIsNull(String email);
 }

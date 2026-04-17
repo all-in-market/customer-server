@@ -29,6 +29,7 @@ public enum ErrorEnum {
     INVALID_CART_ITEM_OWNER(403, "다른 사용자의 장바구니 상품이 포함되어 있습니다."),
     CART_NOT_FOUND(404, "장바구니가 존재하지 않습니다."),
     CART_ITEMS_NOT_FOUND(404, "장바구니에 해당 상품이 존재하지 않습니다."),
+    INVALID_ORDER_CART_ITEMS(404, "요청한 장바구니 상품이 유효하지 않습니다."),
 
     // Product
     PRODUCT_NOT_FOUND(404, "존재하지 않는 상품입니다."),
@@ -73,7 +74,6 @@ public enum ErrorEnum {
     SELLER_NOT_FOUND(404, "존재하지 않는 판매자입니다."),
     SELLER_ALREADY_DELETED(400, "이미 탈퇴한 판매자입니다."),
 
-
     // Token
     TOKEN_EXPIRED(401, "만료된 토큰입니다."),
     TOKEN_INVALID(401, "유효하지 않은 토큰입니다."),
@@ -84,6 +84,10 @@ public enum ErrorEnum {
     // Dashboard
     DASHBOARD_NOT_FOUND(404, "대시보드가 존재하지 않습니다."),
 
+    // Redis
+    REDIS_LOCK_CONFLICT(409, "현재 요청이 처리 중입니다. 잠시 후 다시 시도해주세요."),
+    REDIS_LOCK_INTERRUPTED(409, "요청 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."),
+  
     // Statistics
     STATISTICS_NOT_FOUND(404, "존재하지 않는 통계 데이터입니다.");
 

@@ -1,7 +1,7 @@
 package com.example.allinmarket.domain.orderitem.repository;
 
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
-import com.example.allinmarket.seller.dailyStatistics.dto.DailyStatsResponse;
+import com.example.allinmarket.seller.dailystatistics.dto.DailyStatsResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,7 +28,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     List<OrderItem> findAllByBuyerIdAndOrderId(Long buyerId, Long orderId);
 
     @Query("""
-    SELECT new com.example.allinmarket.seller.dailyStatistics.dto.DailyStatsResponse(
+    SELECT new com.example.allinmarket.seller.dailystatistics.dto.DailyStatsResponse(
     COUNT(DISTINCT oi.order.id), SUM(oi.quantity),
     SUM(CASE WHEN oi.order.status = com.example.allinmarket.domain.order.enums.OrderStatus.REFUNDED THEN 1L ELSE 0L END),
     CAST(SUM(oi.unitPrice * oi.quantity) AS BIGDECIMAL),

@@ -3,7 +3,7 @@ package com.example.allinmarket.seller.dailystatistics.controller;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;
-import com.example.allinmarket.domain.sellerdailystatistics.dto.response.DailyStatisticsResponse;
+import com.example.allinmarket.seller.dailystatistics.dto.DailyStatisticsResponse;
 import com.example.allinmarket.seller.dailystatistics.service.SellerDailyStatisticsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,7 +70,8 @@ class SellerDailyStatisticsControllerTest {
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.data.statDate").isEqualTo("2025-04-10")
+                .jsonPath("$.data.from").isEqualTo("2025-04-10")
+                .jsonPath("$.data.to").isEqualTo("2025-04-10")
                 .jsonPath("$.data.totalOrders").isEqualTo(5)
                 .jsonPath("$.data.totalItems").isEqualTo(10)
                 .jsonPath("$.data.totalRefunds").isEqualTo(1)

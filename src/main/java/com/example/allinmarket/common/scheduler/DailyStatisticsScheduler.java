@@ -3,7 +3,7 @@ package com.example.allinmarket.common.scheduler;
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
 import com.example.allinmarket.domain.sellerdailystatistics.entity.SellerDailyStatistics;
 import com.example.allinmarket.domain.sellerdailystatistics.repository.SellerDailyStatisticsRepository;
-import com.example.allinmarket.seller.dailyStatistics.dto.DailyStatsResponse;
+import com.example.allinmarket.seller.dailystatistics.dto.DailyStatsResponse;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;

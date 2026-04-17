@@ -1,4 +1,4 @@
-package com.example.allinmarket.domain.sellerdailystatistics.dto.response;
+package com.example.allinmarket.seller.dailystatistics.dto;
 
 import com.example.allinmarket.domain.sellerdailystatistics.entity.SellerDailyStatistics;
 

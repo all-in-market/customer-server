@@ -8,6 +8,7 @@ import com.example.allinmarket.seller.dashboard.service.SellerDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,6 +23,16 @@ public class SellerDashBoardController {
     public ResponseEntity<ApiResponse<SellerDashboardResponse>> getSellerDashboard() {
         Long sellerId = SecurityUtils.getCurrentUserId();
         SellerDashboardResponse response = sellerDashBoardService.getSellerDashboard(sellerId);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessEnum.READ_SUCCESS,
+                response
+        ));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<SellerDashboardResponse>> refreshSellerDashboard() {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+        SellerDashboardResponse response = sellerDashBoardService.refreshSellerDashboard(sellerId);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessEnum.READ_SUCCESS,
                 response

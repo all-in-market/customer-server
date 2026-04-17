@@ -3,7 +3,7 @@ package com.example.allinmarket.domain.payment.entity;
 import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
+import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -41,7 +41,7 @@ public class Payment extends ModifiableEntity {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    private TransactionStatus status = TransactionStatus.PENDING;
+    private PaymentStatus status = PaymentStatus.PENDING;
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
@@ -55,27 +55,27 @@ public class Payment extends ModifiableEntity {
         payment.impUid = impUid;
         payment.amount = amount != null ? amount : BigDecimal.ZERO;
         payment.method = method;
-        payment.status = TransactionStatus.PENDING;
+        payment.status = PaymentStatus.PENDING;
         payment.paidAt = null;
         return payment;
     }
 
     public void success(LocalDateTime paidAt) {
-        if (this.status.paymentCanTransitToTargetStatus(TransactionStatus.SUCCESS)) {
-            this.status = TransactionStatus.SUCCESS;
+        if (this.status.paymentCanTransitToTargetStatus(PaymentStatus.SUCCESS)) {
+            this.status = PaymentStatus.SUCCESS;
             this.paidAt = paidAt;
         }
     }
 
     public void fail() {
-        if (this.status.paymentCanTransitToTargetStatus(TransactionStatus.FAILED)) {
-            this.status = TransactionStatus.FAILED;
+        if (this.status.paymentCanTransitToTargetStatus(PaymentStatus.FAILED)) {
+            this.status = PaymentStatus.FAILED;
         }
     }
 
     public void refund() {
-        if (this.status.paymentCanTransitToTargetStatus(TransactionStatus.REFUNDED)) {
-            this.status = TransactionStatus.REFUNDED;
+        if (this.status.paymentCanTransitToTargetStatus(PaymentStatus.REFUNDED)) {
+            this.status = PaymentStatus.REFUNDED;
         }
     }
 }

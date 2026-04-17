@@ -1,6 +1,7 @@
 package com.example.allinmarket.domain.transactionhistory.service;
 
 import com.example.allinmarket.domain.payment.entity.Payment;
+import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.transactionhistory.entity.TransactionHistory;
 import com.example.allinmarket.domain.transactionhistory.repository.TransactionHistoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,8 @@ public class TransactionHistoryService {
     }
 
     @Transactional
-    public void saveRefundHistory(Payment refundedPayment) {
-        TransactionHistory transactionHistory = TransactionHistory.of(refundedPayment);
+    public void saveRefundHistory(Refund refund) {
+        TransactionHistory transactionHistory = TransactionHistory.of(refund);
         transactionHistoryRepository.save(transactionHistory);
     }
 }

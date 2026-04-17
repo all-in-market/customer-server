@@ -1,15 +1,12 @@
 package com.example.allinmarket.domain.refund.enums;
 
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
-
 public enum RefundStatus {
 
     NONE,
     PENDING,
     SUCCESS,
     FAILED,
-    DENIED,
-    REFUNDED;
+    DENIED;
 
     public boolean refundCanTransitToTargetStatus(RefundStatus targetStatus) {
         if (targetStatus == null) {
@@ -20,7 +17,7 @@ public enum RefundStatus {
             case NONE -> targetStatus == PENDING;
             case PENDING ->  targetStatus == SUCCESS || targetStatus == FAILED || targetStatus == DENIED;
             case FAILED -> targetStatus == PENDING;
-            case SUCCESS, REFUNDED, DENIED -> false;
+            case SUCCESS, DENIED -> false;
         };
     }
 }

@@ -3,8 +3,8 @@ package com.example.allinmarket.seller.dailystatistics.controller;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
-import com.example.allinmarket.seller.dailystatistics.dto.DailyStatisticsResponse;
 
+import com.example.allinmarket.seller.dailystatistics.dto.DailyStatisticsResponse;
 import com.example.allinmarket.seller.dailystatistics.service.SellerDailyStatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

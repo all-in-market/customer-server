@@ -4,6 +4,7 @@ import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.common.entity.ModifiableEntity;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
+import com.example.allinmarket.domain.refund.enums.RefundStatus;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -42,7 +43,7 @@ public class Refund extends ModifiableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private TransactionStatus status = TransactionStatus.PENDING;
+    private RefundStatus status = RefundStatus.PENDING;
 
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
@@ -54,7 +55,7 @@ public class Refund extends ModifiableEntity {
         refund.reason = reasonEnum;
         refund.description = description;
         refund.deniedReason = null;
-        refund.status = TransactionStatus.PENDING;
+        refund.status = RefundStatus.PENDING;
         refund.processedAt = null;
         return refund;
     }
@@ -68,27 +69,27 @@ public class Refund extends ModifiableEntity {
     }
 
     public void success() {
-        if(this.status.refundCanTransitToTargetStatus(TransactionStatus.SUCCESS)) {
-            this.status = TransactionStatus.SUCCESS;
+        if(this.status.refundCanTransitToTargetStatus(RefundStatus.SUCCESS)) {
+            this.status = RefundStatus.SUCCESS;
             this.processedAt = LocalDateTime.now();
         }
     }
 
     public void pending() {
-        if(this.status.refundCanTransitToTargetStatus(TransactionStatus.PENDING)) {
-            this.status = TransactionStatus.PENDING;
+        if(this.status.refundCanTransitToTargetStatus(RefundStatus.PENDING)) {
+            this.status = RefundStatus.PENDING;
         }
     }
 
     public void fail() {
-        if(this.status.refundCanTransitToTargetStatus(TransactionStatus.FAILED)) {
-            this.status = TransactionStatus.FAILED;
+        if(this.status.refundCanTransitToTargetStatus(RefundStatus.FAILED)) {
+            this.status = RefundStatus.FAILED;
         }
     }
 
     public void denied() {
-        if(this.status.refundCanTransitToTargetStatus(TransactionStatus.DENIED)) {
-            this.status = TransactionStatus.DENIED;
+        if(this.status.refundCanTransitToTargetStatus(RefundStatus.DENIED)) {
+            this.status = RefundStatus.DENIED;
         }
     }
 }

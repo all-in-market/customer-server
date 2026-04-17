@@ -15,8 +15,9 @@ import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.repository.RefundRepository;
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
+import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +26,14 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class BuyerRefundService {
 
     private final RefundRepository refundRepository;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final TransactionHistoryService transactionHistoryService;
 
     @Transactional
     public RefundDetailResponse createRefundByOrder(Long currentUserId, Long orderId, RefundCreateRequest request) {
@@ -94,7 +97,7 @@ public class BuyerRefundService {
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
         }
 
-        if(payment.getAmount().compareTo(paymentResponse.getTotalAmount()) == 0) {
+        if (payment.getAmount().compareTo(paymentResponse.getTotalAmount()) == 0) {
             throw new BaseException(ErrorEnum.REFUND_AMOUNT_MISMATCH_NOT_FOUND);
         }
 
@@ -116,8 +119,14 @@ public class BuyerRefundService {
         );
 
         refundRepository.save(refund);
+        // transaction_histories 업데이트
+        // 환불 생성 이력은 부가적인 작업이므로 예외가 발생해도 본 흐름을 방해하지 않음
+        try {
+            transactionHistoryService.saveRefundHistory(payment);
+        } catch (Exception e) {
+            log.error("환불 생성 이력 저장 실패 : {}", e.getMessage());
+        }
 
-        // todo: refund_histories 또는 transaction_histories 업데이트
     }
 
     public PageResponse<RefundDetailResponse> getRefunds(Long buyerId, Pageable pageable) {

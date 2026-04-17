@@ -13,7 +13,9 @@ import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
+import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class BuyerPaymentService {
 
@@ -30,6 +33,7 @@ public class BuyerPaymentService {
     private final OrderRepository orderRepository;
 
     private final BuyerRefundService buyerRefundService;
+    private final TransactionHistoryService transactionHistoryService;
 
     /**
      * 결제 생성 및 DB 저장
@@ -61,7 +65,12 @@ public class BuyerPaymentService {
 
         paymentRepository.save(payment);
 
-        // todo: transaction_histories 이력 추가
+        // transaction_histories 이력 추가
+        try {
+            transactionHistoryService.saveSucceededHistory(payment);
+        } catch(Exception e) {
+            log.error("생성 이력 저장 실패: {}", e.getMessage());
+        }
 
         return PaymentDetailResponse.from(payment);
     }
@@ -94,11 +103,18 @@ public class BuyerPaymentService {
         dbPayment.success(LocalDateTime.now());
         dbPayment.getOrder().paid();
 
-        // todo: seller_dashboard 업데이트
-        // todo: transaction_histories 업데이트
-
-        // flush를 commit 직전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생하도록 수정
+        // flush를 commit 전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생하도록 수정
         paymentRepository.saveAndFlush(dbPayment);
+
+        // todo: seller_dashboard 업데이트
+        // transaction_histories 이력 추가
+        try {
+            transactionHistoryService.saveSucceededHistory(dbPayment);
+        } catch(Exception e) {
+            log.error("성공 이력 저장 실패: {}", e.getMessage());
+            throw new BaseException(ErrorEnum.PAYMENT_FAILED);
+        }
+
         return PaymentDetailResponse.from(dbPayment);
     }
 
@@ -174,8 +190,13 @@ public class BuyerPaymentService {
         if (!payment.isPaid()) {
             dbPayment.fail();
 
-            // todo: transaction_histories 업데이트
-
+            // transaction_histories 업데이트
+            try {
+                // 여기서 예외가 발생하더라도 아래 결제 실패 응답은 정상적으로 나가야 함
+                transactionHistoryService.saveFailedHistory(dbPayment);
+            } catch (Exception e) {
+                log.error("실패 이력 저장 실패 : {}", e.getMessage());
+            }
             throw new BaseException(ErrorEnum.PAYMENT_NOT_COMPLETED);
         }
     }
@@ -184,14 +205,20 @@ public class BuyerPaymentService {
      * 주문 금액과 실제 결제 금액이 일치하는지 확인
      * 상이할 경우 결제를 실패 처리하고 환불 대상으로 남김
      */
-    private void validatePaymentAmount(Long currentUerId, PortOnePaymentResponse payment, Payment dbPayment) {
+    private void validatePaymentAmount(Long currentUserId, PortOnePaymentResponse payment, Payment dbPayment) {
 
         // 주문 금액과 실결제 금액이 다를 때
         if (payment.getTotalAmount() == null) {
             dbPayment.fail();
 
-            // todo: transaction_histories 업데이트
-
+            // transaction_histories 업데이트
+            try {
+                // transaction_histories 업데이트
+                // 여기서 에러가 발생하더라도 아래 결제 실패 응답은 정상적으로 나가야 함
+                transactionHistoryService.saveFailedHistory(dbPayment);
+            } catch (Exception e) {
+                log.error("실패 이력 저장 실패 : {}", e.getMessage());
+            }
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
         }
 
@@ -200,10 +227,17 @@ public class BuyerPaymentService {
             // 환불 로직 발생 시 먼저 fail 처리 후
             // 관리자 서버에서 환불이 진행되면 refunded 처리
             dbPayment.fail();
+            try {
+                // transaction_histories 업데이트
+                // 여기서 에러가 발생하더라도 아래 결제 실패 응답은 정상적으로 나가야 함
+                transactionHistoryService.saveFailedHistory(dbPayment);
+            } catch (Exception e) {
+                log.error("실패 이력 저장 실패 : {}", e.getMessage());
+            }
 
-            buyerRefundService.createRefundForAmountMismatch(currentUerId, dbPayment, payment);
-            // todo: transaction_histories 업데이트
-
+            // 제안 : buyerRefundService.createRefundForAmontMisMatch()가 Refund를 반환하도록 하기
+            // 내부에서 transaction_histories 업데이트
+            buyerRefundService.createRefundForAmountMismatch(currentUserId, dbPayment, payment);
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
         }
     }

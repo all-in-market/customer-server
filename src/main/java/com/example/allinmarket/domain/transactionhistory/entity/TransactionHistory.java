@@ -2,7 +2,9 @@ package com.example.allinmarket.domain.transactionhistory.entity;
 
 import com.example.allinmarket.common.entity.CreatableEntity;
 import com.example.allinmarket.domain.payment.entity.Payment;
+import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.refund.entity.Refund;
+import com.example.allinmarket.domain.refund.enums.RefundStatus;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
 import jakarta.persistence.*;
@@ -32,18 +34,24 @@ public class TransactionHistory extends CreatableEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TransactionStatus status;
+    private PaymentStatus paymentStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RefundStatus refundStatus;
 
     @PositiveOrZero
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    // 결제 이력이 추가될 때는 환불은 상태가 없으므로 RefundStatus.NONE으로 고정
     public static TransactionHistory of(Payment payment) {
         TransactionHistory transactionHistory = new TransactionHistory();
 
         transactionHistory.transactionId = payment.getId();
         transactionHistory.type = TransactionType.PAYMENT;
-        transactionHistory.status = payment.getStatus();
+        transactionHistory.paymentStatus = payment.getStatus();
+        transactionHistory.refundStatus = RefundStatus.NONE;
         transactionHistory.amount = payment.getAmount();
 
         return transactionHistory;
@@ -54,7 +62,8 @@ public class TransactionHistory extends CreatableEntity {
 
         transactionHistory.transactionId = refund.getId();
         transactionHistory.type = TransactionType.REFUND;
-        transactionHistory.status = refund.getStatus();
+        transactionHistory.paymentStatus = refund.getPayment().getStatus();
+        transactionHistory.refundStatus = refund.getStatus();
         transactionHistory.amount = refund.getPayment().getAmount();
 
         return transactionHistory;

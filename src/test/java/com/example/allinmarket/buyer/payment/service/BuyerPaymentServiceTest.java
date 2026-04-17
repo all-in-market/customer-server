@@ -12,8 +12,8 @@ import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
+import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -56,6 +56,56 @@ class BuyerPaymentServiceTest {
         paymentRetryService = new PaymentRetryService(buyerPaymentService);
     }
 
+    private Buyer createBuyer(Long id) {
+        Buyer buyer = Buyer.of(
+                "test@test.com",
+                "encodedPassword",
+                "홍길동",
+                "010-1111-2222"
+        );
+        setField(buyer, "id", id);
+        return buyer;
+    }
+
+    private Order createOrder(Long id, Buyer buyer, BigDecimal totalAmount) {
+        Order order = Order.of(
+                buyer,
+                totalAmount,
+                null,
+                "홍길동",
+                "010-1111-2222",
+                "서울시 강남구"
+        );
+        setField(order, "id", id);
+        return order;
+    }
+
+    private Payment createPayment(Order order, String impUid, BigDecimal amount, MethodEnum method) {
+        return Payment.of(order, impUid, amount, method);
+    }
+
+    private void setField(Object target, String fieldName, Object value) {
+        try {
+            Field field = findField(target.getClass(), fieldName);
+            field.setAccessible(true);
+            field.set(target, value);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+        Class<?> current = clazz;
+        while (current != null) {
+            try {
+                return current.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException e) {
+                current = current.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(fieldName);
+    }
+
     @Nested
     @DisplayName("결제 생성")
     class CreatePayment {
@@ -88,7 +138,7 @@ class BuyerPaymentServiceTest {
 
             given(orderRepository.findByIdAndBuyerIdWithLock(orderId, currentUserId))
                     .willReturn(Optional.of(order));
-            given(paymentRepository.existsByOrderIdAndStatus(orderId, TransactionStatus.PENDING))
+            given(paymentRepository.existsByOrderIdAndStatus(orderId, PaymentStatus.PENDING))
                     .willReturn(false);
 
             ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
@@ -108,13 +158,13 @@ class BuyerPaymentServiceTest {
             assertThat(savedPayment.getOrder()).isSameAs(order);
             assertThat(savedPayment.getAmount()).isEqualByComparingTo("15000");
             assertThat(savedPayment.getMethod()).isEqualTo(MethodEnum.MOCK);
-            assertThat(savedPayment.getStatus()).isEqualTo(TransactionStatus.PENDING);
+            assertThat(savedPayment.getStatus()).isEqualTo(PaymentStatus.PENDING);
             assertThat(savedPayment.getImpUid()).startsWith("payment_" + orderId + "_");
 
             assertThat(response).isNotNull();
             assertThat(response.impUid()).isEqualTo(savedPayment.getImpUid());
             assertThat(response.amount()).isEqualByComparingTo("15000");
-            assertThat(response.status()).isEqualTo(TransactionStatus.PENDING);
+            assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
             assertThat(response.method()).isEqualTo(MethodEnum.MOCK);
         }
 
@@ -189,7 +239,7 @@ class BuyerPaymentServiceTest {
 
             given(orderRepository.findByIdAndBuyerIdWithLock(orderId, currentUserId))
                     .willReturn(Optional.of(order));
-            given(paymentRepository.existsByOrderIdAndStatus(orderId, TransactionStatus.PENDING))
+            given(paymentRepository.existsByOrderIdAndStatus(orderId, PaymentStatus.PENDING))
                     .willReturn(true);
 
             // when
@@ -236,7 +286,7 @@ class BuyerPaymentServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(dbPayment.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
+            assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
 
             verify(buyerRefundService, never())
@@ -271,7 +321,7 @@ class BuyerPaymentServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(dbPayment.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
+            assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
 
             verify(buyerRefundService, never())
@@ -391,7 +441,7 @@ class BuyerPaymentServiceTest {
             Order order = createOrder(10L, buyer, new BigDecimal("15000"));
             Payment dbPayment = createPayment(order, paymentId, new BigDecimal("15000"), MethodEnum.MOCK);
 
-            setField(dbPayment, "status", TransactionStatus.REFUNDED);
+            setField(dbPayment, "status", PaymentStatus.REFUNDED);
 
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn(paymentId);
@@ -435,7 +485,7 @@ class BuyerPaymentServiceTest {
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_NOT_COMPLETED);
-            assertThat(dbPayment.getStatus()).isEqualTo(TransactionStatus.FAILED);
+            assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(order.getStatus()).isEqualTo(OrderStatus.CREATED);
         }
 
@@ -466,7 +516,7 @@ class BuyerPaymentServiceTest {
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_AMOUNT_INVALID);
-            assertThat(dbPayment.getStatus()).isEqualTo(TransactionStatus.FAILED);
+            assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
             verify(buyerRefundService, never())
                     .createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
         }
@@ -498,60 +548,10 @@ class BuyerPaymentServiceTest {
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
-            assertThat(dbPayment.getStatus()).isEqualTo(TransactionStatus.FAILED);
+            assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
 
             verify(buyerRefundService)
                     .createRefundForAmountMismatch(currentUserId, dbPayment, pgResponse);
         }
-    }
-
-    private Buyer createBuyer(Long id) {
-        Buyer buyer = Buyer.of(
-                "test@test.com",
-                "encodedPassword",
-                "홍길동",
-                "010-1111-2222"
-        );
-        setField(buyer, "id", id);
-        return buyer;
-    }
-
-    private Order createOrder(Long id, Buyer buyer, BigDecimal totalAmount) {
-        Order order = Order.of(
-                buyer,
-                totalAmount,
-                null,
-                "홍길동",
-                "010-1111-2222",
-                "서울시 강남구"
-        );
-        setField(order, "id", id);
-        return order;
-    }
-
-    private Payment createPayment(Order order, String impUid, BigDecimal amount, MethodEnum method) {
-        return Payment.of(order, impUid, amount, method);
-    }
-
-    private void setField(Object target, String fieldName, Object value) {
-        try {
-            Field field = findField(target.getClass(), fieldName);
-            field.setAccessible(true);
-            field.set(target, value);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-        Class<?> current = clazz;
-        while (current != null) {
-            try {
-                return current.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-                current = current.getSuperclass();
-            }
-        }
-        throw new NoSuchFieldException(fieldName);
     }
 }

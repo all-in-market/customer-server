@@ -10,6 +10,7 @@ import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
+import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
@@ -42,7 +43,7 @@ public class BuyerRefundService {
         validateOrderRefundable(order);
 
         // 해당 주문과 연결된 결제 중 환불 대상 결제 조회
-        Payment payment = paymentRepository.findByOrderIdAndStatusForUpdate(orderId, TransactionStatus.SUCCESS).orElseThrow(
+        Payment payment = paymentRepository.findByOrderIdAndStatusForUpdate(orderId, PaymentStatus.SUCCESS).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
         );
 
@@ -85,7 +86,7 @@ public class BuyerRefundService {
         validateOrderRefundableForAmountMismatch(order);
 
         // 전달받은 payment가 환불 생성 가능한 결제 상태인지 검증
-        if (payment.getStatus() != TransactionStatus.SUCCESS && payment.getStatus() != TransactionStatus.FAILED) {
+        if (payment.getStatus() != PaymentStatus.SUCCESS && payment.getStatus() != PaymentStatus.FAILED) {
             throw new BaseException(ErrorEnum.PAYMENT_NOT_REFUNDABLE);
         }
 

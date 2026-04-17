@@ -12,6 +12,7 @@ import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
+import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.repository.RefundRepository;
@@ -75,7 +76,7 @@ class RefundTest {
 
             given(orderRepository.findByIdAndBuyerIdWithBuyer(orderId, currentUserId))
                     .willReturn(Optional.of(order));
-            given(paymentRepository.findByOrderIdAndStatusForUpdate(orderId, TransactionStatus.SUCCESS))
+            given(paymentRepository.findByOrderIdAndStatusForUpdate(orderId, PaymentStatus.SUCCESS))
                     .willReturn(Optional.of(payment));
             given(refundRepository.findByPayment(payment))
                     .willReturn(Optional.empty());
@@ -155,7 +156,7 @@ class RefundTest {
 
             given(orderRepository.findByIdAndBuyerIdWithBuyer(orderId, currentUserId))
                     .willReturn(Optional.of(order));
-            given(paymentRepository.findByOrderIdAndStatusForUpdate(orderId, TransactionStatus.SUCCESS))
+            given(paymentRepository.findByOrderIdAndStatusForUpdate(orderId, PaymentStatus.SUCCESS))
                     .willReturn(Optional.of(payment));
             given(refundRepository.findByPayment(payment))
                     .willReturn(Optional.of(existingRefund));
@@ -300,7 +301,7 @@ class RefundTest {
             buyerRefundService.createRefundForAmountMismatch(currentUserId, payment, paymentResponse);
 
             // then
-            assertThat(existingRefund.getStatus()).isEqualTo(TransactionStatus.PENDING);
+            assertThat(existingRefund.getStatus()).isEqualTo(PaymentStatus.PENDING);
             assertThat(existingRefund.getReason()).isEqualTo(ReasonEnum.PAYMENT_AMOUNT_MISMATCH);
             assertThat(existingRefund.getDescription())
                     .isEqualTo(ReasonEnum.PAYMENT_AMOUNT_MISMATCH.getReason());

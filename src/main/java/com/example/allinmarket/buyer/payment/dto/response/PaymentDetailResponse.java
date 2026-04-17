@@ -2,6 +2,7 @@ package com.example.allinmarket.buyer.payment.dto.response;
 
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
+import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 
@@ -14,7 +15,7 @@ public record PaymentDetailResponse(
         String impUid,
         BigDecimal amount,
         MethodEnum method,
-        TransactionStatus status,
+        PaymentStatus status,
         LocalDateTime paidAt
 ) {
     public static PaymentDetailResponse from(Payment payment) {

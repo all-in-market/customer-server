@@ -2,6 +2,7 @@ package com.example.allinmarket.buyer.refund.dto.response;
 
 import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
+import com.example.allinmarket.domain.refund.enums.RefundStatus;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 
 public record RefundDetailResponse(
@@ -9,7 +10,7 @@ public record RefundDetailResponse(
         Long buyerId,
         Long paymentId,
         ReasonEnum reason,
-        TransactionStatus status
+        RefundStatus status
 ) {
     public static RefundDetailResponse from(Refund refund) {
         return new RefundDetailResponse(

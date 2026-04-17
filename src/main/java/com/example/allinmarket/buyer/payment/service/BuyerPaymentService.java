@@ -11,8 +11,8 @@ import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
+import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class BuyerPaymentService {
             throw new BaseException(ErrorEnum.ORDER_NOT_PAYABLE);
         }
 
-        boolean exists = paymentRepository.existsByOrderIdAndStatus(order.getId(), TransactionStatus.PENDING);
+        boolean exists = paymentRepository.existsByOrderIdAndStatus(order.getId(), PaymentStatus.PENDING);
 
         if (exists) {
             throw new BaseException(ErrorEnum.PAYMENT_ALREADY_EXISTS);
@@ -61,7 +61,7 @@ public class BuyerPaymentService {
 
         paymentRepository.save(payment);
 
-        // todo: transaction_histories 업데이트
+        // todo: transaction_histories 이력 추가
 
         return PaymentDetailResponse.from(payment);
     }
@@ -146,7 +146,7 @@ public class BuyerPaymentService {
      * 이미 성공한 결제인 경우 예외 대신 성공 응답메세지 전송
      */
     private PaymentDetailResponse handleAlreadySucceededPayment(Payment dbPayment) {
-        if (dbPayment.getStatus() == TransactionStatus.SUCCESS) {
+        if (dbPayment.getStatus() == PaymentStatus.SUCCESS) {
             return PaymentDetailResponse.from(dbPayment);
         }
 
@@ -157,11 +157,11 @@ public class BuyerPaymentService {
      * 결제 진행이 불가능한 상태인지 멱등성 검사 (동일 결제 중복 처리 방지)
      */
     private void validatePaymentNonProcessableStatus(Payment dbPayment) {
-        if (dbPayment.getStatus() == TransactionStatus.FAILED) {
+        if (dbPayment.getStatus() == PaymentStatus.FAILED) {
             throw new BaseException(ErrorEnum.PAYMENT_ALREADY_FAILED);
         }
 
-        if (dbPayment.getStatus() == TransactionStatus.REFUNDED) {
+        if (dbPayment.getStatus() == PaymentStatus.REFUNDED) {
             throw new BaseException(ErrorEnum.PAYMENT_ALREADY_REFUNDED);
         }
     }

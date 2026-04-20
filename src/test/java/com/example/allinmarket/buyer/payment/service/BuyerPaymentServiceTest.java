@@ -55,31 +55,22 @@ class BuyerPaymentServiceTest {
     @Mock
     private TransactionHistoryService transactionHistoryService;
 
+    @Mock
+    private PaymentStateService paymentStateService;
+
     @BeforeEach
     void setUp() {
-        paymentRetryService = new PaymentRetryService(buyerPaymentService);
+        paymentRetryService = new PaymentRetryService(buyerPaymentService, transactionHistoryService, paymentRepository, paymentStateService);
     }
 
     private Buyer createBuyer(Long id) {
-        Buyer buyer = Buyer.of(
-                "test@test.com",
-                "encodedPassword",
-                "홍길동",
-                "010-1111-2222"
-        );
+        Buyer buyer = Buyer.of("test@test.com", "encodedPassword", "홍길동", "010-1111-2222");
         setField(buyer, "id", id);
         return buyer;
     }
 
     private Order createOrder(Long id, Buyer buyer, BigDecimal totalAmount) {
-        Order order = Order.of(
-                buyer,
-                totalAmount,
-                null,
-                "홍길동",
-                "010-1111-2222",
-                "서울시 강남구"
-        );
+        Order order = Order.of(buyer, totalAmount, null, "홍길동", "010-1111-2222", "서울시 강남구");
         setField(order, "id", id);
         return order;
     }
@@ -120,36 +111,21 @@ class BuyerPaymentServiceTest {
             Long currentUserId = 1L;
             Long orderId = 10L;
 
-            Buyer buyer = Buyer.of(
-                    "test@test.com",
-                    "encodedPassword",
-                    "홍길동",
-                    "010-1111-2222"
-            );
+            Buyer buyer = Buyer.of("test@test.com", "encodedPassword", "홍길동", "010-1111-2222");
             setField(buyer, "id", currentUserId);
 
-            Order order = Order.of(
-                    buyer,
-                    new BigDecimal("15000"),
-                    null,
-                    "홍길동",
-                    "010-1111-2222",
-                    "서울시 강남구"
-            );
+            Order order = Order.of(buyer, new BigDecimal("15000"), null, "홍길동", "010-1111-2222", "서울시 강남구");
             setField(order, "id", orderId);
 
             PaymentCreateRequest request = new PaymentCreateRequest(orderId, MethodEnum.MOCK);
 
-            given(orderRepository.findByIdAndBuyerIdWithLock(orderId, currentUserId))
-                    .willReturn(Optional.of(order));
-            given(paymentRepository.existsByOrderIdAndStatus(orderId, PaymentStatus.PENDING))
-                    .willReturn(false);
+            given(orderRepository.findByIdAndBuyerIdWithLock(orderId, currentUserId)).willReturn(Optional.of(order));
+            given(paymentRepository.existsByOrderIdAndStatus(orderId, PaymentStatus.PENDING)).willReturn(false);
 
             ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
 
             // save가 들어오면 그대로 반환
-            given(paymentRepository.save(any(Payment.class)))
-                    .willAnswer(invocation -> invocation.getArgument(0));
+            given(paymentRepository.save(any(Payment.class))).willAnswer(invocation -> invocation.getArgument(0));
 
             // when
             PaymentDetailResponse response = buyerPaymentService.createPayment(currentUserId, request);
@@ -179,35 +155,19 @@ class BuyerPaymentServiceTest {
             Long currentUserId = 1L;
             Long orderId = 10L;
 
-            Buyer buyer = Buyer.of(
-                    "test@test.com",
-                    "encodedPassword",
-                    "홍길동",
-                    "010-1111-2222"
-            );
+            Buyer buyer = Buyer.of("test@test.com", "encodedPassword", "홍길동", "010-1111-2222");
             setField(buyer, "id", currentUserId);
 
-            Order order = Order.of(
-                    buyer,
-                    new BigDecimal("15000"),
-                    null,
-                    "홍길동",
-                    "010-1111-2222",
-                    "서울시 강남구"
-            );
+            Order order = Order.of(buyer, new BigDecimal("15000"), null, "홍길동", "010-1111-2222", "서울시 강남구");
             setField(order, "id", orderId);
             setField(order, "status", OrderStatus.PAID);
 
             PaymentCreateRequest request = new PaymentCreateRequest(orderId, MethodEnum.MOCK);
 
-            given(orderRepository.findByIdAndBuyerIdWithLock(orderId, currentUserId))
-                    .willReturn(Optional.of(order));
+            given(orderRepository.findByIdAndBuyerIdWithLock(orderId, currentUserId)).willReturn(Optional.of(order));
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> buyerPaymentService.createPayment(currentUserId, request)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> buyerPaymentService.createPayment(currentUserId, request));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.ORDER_NOT_PAYABLE);
@@ -221,36 +181,19 @@ class BuyerPaymentServiceTest {
             Long currentUserId = 1L;
             Long orderId = 10L;
 
-            Buyer buyer = Buyer.of(
-                    "test@test.com",
-                    "encodedPassword",
-                    "홍길동",
-                    "010-1111-2222"
-            );
+            Buyer buyer = Buyer.of("test@test.com", "encodedPassword", "홍길동", "010-1111-2222");
             setField(buyer, "id", currentUserId);
 
-            Order order = Order.of(
-                    buyer,
-                    new BigDecimal("15000"),
-                    null,
-                    "홍길동",
-                    "010-1111-2222",
-                    "서울시 강남구"
-            );
+            Order order = Order.of(buyer, new BigDecimal("15000"), null, "홍길동", "010-1111-2222", "서울시 강남구");
             setField(order, "id", orderId);
 
             PaymentCreateRequest request = new PaymentCreateRequest(orderId, MethodEnum.MOCK);
 
-            given(orderRepository.findByIdAndBuyerIdWithLock(orderId, currentUserId))
-                    .willReturn(Optional.of(order));
-            given(paymentRepository.existsByOrderIdAndStatus(orderId, PaymentStatus.PENDING))
-                    .willReturn(true);
+            given(orderRepository.findByIdAndBuyerIdWithLock(orderId, currentUserId)).willReturn(Optional.of(order));
+            given(paymentRepository.existsByOrderIdAndStatus(orderId, PaymentStatus.PENDING)).willReturn(true);
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> buyerPaymentService.createPayment(currentUserId, request)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> buyerPaymentService.createPayment(currentUserId, request));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_ALREADY_EXISTS);
@@ -281,20 +224,17 @@ class BuyerPaymentServiceTest {
             given(pgResponse.isPaid()).willReturn(true);
             given(pgResponse.getTotalAmount()).willReturn(new BigDecimal("15000"));
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            PaymentDetailResponse response =
-                    paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
+            PaymentDetailResponse response = paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
 
             // then
             assertThat(response).isNotNull();
             assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
 
-            verify(buyerRefundService, never())
-                    .createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
+            verify(buyerRefundService, never()).createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
             verify(paymentRepository).saveAndFlush(dbPayment);
         }
 
@@ -316,20 +256,17 @@ class BuyerPaymentServiceTest {
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn(paymentId);
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            PaymentDetailResponse response =
-                    paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
+            PaymentDetailResponse response = paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
 
             // then
             assertThat(response).isNotNull();
             assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
 
-            verify(buyerRefundService, never())
-                    .createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
+            verify(buyerRefundService, never()).createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
         }
 
         @Test
@@ -340,14 +277,10 @@ class BuyerPaymentServiceTest {
             String paymentId = "payment_10_abc";
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.empty());
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.empty());
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_NOT_FOUND);
@@ -365,14 +298,10 @@ class BuyerPaymentServiceTest {
             Payment dbPayment = createPayment(order, paymentId, new BigDecimal("15000"), MethodEnum.MOCK);
 
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_FORBIDDEN);
@@ -392,14 +321,10 @@ class BuyerPaymentServiceTest {
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn("different_payment_id");
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_MISMATCH);
@@ -421,14 +346,10 @@ class BuyerPaymentServiceTest {
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn(paymentId);
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_ALREADY_FAILED);
@@ -450,14 +371,10 @@ class BuyerPaymentServiceTest {
             PortOnePaymentResponse pgResponse = mock(PortOnePaymentResponse.class);
             given(pgResponse.getPaymentId()).willReturn(paymentId);
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_ALREADY_REFUNDED);
@@ -478,14 +395,14 @@ class BuyerPaymentServiceTest {
             given(pgResponse.getPaymentId()).willReturn(paymentId);
             given(pgResponse.isPaid()).willReturn(false);
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
+            doAnswer(inv -> {
+                inv.getArgument(0, Payment.class).fail();
+                return null;
+            }).when(paymentStateService).failAndSaveHistory(any(Payment.class));
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_NOT_COMPLETED);
@@ -509,20 +426,19 @@ class BuyerPaymentServiceTest {
             given(pgResponse.isPaid()).willReturn(true);
             given(pgResponse.getTotalAmount()).willReturn(null);
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
+            doAnswer(inv -> {
+                inv.getArgument(0, Payment.class).fail();
+                return null;
+            }).when(paymentStateService).failAndSaveHistory(any(Payment.class));
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_AMOUNT_INVALID);
             assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-            verify(buyerRefundService, never())
-                    .createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
+            verify(buyerRefundService, never()).createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
         }
 
         @Test
@@ -541,21 +457,20 @@ class BuyerPaymentServiceTest {
             given(pgResponse.isPaid()).willReturn(true);
             given(pgResponse.getTotalAmount()).willReturn(new BigDecimal("10000"));
 
-            given(paymentRepository.findByImpUidWithOrder(paymentId))
-                    .willReturn(Optional.of(dbPayment));
+            given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
+            doAnswer(inv -> {
+                inv.getArgument(0, Payment.class).fail();
+                return null;
+            }).when(paymentStateService).failAndSaveHistory(any(Payment.class));
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse)
-            );
+            BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
             assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
 
-            verify(buyerRefundService)
-                    .createRefundForAmountMismatch(currentUserId, dbPayment, pgResponse);
+            verify(buyerRefundService).createRefundForAmountMismatch(currentUserId, dbPayment, pgResponse);
         }
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(propagation = Propagation.REQUIRES_NEW)
 public class TransactionHistoryService {
 
     private final TransactionHistoryRepository transactionHistoryRepository;

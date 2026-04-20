@@ -29,6 +29,12 @@ spring:
     exclude:
       - org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400000} # 하루

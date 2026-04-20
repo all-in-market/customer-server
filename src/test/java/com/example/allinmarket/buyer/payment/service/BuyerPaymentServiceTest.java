@@ -14,6 +14,7 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
+import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,14 +54,14 @@ class BuyerPaymentServiceTest {
     private BuyerRefundService buyerRefundService;
 
     @Mock
-    private TransactionHistoryService transactionHistoryService;
+    private PaymentStateService paymentStateService;
 
     @Mock
-    private PaymentStateService paymentStateService;
+    private DashboardService dashboardService;
 
     @BeforeEach
     void setUp() {
-        paymentRetryService = new PaymentRetryService(buyerPaymentService, transactionHistoryService, paymentRepository, paymentStateService);
+        paymentRetryService = new PaymentRetryService(buyerPaymentService, paymentRepository, paymentStateService);
     }
 
     private Buyer createBuyer(Long id) {

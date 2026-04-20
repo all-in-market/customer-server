@@ -90,4 +90,12 @@ public class SellerDashboard extends ModifiableEntity {
         this.settlementAmount = BigDecimal.ZERO;
         this.statDate = LocalDate.now();
     }
+
+    public void addOrder(BigDecimal salesAmount, int productsSold) {
+        this.totalOrders +=1;
+        this.totalProductsSold +=productsSold;
+        this.totalSales = this.totalSales.add(salesAmount);
+        this.feeAmount = this.totalSales.multiply(COMMISSION_RATE);
+        this.settlementAmount = this.totalSales.subtract(refundAmount.add(feeAmount));
+    }
 }

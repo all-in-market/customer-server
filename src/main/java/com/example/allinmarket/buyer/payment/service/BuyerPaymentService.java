@@ -13,6 +13,7 @@ import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
+import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class BuyerPaymentService {
     private final BuyerRefundService buyerRefundService;
     private final TransactionHistoryService transactionHistoryService;
     private final PaymentStateService paymentStateService;
+    private final DashboardService dashboardService;
 
     /**
      * 결제 생성 및 DB 저장
@@ -130,7 +132,8 @@ public class BuyerPaymentService {
         // flush를 commit 전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생
         paymentRepository.saveAndFlush(dbPayment);
 
-        // todo: seller_dashboard 업데이트
+        // seller_dashboard 업데이트
+        dashboardService.updateSellerDashboard(dbPayment.getOrder().getId());
 
         log.info("결제 승인 성공: paymentId = {}", dbPayment.getId());
 

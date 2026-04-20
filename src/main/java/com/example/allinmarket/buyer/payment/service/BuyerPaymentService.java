@@ -13,7 +13,9 @@ import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
+import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,13 +25,15 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class BuyerPaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
-
     private final BuyerRefundService buyerRefundService;
+    private final TransactionHistoryService transactionHistoryService;
+    private final PaymentStateService paymentStateService;
 
     /**
      * 결제 생성 및 DB 저장
@@ -60,8 +64,15 @@ public class BuyerPaymentService {
         );
 
         paymentRepository.save(payment);
+        log.info("결제 생성 성공: paymentId = {}", payment.getId());
 
-        // todo: transaction_histories 이력 추가
+        // transaction_histories 이력 추가
+        try {
+            transactionHistoryService.savePaymentHistory(payment);
+            log.info("결제 생성 이력 저장 성공: paymentId = {}", payment.getId());
+        } catch (Exception e) {
+            log.error("결제 생성 이력 저장 실패: paymentId = {}, reason = {}", payment.getId(), e.getMessage());
+        }
 
         return PaymentDetailResponse.from(payment);
     }
@@ -72,7 +83,6 @@ public class BuyerPaymentService {
     @Transactional
     public PaymentDetailResponse confirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) {
 
-        // 낙관적 락 적용
         Payment dbPayment = paymentRepository.findByImpUidWithOrder(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
         );
@@ -80,25 +90,57 @@ public class BuyerPaymentService {
         validatePaymentOwner(currentUserId, dbPayment);
         validatePaymentIdMatch(paymentId, payment);
 
+        // 멱등성 검사
         PaymentDetailResponse idempotentSuccessResponse = handleAlreadySucceededPayment(dbPayment);
-
         if (idempotentSuccessResponse != null) {
             return idempotentSuccessResponse;
         }
 
         validatePaymentNonProcessableStatus(dbPayment);
 
-        validatePaymentResult(payment, dbPayment);
-        validatePaymentAmount(currentUserId, payment, dbPayment);
+        /**
+         * PG 응답을 통해 실제 결제가 성공했는지 검사
+         * PG 결과 검증 실패 -> REQUIRES_NEW로 fail + 이력 저장 후 예외 전파
+         */
+        if (!payment.isPaid()) {
+            paymentStateService.failAndSaveHistory(dbPayment);
+            throw new BaseException(ErrorEnum.PAYMENT_NOT_COMPLETED);
+        }
+
+        /**
+         * 포트원 결제 금액이 유효한지 확인
+         */
+        if (payment.getTotalAmount() == null) {
+            paymentStateService.failAndSaveHistory(dbPayment);
+            throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
+        }
+        /**
+         * 주문 금액과 실제 결제 금액이 일치하는지 확인
+         * 금액 불일치 -> REQUIRES_NEW로 fail + 이력 저장 + 환불 생성 후 예외 전파
+         */
+        if (dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
+            paymentStateService.failAndSaveHistory(dbPayment);
+            buyerRefundService.createRefundForAmountMismatch(currentUserId, dbPayment, payment);
+            throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
+        }
 
         dbPayment.success(LocalDateTime.now());
         dbPayment.getOrder().paid();
 
-        // todo: seller_dashboard 업데이트
-        // todo: transaction_histories 업데이트
-
-        // flush를 commit 직전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생하도록 수정
+        // flush를 commit 전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생
         paymentRepository.saveAndFlush(dbPayment);
+
+        // todo: seller_dashboard 업데이트
+
+        log.info("결제 승인 성공: paymentId = {}", dbPayment.getId());
+
+        try {
+            transactionHistoryService.savePaymentHistory(dbPayment);
+            log.info("결제 승인 이력 저장 성공: paymentId = {}", dbPayment.getId());
+        } catch (Exception e) {
+            log.error("결제 승인 이력 저장 실패: paymentId = {}, reason = {}", dbPayment.getId(), e.getMessage());
+        }
+
         return PaymentDetailResponse.from(dbPayment);
     }
 
@@ -163,48 +205,6 @@ public class BuyerPaymentService {
 
         if (dbPayment.getStatus() == PaymentStatus.REFUNDED) {
             throw new BaseException(ErrorEnum.PAYMENT_ALREADY_REFUNDED);
-        }
-    }
-
-    /**
-     * PG 응답을 통해 실제 결제가 성공했는지 검사
-     */
-    private void validatePaymentResult(PortOnePaymentResponse payment, Payment dbPayment) {
-
-        if (!payment.isPaid()) {
-            dbPayment.fail();
-
-            // todo: transaction_histories 업데이트
-
-            throw new BaseException(ErrorEnum.PAYMENT_NOT_COMPLETED);
-        }
-    }
-
-    /**
-     * 주문 금액과 실제 결제 금액이 일치하는지 확인
-     * 상이할 경우 결제를 실패 처리하고 환불 대상으로 남김
-     */
-    private void validatePaymentAmount(Long currentUerId, PortOnePaymentResponse payment, Payment dbPayment) {
-
-        // 주문 금액과 실결제 금액이 다를 때
-        if (payment.getTotalAmount() == null) {
-            dbPayment.fail();
-
-            // todo: transaction_histories 업데이트
-
-            throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
-        }
-
-        if (dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
-
-            // 환불 로직 발생 시 먼저 fail 처리 후
-            // 관리자 서버에서 환불이 진행되면 refunded 처리
-            dbPayment.fail();
-
-            buyerRefundService.createRefundForAmountMismatch(currentUerId, dbPayment, payment);
-            // todo: transaction_histories 업데이트
-
-            throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
         }
     }
 

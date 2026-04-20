@@ -4,7 +4,11 @@ import com.example.allinmarket.buyer.payment.client.dto.PortOnePaymentResponse;
 import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.domain.payment.entity.Payment;
+import com.example.allinmarket.domain.payment.repository.PaymentRepository;
+import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -13,9 +17,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentRetryService {
 
     private final BuyerPaymentService buyerPaymentService;
+    private final TransactionHistoryService transactionHistoryService;
+    private final PaymentRepository paymentRepository;
+    private final PaymentStateService paymentStateService;
 
     @Retryable(retryFor = OptimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 100, multiplier = 2))
     public PaymentDetailResponse retryConfirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) {
@@ -26,6 +34,10 @@ public class PaymentRetryService {
     @Recover
     public PaymentDetailResponse recoverConfirmPayment(OptimisticLockingFailureException e, Long currentUserId, String paymentId,
                                                        PortOnePaymentResponse payment) {
+        Payment dbPayment = paymentRepository.findByImpUidWithOrder(paymentId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
+        );
+        paymentStateService.failAndSaveHistory(dbPayment);
         throw new BaseException(ErrorEnum.PAYMENT_FAILED); // 적절한 에러 응답
     }
 

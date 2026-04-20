@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -76,7 +77,7 @@ public class BuyerRefundService {
     /**
      * 주문 금액 != 실결제 금액 시, 환불 처리
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createRefundForAmountMismatch(Long currentUserId, Payment payment, PortOnePaymentResponse paymentResponse) {
 
         // 전달받은 payment의 소유자와 현재 사용자가 일치하는지 검증

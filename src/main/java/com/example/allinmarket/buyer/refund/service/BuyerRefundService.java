@@ -120,7 +120,6 @@ public class BuyerRefundService {
 
         refundRepository.save(refund);
         // transaction_histories 업데이트
-        // 환불 생성 이력은 부가적인 작업이므로 예외가 발생해도 본 흐름을 방해하지 않음
         try {
             transactionHistoryService.saveRefundHistory(refund);
         } catch (Exception e) {

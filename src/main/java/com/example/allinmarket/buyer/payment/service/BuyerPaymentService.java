@@ -67,9 +67,10 @@ public class BuyerPaymentService {
 
         // transaction_histories 이력 추가
         try {
-            transactionHistoryService.saveSucceededHistory(payment);
-        } catch(Exception e) {
-            log.error("생성 이력 저장 실패: {}", e.getMessage());
+            transactionHistoryService.savePaymentHistory(payment);
+            log.info("결제 생성 이력 저장 성공: paymentId = {}", payment.getId());
+        } catch (Exception e) {
+            log.error("생성 이력 저장 실패: paymentId = {}, reason = {}", payment.getId(), e.getMessage());
         }
 
         return PaymentDetailResponse.from(payment);
@@ -81,7 +82,6 @@ public class BuyerPaymentService {
     @Transactional
     public PaymentDetailResponse confirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) {
 
-        // 낙관적 락 적용
         Payment dbPayment = paymentRepository.findByImpUidWithOrder(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
         );
@@ -109,10 +109,9 @@ public class BuyerPaymentService {
         // todo: seller_dashboard 업데이트
         // transaction_histories 이력 추가
         try {
-            transactionHistoryService.saveSucceededHistory(dbPayment);
-        } catch(Exception e) {
+            transactionHistoryService.savePaymentHistory(dbPayment);
+        } catch (Exception e) {
             log.error("성공 이력 저장 실패: {}", e.getMessage());
-            throw new BaseException(ErrorEnum.PAYMENT_FAILED);
         }
 
         return PaymentDetailResponse.from(dbPayment);
@@ -189,14 +188,6 @@ public class BuyerPaymentService {
 
         if (!payment.isPaid()) {
             dbPayment.fail();
-
-            // transaction_histories 업데이트
-            try {
-                // 여기서 예외가 발생하더라도 아래 결제 실패 응답은 정상적으로 나가야 함
-                transactionHistoryService.saveFailedHistory(dbPayment);
-            } catch (Exception e) {
-                log.error("실패 이력 저장 실패 : {}", e.getMessage());
-            }
             throw new BaseException(ErrorEnum.PAYMENT_NOT_COMPLETED);
         }
     }
@@ -210,33 +201,14 @@ public class BuyerPaymentService {
         // 주문 금액과 실결제 금액이 다를 때
         if (payment.getTotalAmount() == null) {
             dbPayment.fail();
-
-            // transaction_histories 업데이트
-            try {
-                // transaction_histories 업데이트
-                // 여기서 에러가 발생하더라도 아래 결제 실패 응답은 정상적으로 나가야 함
-                transactionHistoryService.saveFailedHistory(dbPayment);
-            } catch (Exception e) {
-                log.error("실패 이력 저장 실패 : {}", e.getMessage());
-            }
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
         }
 
         if (dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
 
-            // 환불 로직 발생 시 먼저 fail 처리 후
-            // 관리자 서버에서 환불이 진행되면 refunded 처리
+            // 환불 로직 발생 시 먼저 fail 처리 후 관리자 서버에서 환불이 진행되면 refunded 처리
             dbPayment.fail();
-            try {
-                // transaction_histories 업데이트
-                // 여기서 에러가 발생하더라도 아래 결제 실패 응답은 정상적으로 나가야 함
-                transactionHistoryService.saveFailedHistory(dbPayment);
-            } catch (Exception e) {
-                log.error("실패 이력 저장 실패 : {}", e.getMessage());
-            }
-
             // 제안 : buyerRefundService.createRefundForAmontMisMatch()가 Refund를 반환하도록 하기
-            // 내부에서 transaction_histories 업데이트
             buyerRefundService.createRefundForAmountMismatch(currentUserId, dbPayment, payment);
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
         }

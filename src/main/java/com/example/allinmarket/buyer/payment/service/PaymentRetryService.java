@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 public class PaymentRetryService {
 
     private final BuyerPaymentService buyerPaymentService;
-    private final TransactionHistoryService transactionHistoryService;
     private final PaymentRepository paymentRepository;
     private final PaymentStateService paymentStateService;
 

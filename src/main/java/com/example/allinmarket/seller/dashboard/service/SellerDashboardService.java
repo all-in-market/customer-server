@@ -21,7 +21,7 @@ public class SellerDashboardService {
     private final SellerDashboardRepository sellerDashboardRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    // 이 후 관리자가 환불 처리 시 이벤트 리스너에서 캐시 무효화 필요
+    // 이 후 관리자가 환불 처리 시 캐시 무효화 필요
     public SellerDashboardResponse getSellerDashboard(Long sellerId) {
         String key = "dashboard:" + sellerId + ":" + LocalDate.now();
 
@@ -35,7 +35,6 @@ public class SellerDashboardService {
 
         SellerDashboardResponse response = SellerDashboardResponse.from(sellerDashboard);
         redisTemplate.opsForValue().set(key, response, Duration.ofMinutes(5));
-
 
         return response;
     }

@@ -30,7 +30,7 @@ public class SellerDashboardService {
             return response;
         }
 
-        SellerDashboard sellerDashboard = sellerDashboardRepository.findBySellerIdAndStatDate(sellerId, LocalDate.now())
+        SellerDashboard sellerDashboard = sellerDashboardRepository.findBySellerId(sellerId)
                 .orElseThrow(() -> new BaseException(ErrorEnum.DASHBOARD_NOT_FOUND));
 
         SellerDashboardResponse response = SellerDashboardResponse.from(sellerDashboard);
@@ -44,7 +44,7 @@ public class SellerDashboardService {
         String key = "dashboard:" + sellerId + ":" + LocalDate.now();
         redisTemplate.delete(key);
 
-        SellerDashboard sellerDashboard = sellerDashboardRepository.findBySellerIdAndStatDate(sellerId, LocalDate.now())
+        SellerDashboard sellerDashboard = sellerDashboardRepository.findBySellerId(sellerId)
                 .orElseThrow(() -> new BaseException(ErrorEnum.DASHBOARD_NOT_FOUND));
 
         SellerDashboardResponse response = SellerDashboardResponse.from(sellerDashboard);

@@ -70,11 +70,12 @@ public class BuyerRefundService {
         );
 
         refundRepository.save(refund);
+
         // transaction_histories 업데이트
         try {
             transactionHistoryService.saveRefundHistory(refund);
         } catch (Exception e) {
-            log.error("환불 생성 이력 저장 실패 : {}", e.getMessage());
+            log.error("환불 생성 이력 저장 실패 : refundId = {}, reason = {}", refund.getId(),e.getMessage());
         }
 
         return RefundDetailResponse.from(refund);
@@ -130,7 +131,7 @@ public class BuyerRefundService {
         try {
             transactionHistoryService.saveRefundHistory(refund);
         } catch (Exception e) {
-            log.error("환불 생성 이력 저장 실패 : {}", e.getMessage());
+            log.error("환불 생성 이력 저장 실패 : refundId = {}, reason = {}", refund.getId(),e.getMessage());
         }
 
     }

@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface SellerDashboardRepository extends JpaRepository<SellerDashboard, Long> {
 
-    Optional<SellerDashboard> findBySellerIdAndStatDate(Long id, LocalDate day);
+    Optional<SellerDashboard> findBySellerId(Long sellerId);
 
     @Modifying(clearAutomatically = true)
     @Query("""
@@ -22,10 +22,9 @@ public interface SellerDashboardRepository extends JpaRepository<SellerDashboard
               d.totalSales         = d.totalSales + :salesAmount,
               d.feeAmount          = (d.totalSales + :salesAmount - d.refundAmount ) * :commissionRate,
               d.settlementAmount   = (d.totalSales + :salesAmount - d.refundAmount) * (1 - :commissionRate)
-            WHERE d.seller.id = :sellerId AND d.statDate = :statDate
+            WHERE d.seller.id = :sellerId
             """)
     void addOrder(@Param("sellerId") Long sellerId,
-                  @Param("statDate") LocalDate statDate,
                   @Param("salesAmount") BigDecimal salesAmount,
                   @Param("productsSold") int productsSold,
                   @Param("commissionRate") BigDecimal commissionRate);

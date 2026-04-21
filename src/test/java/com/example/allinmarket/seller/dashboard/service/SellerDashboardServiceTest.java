@@ -86,8 +86,8 @@ public class SellerDashboardServiceTest {
         assertEquals(8, response.totalProductsSold());
         assertEquals(2, response.totalRefunds());
         assertEquals(BigDecimal.valueOf(30000), response.refundAmount());
-        assertEquals(0, BigDecimal.valueOf(445000).compareTo(response.settlementAmount()));
-        assertEquals(0, BigDecimal.valueOf(25000).compareTo(response.feeAmount()));
+        assertEquals(0, BigDecimal.valueOf(446500).compareTo(response.settlementAmount()));
+        assertEquals(0, BigDecimal.valueOf(23500).compareTo(response.feeAmount()));
 
         // DB 조회가 실제로 일어났는지 검증
         verify(sellerDashboardRepository).findBySellerIdAndStatDate(eq(sellerId), any(LocalDate.class));

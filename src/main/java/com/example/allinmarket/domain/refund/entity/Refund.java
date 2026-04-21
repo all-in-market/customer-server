@@ -6,6 +6,7 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.enums.RefundStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,7 @@ public class Refund extends ModifiableEntity {
     @Column(nullable = false, length = 50)
     private ReasonEnum reason;
 
+    @Column
     private String description;
 
     @Column(name = "denied_reason")

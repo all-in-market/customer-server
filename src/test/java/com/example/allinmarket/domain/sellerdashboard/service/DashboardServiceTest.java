@@ -78,7 +78,7 @@ class DashboardServiceTest {
             dashboardService.updateSellerDashboard(orderId);
 
             // then - 원자적 UPDATE 쿼리 호출 검증
-            verify(sellerDashboardRepository).addOrder(seller.getId(), LocalDate.now(), new BigDecimal("25000"), 3, COMMISSION_RATE);
+            verify(sellerDashboardRepository).addOrder(seller.getId(), new BigDecimal("25000"), 3, COMMISSION_RATE);
         }
 
         @Test
@@ -98,7 +98,7 @@ class DashboardServiceTest {
             dashboardService.updateSellerDashboard(orderId);
 
             // then - DB 레벨 원자적 누적(+1 order, +1 product, +10000 sales)
-            verify(sellerDashboardRepository).addOrder(seller.getId(), LocalDate.now(), new BigDecimal("10000"), 1, COMMISSION_RATE);
+            verify(sellerDashboardRepository).addOrder(seller.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE);
         }
 
         @Test
@@ -120,8 +120,8 @@ class DashboardServiceTest {
             dashboardService.updateSellerDashboard(orderId);
 
             // then - 판매자별로 각각 addOrder 호출
-            verify(sellerDashboardRepository).addOrder(sellerA.getId(), LocalDate.now(), new BigDecimal("10000"), 1, COMMISSION_RATE);
-            verify(sellerDashboardRepository).addOrder(sellerB.getId(), LocalDate.now(), new BigDecimal("40000"), 2, COMMISSION_RATE);
+            verify(sellerDashboardRepository).addOrder(sellerA.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE);
+            verify(sellerDashboardRepository).addOrder(sellerB.getId(), new BigDecimal("40000"), 2, COMMISSION_RATE);
         }
 
         @Test
@@ -135,7 +135,7 @@ class DashboardServiceTest {
             dashboardService.updateSellerDashboard(orderId);
 
             // then
-            verify(sellerDashboardRepository, never()).findBySellerIdAndStatDate(any(), any());
+            verify(sellerDashboardRepository, never()).findBySellerId(any());
             verify(sellerDashboardRepository, never()).save(any());
         }
     }

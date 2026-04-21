@@ -28,21 +28,26 @@ public class DashboardService {
     private final OrderItemRepository orderItemRepository;
 
     public void updateSellerDashboard(Long orderId) {
-        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdWithSeller(orderId);
+        try{
+            List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdWithSeller(orderId);
 
-        Map<Seller, List<OrderItem>> itemsBySeller = orderItems.stream()
-                .collect(Collectors.groupingBy(OrderItem::getSeller));
+            Map<Seller, List<OrderItem>> itemsBySeller = orderItems.stream()
+                    .collect(Collectors.groupingBy(OrderItem::getSeller));
 
-        itemsBySeller.forEach((seller, items) -> {
-            BigDecimal salesAmount = items.stream()
-                    .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            itemsBySeller.forEach((seller, items) -> {
+                BigDecimal salesAmount = items.stream()
+                        .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            int productsSold = items.stream()
-                    .mapToInt(OrderItem::getQuantity)
-                    .sum();
+                int productsSold = items.stream()
+                        .mapToInt(OrderItem::getQuantity)
+                        .sum();
 
-            sellerDashboardRepository.addOrder(seller.getId(), LocalDate.now(), salesAmount, productsSold, COMMISSION_RATE);
-        });
+                sellerDashboardRepository.addOrder(seller.getId(), salesAmount, productsSold, COMMISSION_RATE);
+                log.info("대시보드 업데이트 성공: orderId = {}", orderId);
+            });
+        } catch (Exception e) {
+            log.error("대시보드 업데이트 실패: orderId = {}", orderId);
+        }
     }
 }

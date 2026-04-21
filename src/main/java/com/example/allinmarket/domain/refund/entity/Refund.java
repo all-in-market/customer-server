@@ -77,20 +77,6 @@ public class Refund extends ModifiableEntity {
         }
     }
 
-    public void complete() {
-        if (this.status.refundCanTransitToTargetStatus(RefundStatus.SUCCESS)) {
-            this.status = RefundStatus.SUCCESS;
-            this.processedAt = LocalDateTime.now();
-        }
-    }
-
-    public void deny(String deniedReason) {
-        if (this.status.refundCanTransitToTargetStatus(RefundStatus.DENIED)) {
-            this.status = RefundStatus.DENIED;
-            this.deniedReason = deniedReason;
-        }
-    }
-
     public void pending() {
         if (this.status.refundCanTransitToTargetStatus(RefundStatus.PENDING)) {
             this.status = RefundStatus.PENDING;

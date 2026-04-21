@@ -1,5 +1,5 @@
 dummy:
-  enabled: false
+  enabled: true
   batch-type:
   category-count: 100
   seller-count: 10000

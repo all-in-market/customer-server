@@ -20,7 +20,7 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private int redisPort;
 
-    @Value("${spring.data.redis.ssl.enabled}")
+    @Value("${spring.data.redis.ssl.enabled:false}")
     private boolean sslEnabled;
 
     @Bean

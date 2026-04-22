@@ -6,12 +6,12 @@ import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboard
 import com.example.allinmarket.seller.entity.Seller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,8 +27,9 @@ public class DashboardService {
     private final SellerDashboardRepository sellerDashboardRepository;
     private final OrderItemRepository orderItemRepository;
 
+    @Async("dashboardExecutor")
     public void updateSellerDashboard(Long orderId) {
-        try{
+        try {
             List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdWithSeller(orderId);
 
             Map<Seller, List<OrderItem>> itemsBySeller = orderItems.stream()
@@ -47,7 +48,7 @@ public class DashboardService {
                 log.info("대시보드 업데이트 성공: orderId = {}", orderId);
             });
         } catch (Exception e) {
-            log.error("대시보드 업데이트 실패: orderId = {}", orderId);
+            log.error("대시보드 업데이트 실패: orderId = {}, reason = {}", orderId, e.getMessage());
         }
     }
 }

@@ -17,7 +17,7 @@ public class DummyDataRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
 
-        if(!properties.isEnabled()) return;
+        if (!properties.isEnabled()) return;
 
         dummyDataService.createDummyCategory(properties.getCategoryCount());
         dummyDataService.createDummySeller(properties.getSellerCount());
@@ -25,5 +25,6 @@ public class DummyDataRunner implements ApplicationRunner {
         dummyDataService.createDummyBuyer(properties.getBuyerCartCount());
         dummyDataService.createDummyCart(properties.getBuyerCartCount());
         dummyDataService.createDummyAddress(properties.getAddressCount());
+        dummyDataService.createDummySellerDashboard();
     }
 }

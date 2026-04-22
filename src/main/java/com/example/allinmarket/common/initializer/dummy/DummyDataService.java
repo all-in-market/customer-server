@@ -1,23 +1,20 @@
 package com.example.allinmarket.common.initializer.dummy;
 
 import com.example.allinmarket.common.enums.UserRole;
-import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
-import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import net.datafaker.Faker;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -28,14 +25,6 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 public class DummyDataService {
 
-    private final JdbcTemplate jdbcTemplate;
-    private final PasswordEncoder passwordEncoder;
-
-    private final SellerRepository sellerRepository;
-    private final CategoryRepository categoryRepository;
-
-    private final Faker faker = new Faker(new Locale("ko"));
-
     // batchUpdate 크기 단위 설정
     private static final int CATEGORY_BATCH_SIZE = 100;
     private static final int SELLER_BATCH_SIZE = 1000;
@@ -43,6 +32,11 @@ public class DummyDataService {
     private static final int BUYER_BATCH_SIZE = 1000;
     private static final int CART_BATCH_SIZE = 1000;
     private static final int ADDRESS_BATCH_SIZE = 1000;
+    private final JdbcTemplate jdbcTemplate;
+    private final PasswordEncoder passwordEncoder;
+    private final SellerRepository sellerRepository;
+    private final CategoryRepository categoryRepository;
+    private final Faker faker = new Faker(new Locale("ko"));
 
     /**
      * 카테고리 더미 데이터 생성
@@ -54,10 +48,10 @@ public class DummyDataService {
         List<Object[]> batchCategories = new ArrayList<>(CATEGORY_BATCH_SIZE);
 
         String sql = """
-            INSERT INTO categories
-            (name, sort_order, created_at, updated_at)
-            VALUES (?, ?, now(), now())
-            """;
+                INSERT INTO categories
+                (name, sort_order, created_at, updated_at)
+                VALUES (?, ?, now(), now())
+                """;
 
         for (int i = 0; i < totalCategoryCount; i++) {
 
@@ -66,7 +60,7 @@ public class DummyDataService {
 
             batchCategories.add(new Object[]{name, sortOrder});
 
-            if(batchCategories.size() == CATEGORY_BATCH_SIZE){
+            if (batchCategories.size() == CATEGORY_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchCategories);
                 batchCategories.clear();
 
@@ -76,7 +70,7 @@ public class DummyDataService {
             }
         }
 
-        if(!batchCategories.isEmpty()){
+        if (!batchCategories.isEmpty()) {
             jdbcTemplate.batchUpdate(sql, batchCategories);
         }
     }
@@ -90,10 +84,10 @@ public class DummyDataService {
         List<Object[]> batchSellers = new ArrayList<>(SELLER_BATCH_SIZE);
 
         String sql = """
-            INSERT INTO sellers
-            (email, password, name, phone, store_name, biz_number, bank_account, status, role, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now())
-            """;
+                INSERT INTO sellers
+                (email, password, name, phone, store_name, biz_number, bank_account, status, role, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now())
+                """;
 
         String password = passwordEncoder.encode("1234567890");
 
@@ -110,7 +104,7 @@ public class DummyDataService {
 
             batchSellers.add(new Object[]{email, password, name, phone, storeName, biz_number, bank_account, status, role});
 
-            if(batchSellers.size() == SELLER_BATCH_SIZE){
+            if (batchSellers.size() == SELLER_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchSellers);
                 batchSellers.clear();
 
@@ -120,7 +114,7 @@ public class DummyDataService {
             }
         }
 
-        if(!batchSellers.isEmpty()){
+        if (!batchSellers.isEmpty()) {
             jdbcTemplate.batchUpdate(sql, batchSellers);
         }
 
@@ -142,10 +136,10 @@ public class DummyDataService {
         List<Object[]> batchProducts = new ArrayList<>(PRODUCT_BATCH_SIZE);
 
         String sql = """
-            INSERT INTO products
-            (seller_id, category_id, name, price, stock, status, description, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, now(), now())
-            """;
+                INSERT INTO products
+                (seller_id, category_id, name, price, stock, status, description, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, now(), now())
+                """;
 
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
@@ -162,7 +156,7 @@ public class DummyDataService {
 
             batchProducts.add(new Object[]{sellerId, categoryId, name, price, stock, status, description});
 
-            if(batchProducts.size() == PRODUCT_BATCH_SIZE){
+            if (batchProducts.size() == PRODUCT_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchProducts);
                 batchProducts.clear();
 
@@ -172,7 +166,7 @@ public class DummyDataService {
             }
         }
 
-        if(!batchProducts.isEmpty()){
+        if (!batchProducts.isEmpty()) {
             jdbcTemplate.batchUpdate(sql, batchProducts);
         }
 
@@ -189,10 +183,10 @@ public class DummyDataService {
         List<Object[]> batchBuyers = new ArrayList<>(BUYER_BATCH_SIZE);
 
         String sql = """
-        INSERT INTO buyers
-        (email, password, name, phone, role, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, now(), now())
-        """;
+                INSERT INTO buyers
+                (email, password, name, phone, role, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, now(), now())
+                """;
 
         String password = passwordEncoder.encode("1234567890");
 
@@ -205,7 +199,7 @@ public class DummyDataService {
 
             batchBuyers.add(new Object[]{email, password, name, phone, role});
 
-            if(batchBuyers.size() == BUYER_BATCH_SIZE){
+            if (batchBuyers.size() == BUYER_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchBuyers);
                 batchBuyers.clear();
 
@@ -215,13 +209,55 @@ public class DummyDataService {
             }
         }
 
-        if(!batchBuyers.isEmpty()){
+        if (!batchBuyers.isEmpty()) {
             jdbcTemplate.batchUpdate(sql, batchBuyers);
         }
 
         long finished = System.currentTimeMillis() - start;
 
         log.info("sell batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 셀러 대시보드 초기 데이터 생성 (오늘 날짜 기준 seller당 1행)
+     * addOrder()가 UPDATE이므로 row가 없으면 0 rows affected → 테스트 현실성 확보
+     */
+    public void createDummySellerDashboard() {
+        long start = System.currentTimeMillis();
+
+        List<Long> sellerIdList = jdbcTemplate.queryForList("SELECT id FROM sellers", Long.class);
+
+        Date today = Date.valueOf(LocalDate.now());
+        Integer existing = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM seller_dashboard WHERE stat_date = ?", Integer.class, today);
+        if (existing != null && existing > 0) {
+            log.info("seller_dashboard already seeded for today, skipping");
+            return;
+        }
+
+        String sql = """
+                INSERT INTO seller_dashboard
+                (seller_id, stat_date, total_orders, total_sales, total_products_sold,
+                 total_refunds, refund_amount, fee_amount, settlement_amount, created_at, updated_at)
+                VALUES (?, ?, 0, 0.00, 0, 0, 0.00, 0.00, 0.00, now(), now())
+                """;
+
+        List<Object[]> batch = new ArrayList<>(1000);
+
+        for (Long sellerId : sellerIdList) {
+            batch.add(new Object[]{sellerId, today});
+
+            if (batch.size() == 1000) {
+                jdbcTemplate.batchUpdate(sql, batch);
+                batch.clear();
+            }
+        }
+
+        if (!batch.isEmpty()) {
+            jdbcTemplate.batchUpdate(sql, batch);
+        }
+
+        log.info("seller_dashboard seed finished in {} s", (System.currentTimeMillis() - start) / 1000.0);
     }
 
     /**
@@ -236,10 +272,10 @@ public class DummyDataService {
         List<Object[]> batchCarts = new ArrayList<>(CART_BATCH_SIZE);
 
         String sql = """
-            INSERT INTO carts
-            (buyer_id, created_at, updated_at)
-            VALUES (?, now(), now())
-            """;
+                INSERT INTO carts
+                (buyer_id, created_at, updated_at)
+                VALUES (?, now(), now())
+                """;
 
         for (int i = 0; i < totalCartCount; i++) {
 
@@ -247,7 +283,7 @@ public class DummyDataService {
 
             batchCarts.add(new Object[]{buyerId});
 
-            if(batchCarts.size() == CART_BATCH_SIZE){
+            if (batchCarts.size() == CART_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchCarts);
                 batchCarts.clear();
 
@@ -257,7 +293,7 @@ public class DummyDataService {
             }
         }
 
-        if(!batchCarts.isEmpty()){
+        if (!batchCarts.isEmpty()) {
             jdbcTemplate.batchUpdate(sql, batchCarts);
         }
 
@@ -274,10 +310,10 @@ public class DummyDataService {
         List<Object[]> batchAddress = new ArrayList<>(ADDRESS_BATCH_SIZE);
 
         String sql = """
-        INSERT INTO addresses
-        (buyer_id, recipient, phone, detail, is_default, created_at, updated_at)
-        VALUES (?, ?, ?, ?, false, now(), now())
-        """;
+                INSERT INTO addresses
+                (buyer_id, recipient, phone, detail, is_default, created_at, updated_at)
+                VALUES (?, ?, ?, ?, false, now(), now())
+                """;
 
         for (int i = 0; i < totalAddressCount; i++) {
 
@@ -288,7 +324,7 @@ public class DummyDataService {
 
             batchAddress.add(new Object[]{buyerId, recipient, phone, detail});
 
-            if(batchAddress.size() == ADDRESS_BATCH_SIZE){
+            if (batchAddress.size() == ADDRESS_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchAddress);
                 batchAddress.clear();
 
@@ -298,7 +334,7 @@ public class DummyDataService {
             }
         }
 
-        if(!batchAddress.isEmpty()){
+        if (!batchAddress.isEmpty()) {
             jdbcTemplate.batchUpdate(sql, batchAddress);
         }
 

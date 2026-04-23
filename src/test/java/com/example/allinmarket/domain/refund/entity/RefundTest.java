@@ -17,7 +17,7 @@ import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.enums.RefundStatus;
 import com.example.allinmarket.domain.refund.repository.RefundRepository;
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
+import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
@@ -53,6 +53,59 @@ class RefundTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private TransactionHistoryService transactionHistoryService;
+
+    private Buyer createBuyer(Long id) {
+        Buyer buyer = Buyer.of(
+                "test@test.com",
+                "encodedPassword",
+                "홍길동",
+                "010-1111-2222"
+        );
+        setField(buyer, "id", id);
+        return buyer;
+    }
+
+    private Order createOrder(Long id, Buyer buyer, BigDecimal totalAmount) {
+        Order order = Order.of(
+                buyer,
+                totalAmount,
+                null,
+                "홍길동",
+                "010-1111-2222",
+                "서울시 강남구"
+        );
+        setField(order, "id", id);
+        return order;
+    }
+
+    private Payment createPayment(Order order, String impUid, BigDecimal amount, MethodEnum method) {
+        return Payment.of(order, impUid, amount, method);
+    }
+
+    private void setField(Object target, String fieldName, Object value) {
+        try {
+            Field field = findField(target.getClass(), fieldName);
+            field.setAccessible(true);
+            field.set(target, value);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+        Class<?> current = clazz;
+        while (current != null) {
+            try {
+                return current.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException e) {
+                current = current.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(fieldName);
+    }
 
     @Nested
     @DisplayName("주문 기준 환불 생성")
@@ -334,55 +387,5 @@ class RefundTest {
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.REFUND_FORBIDDEN);
             verify(refundRepository, never()).save(any());
         }
-    }
-
-    private Buyer createBuyer(Long id) {
-        Buyer buyer = Buyer.of(
-                "test@test.com",
-                "encodedPassword",
-                "홍길동",
-                "010-1111-2222"
-        );
-        setField(buyer, "id", id);
-        return buyer;
-    }
-
-    private Order createOrder(Long id, Buyer buyer, BigDecimal totalAmount) {
-        Order order = Order.of(
-                buyer,
-                totalAmount,
-                null,
-                "홍길동",
-                "010-1111-2222",
-                "서울시 강남구"
-        );
-        setField(order, "id", id);
-        return order;
-    }
-
-    private Payment createPayment(Order order, String impUid, BigDecimal amount, MethodEnum method) {
-        return Payment.of(order, impUid, amount, method);
-    }
-
-    private void setField(Object target, String fieldName, Object value) {
-        try {
-            Field field = findField(target.getClass(), fieldName);
-            field.setAccessible(true);
-            field.set(target, value);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-        Class<?> current = clazz;
-        while (current != null) {
-            try {
-                return current.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-                current = current.getSuperclass();
-            }
-        }
-        throw new NoSuchFieldException(fieldName);
     }
 }

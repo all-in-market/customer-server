@@ -59,6 +59,9 @@ class BuyerPaymentServiceTest {
     @Mock
     private DashboardService dashboardService;
 
+    @Mock
+    private TransactionHistoryService transactionHistoryService;
+
     @BeforeEach
     void setUp() {
         paymentRetryService = new PaymentRetryService(buyerPaymentService, paymentRepository, paymentStateService);

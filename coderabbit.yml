@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: ko-KR
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary_in_walkthrough: true
+  review_details: true
+  fail_commit_status: true
+  auto_apply_labels: true
+  auto_assign_reviewers: true
+  in_progress_fortune: false
+  poem: false
+chat:
+  art: false

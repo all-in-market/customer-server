@@ -1,10 +1,10 @@
 import http from 'k6/http';
-import { check } from 'k6';
-import { Trend } from 'k6/metrics';
-import { loginUsers, authHeaders } from './common.js';
+import {check} from 'k6';
+import {Trend} from 'k6/metrics';
+import {authHeaders, loginUsers} from './common.js';
 
 const BASE_URL = __ENV.BASE_URL || 'http://host.docker.internal:8080';
-const MAX_VUS  = parseInt(__ENV.MAX_VUS  || '200');
+const MAX_VUS = parseInt(__ENV.MAX_VUS || '200');
 
 // before / after 구분 태그 — InfluxDB에서 두 결과를 같은 패널에 겹쳐서 비교할 때 사용
 // 실행 시 -e RUN_TAG=before 또는 -e RUN_TAG=after 로 전달
@@ -18,12 +18,12 @@ const paymentDuration = new Trend('payment_duration_ms', true);
 // smoke: 시나리오 동작 검증용 최소 실행
 const stages = {
     smoke: [
-        { target: 3,  duration: '30s' },
+        {target: 3, duration: '30s'},
     ],
     load: [
-        { target: 20, duration: '1m'  },  // 워밍업
-        { target: 20, duration: '5m'  },  // 안정 구간 — 이 구간 지표로 before/after 비교
-        { target: 0,  duration: '30s' },  // 쿨다운
+        {target: 50, duration: '1m'},  // 워밍업
+        {target: 100, duration: '3m'},  // 안정 구간 — 이 구간 지표로 before/after 비교
+        {target: 0, duration: '30s'},  // 쿨다운
     ],
 };
 
@@ -44,12 +44,12 @@ export const options = {
         },
     },
     // 모든 메트릭에 run 태그 자동 부착 → InfluxDB에서 before/after 필터링 가능
-    tags: { run: RUN_TAG },
+    tags: {run: RUN_TAG},
     thresholds: {
         // POST /payments 에 name 태그를 붙여 이 엔드포인트만 기준 적용
         'http_req_duration{name:POST /payments}': ['p(95)<2000'],
-        'payment_duration_ms':                    ['p(95)<2000'],
-        http_req_failed:                          ['rate<0.01'],
+        'payment_duration_ms': ['p(95)<2000'],
+        http_req_failed: ['rate<0.01'],
     },
 };
 
@@ -60,7 +60,7 @@ function postParams(token, endpointName) {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
         },
-        tags: { name: endpointName },
+        tags: {name: endpointName},
     };
 }
 
@@ -68,36 +68,41 @@ export function setup() {
     const productRes = http.get(`${BASE_URL}/products?page=0&size=20`);
     const productIds = productRes.json('data.content').map(p => p.id);
 
-    const { tokens } = loginUsers(MAX_VUS);
+    const {tokens} = loginUsers(MAX_VUS);
 
     const users = tokens.map(token => {
-        const addrRes  = http.get(`${BASE_URL}/addresses`, authHeaders(token));
+        const addrRes = http.get(`${BASE_URL}/addresses`, authHeaders(token));
         const addrBody = addrRes.json();
-        const addresses  = addrRes.json('data');
-        const addressId  = addresses && addresses.length > 0 ? addresses[0].addressId : null;
+        const addresses = addrRes.json('data');
+        const addressId = addresses && addresses.length > 0 ? addresses[0].addressId : null;
 
         if (!addressId) {
-            console.log(`addressId missing: ${JSON.stringify(addrBody)}`);
+            console.warn(`addressId missing, skipping user. status=${addrRes.status}`);
+            return null;
         }
 
-        return { token, addressId };
-    });
+        return {token, addressId};
+    }).filter(user => user !== null);
 
-    return { users, productIds };
+    if (users.length === 0) {
+        throw new Error('No users with valid addressId. Seed addresses before running this scenario.');
+    }
+
+    return {users, productIds};
 }
 
 export default function (data) {
-    const user      = data.users[(__VU - 1) % data.users.length];
+    const user = data.users[(__VU - 1) % data.users.length];
     const productId = data.productIds[Math.floor(Math.random() * data.productIds.length)];
 
     // 1. 장바구니 추가
     const cartRes = http.post(
         `${BASE_URL}/carts/items?sort=createdAt,desc&size=1`,
-        JSON.stringify({ productId, quantity: 1 }),
+        JSON.stringify({productId, quantity: 1}),
         postParams(user.token, 'POST /carts/items')
     );
 
-    check(cartRes, { 'cart item added 201': r => r.status === 201 });
+    check(cartRes, {'cart item added 201': r => r.status === 201});
     if (cartRes.status !== 201) return;
 
     const cartItemId = cartRes.json().data.items.content[0].id;
@@ -105,11 +110,11 @@ export default function (data) {
     // 2. 주문 생성
     const orderRes = http.post(
         `${BASE_URL}/orders`,
-        JSON.stringify({ cartItemIds: [cartItemId], addressId: user.addressId }),
+        JSON.stringify({cartItemIds: [cartItemId], addressId: user.addressId}),
         postParams(user.token, 'POST /orders')
     );
 
-    check(orderRes, { 'order created 201': r => r.status === 201 });
+    check(orderRes, {'order created 201': r => r.status === 201});
     if (orderRes.status !== 201) return;
 
     const orderId = orderRes.json('data.orderId');
@@ -119,10 +124,10 @@ export default function (data) {
     const paymentStart = Date.now();
     const paymentRes = http.post(
         `${BASE_URL}/payments`,
-        JSON.stringify({ orderId, method: 'MOCK' }),
+        JSON.stringify({orderId, method: 'MOCK'}),
         postParams(user.token, 'POST /payments')
     );
-    paymentDuration.add(Date.now() - paymentStart, { run: RUN_TAG });
+    paymentDuration.add(Date.now() - paymentStart, {run: RUN_TAG});
 
-    check(paymentRes, { 'payment processed 201': r => r.status === 201 });
+    check(paymentRes, {'payment processed 201': r => r.status === 201});
 }

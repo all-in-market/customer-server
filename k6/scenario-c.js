@@ -77,7 +77,7 @@ export function setup() {
         const addressId  = addresses && addresses.length > 0 ? addresses[0].addressId : null;
 
         if (!addressId) {
-            console.warn(`addressId missing, skipping user: ${JSON.stringify(addrBody)}`);
+            console.warn(`addressId missing, skipping user. status=${addrRes.status}`);
             return null;
         }
 

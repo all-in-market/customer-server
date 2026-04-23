@@ -57,24 +57,16 @@ public class BuyerPaymentService {
         }
 
         String impUid = createPaymentId(request.orderId());
-
         Payment payment = Payment.of(
                 order,
                 impUid,
                 order.getTotalAmount(),
                 request.method()
         );
-
         paymentRepository.save(payment);
         log.info("결제 생성 성공: paymentId = {}", payment.getId());
 
-        // transaction_histories 이력 추가
-        try {
-            transactionHistoryService.savePaymentHistory(payment);
-            log.info("결제 생성 이력 저장 성공: paymentId = {}", payment.getId());
-        } catch (Exception e) {
-            log.error("결제 생성 이력 저장 실패: paymentId = {}, reason = {}", payment.getId(), e.getMessage());
-        }
+        transactionHistoryService.savePaymentHistory(payment);
 
         return PaymentDetailResponse.from(payment);
     }
@@ -131,18 +123,10 @@ public class BuyerPaymentService {
 
         // flush를 commit 전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생
         paymentRepository.saveAndFlush(dbPayment);
-
-        // seller_dashboard 업데이트
-        dashboardService.updateSellerDashboard(dbPayment.getOrder().getId());
-
         log.info("결제 승인 성공: paymentId = {}", dbPayment.getId());
 
-        try {
-            transactionHistoryService.savePaymentHistory(dbPayment);
-            log.info("결제 승인 이력 저장 성공: paymentId = {}", dbPayment.getId());
-        } catch (Exception e) {
-            log.error("결제 승인 이력 저장 실패: paymentId = {}, reason = {}", dbPayment.getId(), e.getMessage());
-        }
+        dashboardService.updateSellerDashboard(dbPayment.getOrder().getId());
+        transactionHistoryService.savePaymentHistory(dbPayment);
 
         return PaymentDetailResponse.from(dbPayment);
     }

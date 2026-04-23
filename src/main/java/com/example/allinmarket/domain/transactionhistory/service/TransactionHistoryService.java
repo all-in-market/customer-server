@@ -21,7 +21,7 @@ public class TransactionHistoryService {
     public void savePaymentHistory(Payment payment) {
         try{
             TransactionHistory transactionHistory = TransactionHistory.of(payment);
-            transactionHistoryRepository.save(transactionHistory);
+            transactionHistoryRepository.saveAndFlush(transactionHistory);
             log.info("결제 생성 이력 저장 성공: paymentId = {}", payment.getId());
         } catch(Exception e) {
             log.error("결제 생성 이력 저장 실패: paymentId = {}, reason = {}", payment.getId(), e.getMessage());
@@ -31,7 +31,7 @@ public class TransactionHistoryService {
     public void saveRefundHistory(Refund refund) {
         try{
             TransactionHistory transactionHistory = TransactionHistory.of(refund);
-            transactionHistoryRepository.save(transactionHistory);
+            transactionHistoryRepository.saveAndFlush(transactionHistory);
             log.info("환불 생성 이력 저장 성공: refundId = {}", refund.getId());
         } catch(Exception e) {
             log.error("환불 생성 이력 저장 실패 : refundId = {}, reason = {}", refund.getId(),e.getMessage());

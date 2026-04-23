@@ -6,6 +6,18 @@ build/
 !**/src/test/**/build/
 .env
 
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/.terraform.tfstate.lock.info
+
+# 민감정보
+infra/*.tfvars
+infra/*.tfvars.json
+infra/*.auto.tfvars
+infra/*.auto.tfvars.json
+
 ### STS ###
 .apt_generated
 .classpath

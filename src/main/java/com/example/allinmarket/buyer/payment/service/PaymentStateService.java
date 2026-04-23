@@ -22,12 +22,6 @@ public class PaymentStateService {
         payment.fail();
         paymentRepository.saveAndFlush(payment);
         log.info("결제 승인 실패: paymentId = {}", payment.getId());
-
-        try {
-            transactionHistoryService.savePaymentHistory(payment);
-            log.info("결제 실패 이력 저장 성공: paymentId = {}", payment.getId());
-        } catch (Exception e) {
-            log.error("결제 실패 이력 저장 실패: paymentId = {}, reason = {}", payment.getId(), e.getMessage());
-        }
+        transactionHistoryService.savePaymentHistory(payment);
     }
 }

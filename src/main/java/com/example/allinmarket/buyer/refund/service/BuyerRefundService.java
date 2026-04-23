@@ -61,22 +61,15 @@ public class BuyerRefundService {
             return RefundDetailResponse.from(existingRefund);
         }
 
-        // 환불 객체 생성 및 저장
         Refund refund = Refund.of(
                 order.getBuyer(),
                 payment,
                 request.reason(),
                 request.description()
         );
-
         refundRepository.save(refund);
 
-        // transaction_histories 업데이트
-        try {
-            transactionHistoryService.saveRefundHistory(refund);
-        } catch (Exception e) {
-            log.error("환불 생성 이력 저장 실패 : refundId = {}, reason = {}", refund.getId(),e.getMessage());
-        }
+        transactionHistoryService.saveRefundHistory(refund);
 
         return RefundDetailResponse.from(refund);
     }
@@ -125,15 +118,9 @@ public class BuyerRefundService {
                 ReasonEnum.PAYMENT_AMOUNT_MISMATCH,
                 ReasonEnum.PAYMENT_AMOUNT_MISMATCH.getReason()
         );
-
         refundRepository.save(refund);
-        // transaction_histories 업데이트
-        try {
-            transactionHistoryService.saveRefundHistory(refund);
-        } catch (Exception e) {
-            log.error("환불 생성 이력 저장 실패 : refundId = {}, reason = {}", refund.getId(),e.getMessage());
-        }
 
+        transactionHistoryService.saveRefundHistory(refund);
     }
 
     public PageResponse<RefundDetailResponse> getRefunds(Long buyerId, Pageable pageable) {

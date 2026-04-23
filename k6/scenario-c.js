@@ -21,8 +21,8 @@ const stages = {
         { target: 3,  duration: '30s' },
     ],
     load: [
-        { target: 20, duration: '1m'  },  // 워밍업
-        { target: 20, duration: '5m'  },  // 안정 구간 — 이 구간 지표로 before/after 비교
+        { target: 50, duration: '1m'  },  // 워밍업
+        { target: 100, duration: '3m'  },  // 안정 구간 — 이 구간 지표로 before/after 비교
         { target: 0,  duration: '30s' },  // 쿨다운
     ],
 };
@@ -77,11 +77,13 @@ export function setup() {
         const addressId  = addresses && addresses.length > 0 ? addresses[0].addressId : null;
 
         if (!addressId) {
-            console.log(`addressId missing: ${JSON.stringify(addrBody)}`);
+            console.warn(`addressId missing, skipping user: ${JSON.stringify(addrBody)}`);
+            return null;
         }
 
         return { token, addressId };
-    });
+        // [수정] null 유저 제거 → default 함수에서 addressId 없는 유저가 섞이지 않음
+    }).filter(user => user !== null);
 
     return { users, productIds };
 }

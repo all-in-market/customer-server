@@ -48,7 +48,7 @@ public class DashboardService {
                 log.info("대시보드 업데이트 성공: orderId = {}", orderId);
             });
         } catch (Exception e) {
-            log.error("대시보드 업데이트 실패: orderId = {}, reason = {}", orderId, e.getMessage());
+            log.error("대시보드 업데이트 실패: orderId = {}, reason = {}", orderId, e.getStackTrace());
         }
     }
 }

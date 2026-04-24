@@ -81,9 +81,16 @@ variable "redis_node_type" {
   default     = "cache.t4g.micro"
 }
 
-variable "container_image" {
-  description = "Full ECR image URI including tag"
+variable "ecr_repository_name" {
+  description = "ECR repository name. If null, project_name is used."
   type        = string
+  default     = null
+}
+
+variable "image_tag" {
+  description = "Docker image tag used by ECS task definition"
+  type        = string
+  default     = "latest"
 }
 
 variable "container_name" {
@@ -144,4 +151,20 @@ variable "certificate_arn" {
   description = "Optional ACM certificate ARN for HTTPS listener. Leave null to create HTTP only."
   type        = string
   default     = null
+}
+
+variable "github_owner" {
+  description = "GitHub organization or user name"
+  type        = string
+}
+
+variable "github_repo" {
+  description = "GitHub repository name"
+  type        = string
+}
+
+variable "github_branch" {
+  description = "GitHub branch allowed to deploy"
+  type        = string
+  default     = "dev"
 }

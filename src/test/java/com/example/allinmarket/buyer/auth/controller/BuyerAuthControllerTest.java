@@ -4,9 +4,15 @@ import com.example.allinmarket.buyer.auth.dto.request.BuyerLoginRequest;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerSignupRequest;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerLoginResponse;
+import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
 import com.example.allinmarket.buyer.auth.service.BuyerAuthService;
 import com.example.allinmarket.common.enums.SuccessEnum;
+import com.example.allinmarket.common.security.JwtAuthenticationFilter;
 import com.example.allinmarket.common.security.JwtProvider;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -17,6 +23,7 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(BuyerAuthController.class)
@@ -26,10 +33,22 @@ public class BuyerAuthControllerTest {
     private RestTestClient restTestClient;
 
     @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockitoBean
     private JwtProvider jwtProvider;
 
     @MockitoBean
     private BuyerAuthService buyerAuthService;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+    }
 
     @Test
     void 회원_가입_성공_테스트() {
@@ -95,9 +114,12 @@ public class BuyerAuthControllerTest {
                 "12345678"
         );
 
-        BuyerLoginResponse response = new BuyerLoginResponse("test-accessToken");
+        LoginResult loginResult = new LoginResult(
+                new BuyerLoginResponse("test-accessToken"),
+                "test-refreshToken"
+        );
 
-        given(buyerAuthService.login(any(BuyerLoginRequest.class))).willReturn(response);
+        given(buyerAuthService.login(any(BuyerLoginRequest.class))).willReturn(loginResult);
 
         // when & then
         restTestClient.post().uri("/auth/login")
@@ -105,10 +127,12 @@ public class BuyerAuthControllerTest {
                 .body(request)
                 .exchange()
                 .expectStatus().isOk()
+                .expectHeader().valueMatches("Set-Cookie", ".*refreshToken=test-refreshToken.*")
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.LOGIN_SUCCESS.getMessage());
+                .jsonPath("$.message").isEqualTo(SuccessEnum.LOGIN_SUCCESS.getMessage())
+                .jsonPath("$.data.accessToken").isEqualTo("test-accessToken");
     }
 
     @Test

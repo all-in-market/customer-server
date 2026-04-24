@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,7 +24,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-//    private final StringRedisTemplate redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -32,17 +33,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
 
         if (token != null) {
-            // Redis 블랙리스트 확인 — 장애 시 fail-closed (503 반환)
-//            try {
-//                if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + token))) {
-//                    sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ErrorEnum.TOKEN_INVALID);
-//                    return;
-//                }
-//            } catch (Exception e) {
-//                log.error("[JWT] Redis 연결 오류 - fail-closed 처리", e);
-//                sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, ErrorEnum.INTERNAL_SERVER_ERROR);
-//                return;
-//            }
+//            Redis 블랙리스트 확인 — 장애 시 fail-closed (503 반환)
+            try {
+                if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + token))) {
+                    sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ErrorEnum.TOKEN_INVALID);
+                    return;
+                }
+            } catch (Exception e) {
+                log.error("[JWT] Redis 연결 오류 - fail-closed 처리", e);
+                sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, ErrorEnum.INTERNAL_SERVER_ERROR);
+                return;
+            }
 
             if (!jwtProvider.validateToken(token)) {
                 sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ErrorEnum.TOKEN_INVALID);

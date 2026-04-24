@@ -4,6 +4,7 @@ import com.example.allinmarket.buyer.auth.dto.request.BuyerLoginRequest;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerSignupRequest;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerLoginResponse;
+import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
@@ -18,6 +19,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
@@ -43,6 +46,12 @@ public class BuyerAuthServiceTest {
 
     @Mock
     private CartRepository cartRepository;
+
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private ValueOperations<String, Object> valueOperations;
 
     @Test
     void 회원_가입_성공_테스트() {
@@ -117,12 +126,14 @@ public class BuyerAuthServiceTest {
         given(buyerRepository.findByEmail("테스트@테스트.com")).willReturn(Optional.of(buyer));
         given(passwordEncoder.matches("12345678", "비밀번호암호화")).willReturn(true);
         given(jwtProvider.generateToken(buyer.getId(), buyer.getRole())).willReturn("test-accessToken");
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
 
         // when
-        BuyerLoginResponse response = buyerAuthService.login(request);
+        LoginResult result = buyerAuthService.login(request);
 
         // then
-        assertThat(response.accessToken()).isEqualTo("test-accessToken");
+        assertThat(result.response().accessToken()).isEqualTo("test-accessToken");
+        assertThat(result.refreshToken()).isNotNull();
     }
 
     @Test

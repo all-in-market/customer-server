@@ -114,8 +114,8 @@ public class BuyerCartServiceTest {
 
         AddProductToCartRequest request = new AddProductToCartRequest(1L, 2);
 
+        given(productRepository.findVisibleProductById(request.productId())).willReturn(Optional.of(product));
         given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
-        given(productRepository.findById(request.productId())).willReturn(Optional.of(product));
         given(cartItemRepository.findByCartIdAndProductId(cart.getId(), request.productId())).willReturn(Optional.empty());
         given(cartItemRepository.findByCartId(eq(cart.getId()), any(Pageable.class))).willReturn(page);
 
@@ -128,7 +128,7 @@ public class BuyerCartServiceTest {
     }
 
     @Test
-    void 장바구니_상품_추가_실패_테스트() {
+    void 장바구니_상품_추가_실패_테스트_재고부족() {
         // given
         Buyer buyer = Buyer.of("test@test.com", "pw", "홍길동", "010-1234-5678");
 
@@ -145,11 +145,29 @@ public class BuyerCartServiceTest {
         AddProductToCartRequest request = new AddProductToCartRequest(1L, 5);
 
         given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
-        given(productRepository.findById(request.productId())).willReturn(Optional.of(product));
+        given(productRepository.findVisibleProductById(request.productId())).willReturn(Optional.of(product));
 
         // when & then
         assertThrows(BaseException.class,
                 () -> buyerCartService.addProductToCart(buyer.getId(), request, PageRequest.of(0, 10)));
+    }
+
+    @Test
+    void 장바구니_상품_추가_실패_테스트_비가시_상품() {
+    // given
+    Buyer buyer = Buyer.of("test@test.com", "pw", "홍길동", "010-1234-5678");
+    ReflectionTestUtils.setField(buyer, "id", 1L);
+    Cart cart = Cart.of(buyer);
+    ReflectionTestUtils.setField(cart, "id", 1L);
+
+    AddProductToCartRequest request = new AddProductToCartRequest(1L, 1);
+
+    given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
+    given(productRepository.findVisibleProductById(request.productId())).willReturn(Optional.empty());
+
+    // when & then
+    assertThrows(BaseException.class,
+            () -> buyerCartService.addProductToCart(buyer.getId(), request, PageRequest.of(0, 10)));
     }
 
     @Test

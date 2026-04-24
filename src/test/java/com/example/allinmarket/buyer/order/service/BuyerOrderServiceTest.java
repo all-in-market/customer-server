@@ -4,11 +4,15 @@ import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.order.dto.request.OrderCreateRequest;
 import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.address.entity.Address;
 import com.example.allinmarket.domain.address.repository.AddressRepository;
+import com.example.allinmarket.domain.cart.entity.Cart;
 import com.example.allinmarket.domain.cartitem.entity.CartItem;
 import com.example.allinmarket.domain.cartitem.repository.CartItemRepository;
+import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -24,8 +28,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -141,6 +147,84 @@ class BuyerOrderServiceTest {
 
             verify(product1).decreaseStock(2);
             verify(product2).decreaseStock(3);
+        }
+
+        @Test
+        void 삭제된_상품이_장바구니에_있으면_주문_생성에_실패한다() {
+            // given
+
+            Buyer buyer = Buyer.of(
+                    "buyer@test.com",
+                    "password",
+                    "구매자",
+                    "010-1111-2222"
+            );
+            ReflectionTestUtils.setField(buyer, "id", buyerId);
+
+            Address address = Address.of(
+                    buyer,
+                    "수령인",
+                    "010-1111-2222",
+                    "서울시 어딘가"
+            );
+            ReflectionTestUtils.setField(address, "id", addressId);
+
+            Cart cart = Cart.of(buyer);
+            ReflectionTestUtils.setField(cart, "id", 1L);
+
+            Seller seller = Seller.of(
+                    "seller@test.com",
+                    "password",
+                    "판매자",
+                    "010-3333-4444",
+                    "store",
+                    "bizNum",
+                    "bankAccount"
+            );
+            ReflectionTestUtils.setField(seller, "id", 1L);
+
+            Category category = Category.of("테스트 카테고리", 1);
+            ReflectionTestUtils.setField(category, "id", 1L);
+
+            Product deletedProduct = Product.of(
+                    seller,
+                    category,
+                    "삭제된 상품",
+                    BigDecimal.valueOf(10000),
+                    10,
+                    "삭제된 상품 설명"
+            );
+            ReflectionTestUtils.setField(deletedProduct, "id", productId1);
+            ReflectionTestUtils.setField(deletedProduct, "deletedAt", LocalDateTime.now());
+
+            CartItem cartItem = CartItem.of(cart, deletedProduct);
+            ReflectionTestUtils.setField(cartItem, "id", 1L);
+            cartItem.updateQuantity(1);
+
+            List<CartItem> cartItems = List.of(cartItem);
+
+            when(buyerRepository.findById(buyerId))
+                    .thenReturn(Optional.of(buyer));
+
+            when(addressRepository.findByIdAndBuyerId(addressId, buyerId))
+                    .thenReturn(Optional.of(address));
+
+            /*
+             * 실제 쿼리는 deletedAt IS NULL 조건 때문에
+             * deletedAt != null 상품을 조회하지 않는다.
+             */
+            when(productRepository.findAllByIdInWithSellerWithLock(eq(List.of(productId1))))
+                    .thenReturn(List.of());
+
+            // when & then
+            assertThatThrownBy(() ->
+                    buyerOrderService.createOrder(buyerId, cartItems, addressId)
+            )
+                    .isInstanceOf(BaseException.class)
+                    .extracting("errorEnum")
+                    .isEqualTo(ErrorEnum.INVALID_ORDER_PRODUCT);
+
+            verify(productRepository).findAllByIdInWithSellerWithLock(eq(List.of(productId1)));
         }
     }
 

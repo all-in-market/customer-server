@@ -114,8 +114,8 @@ public class BuyerCartServiceTest {
 
         AddProductToCartRequest request = new AddProductToCartRequest(1L, 2);
 
+        given(productRepository.findVisibleProductById(request.productId())).willReturn(Optional.of(product));
         given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
-        given(productRepository.findById(request.productId())).willReturn(Optional.of(product));
         given(cartItemRepository.findByCartIdAndProductId(cart.getId(), request.productId())).willReturn(Optional.empty());
         given(cartItemRepository.findByCartId(eq(cart.getId()), any(Pageable.class))).willReturn(page);
 
@@ -145,7 +145,7 @@ public class BuyerCartServiceTest {
         AddProductToCartRequest request = new AddProductToCartRequest(1L, 5);
 
         given(cartRepository.findByBuyerId(buyer.getId())).willReturn(Optional.of(cart));
-        given(productRepository.findById(request.productId())).willReturn(Optional.of(product));
+        given(productRepository.findVisibleProductById(request.productId())).willReturn(Optional.of(product));
 
         // when & then
         assertThrows(BaseException.class,

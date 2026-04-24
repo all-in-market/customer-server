@@ -20,6 +20,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -43,12 +48,27 @@ public class SellerProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private RedisConnectionFactory redisConnectionFactory;
+
+    @Mock
+    private RedisConnection redisConnection;
+
+    @Mock
+    private Cursor<byte[]> cursor;
+
     @InjectMocks
     private SellerProductService sellerProductService;
 
     @Test
     void 판매자_상품_등록_성공_테스트() {
         // given
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
 
         Seller seller = mock(Seller.class);
@@ -185,6 +205,9 @@ public class SellerProductServiceTest {
     @Test
     void 판매자_상품_수정_성공_테스트() {
         // given
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
         Long productId = 1L;
 
@@ -233,6 +256,9 @@ public class SellerProductServiceTest {
     @Test
     void 판매자_상품_수정_일부필드만_수정_성공_테스트() {
         // given - name만 수정, 나머지는 null
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
         Long productId = 1L;
 
@@ -359,6 +385,9 @@ public class SellerProductServiceTest {
     @Test
     void 판매자_상품_삭제_성공_테스트() {
         // given
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
         Long productId = 1L;
 
@@ -437,6 +466,9 @@ public class SellerProductServiceTest {
     @Test
     void 판매자_상품_재고수정_성공_테스트() {
         // given
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
         Long productId = 1L;
 
@@ -507,5 +539,12 @@ public class SellerProductServiceTest {
                 () -> sellerProductService.stockUpdate(sellerId, productId, request)
         );
         assertEquals(ErrorEnum.FORBIDDEN, exception.getErrorEnum());
+    }
+
+    private void givenRedisCacheEvictWorks() {
+        given(redisTemplate.getConnectionFactory()).willReturn(redisConnectionFactory);
+        given(redisConnectionFactory.getConnection()).willReturn(redisConnection);
+        given(redisConnection.scan(any(ScanOptions.class))).willReturn(cursor);
+        given(cursor.hasNext()).willReturn(false);
     }
 }

@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/categories").permitAll()
                         .requestMatchers("/seller/auth/**").permitAll()
                         .requestMatchers("/seller/**").hasRole("SELLER")
+                        .requestMatchers("/sellers/**").hasRole("SELLER")
                         .anyRequest().hasRole("BUYER")
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

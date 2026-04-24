@@ -16,6 +16,7 @@ public enum ErrorEnum {
     LOCK_ACQUISITION_FAILED(500, "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
     REDIS_UNAVAILABLE(503, "Redis 서버에 연결할 수 없습니다."),
     INVALID_ARGUMENT(400, "요청값이 올바르지 않습니다"),
+    DATA_CONFLICT(409, "요청이 현재 데이터 상태와 충돌합니다."),
 
     // Order
     ORDER_NOT_FOUND(404, "존재하지 않는 주문입니다."),

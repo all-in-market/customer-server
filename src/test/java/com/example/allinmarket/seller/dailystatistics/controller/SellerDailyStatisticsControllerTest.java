@@ -129,14 +129,14 @@ class SellerDailyStatisticsControllerTest {
     }
 
     @Test
-    void 특정일_통계_조회_잘못된날짜형식_500_테스트() {
+    void 특정일_통계_조회_잘못된날짜형식_400_테스트() {
         // given
         setAuth();
 
         // when & then
         restTestClient.get().uri("/seller/statistics/daily/20250410")
                 .exchange()
-                .expectStatus().isEqualTo(500)
+                .expectStatus().isEqualTo(400)
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(false);
     }

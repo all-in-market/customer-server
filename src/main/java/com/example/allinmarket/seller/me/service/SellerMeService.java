@@ -36,12 +36,11 @@ public class SellerMeService {
         Seller me = sellerRepository.findByIdAndDeletedAtIsNull(userId).orElseThrow(
                 () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND));
 
-        // 중복 이메일 검사
-        if (sellerRepository.existsByEmail(request.email())) {
-            throw new BaseException(ErrorEnum.EMAIL_ALREADY_EXISTS);
-        }
+        if (StringUtils.hasText(request.email()) && !request.email().equals(me.getEmail())) {
+            if (sellerRepository.existsByEmail(request.email())) {
+                throw new BaseException(ErrorEnum.EMAIL_ALREADY_EXISTS);
+            }
 
-        if (StringUtils.hasText(request.email())) {
             me.updateEmail(request.email());
         }
 

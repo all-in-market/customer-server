@@ -213,7 +213,7 @@ class BuyerOrderServiceTest {
              * 실제 쿼리는 deletedAt IS NULL 조건 때문에
              * deletedAt != null 상품을 조회하지 않는다.
              */
-            when(productRepository.findAllByIdInWithSellerWithLock(anyList()))
+            when(productRepository.findAllByIdInWithSellerWithLock(eq(List.of(productId1))))
                     .thenReturn(List.of());
 
             // when & then
@@ -223,8 +223,9 @@ class BuyerOrderServiceTest {
                     .isInstanceOf(BaseException.class)
                     .extracting("errorEnum")
                     .isEqualTo(ErrorEnum.INVALID_ORDER_PRODUCT);
-        }
 
+            verify(productRepository).findAllByIdInWithSellerWithLock(eq(List.of(productId1)));
+        }
     }
 
     @Nested

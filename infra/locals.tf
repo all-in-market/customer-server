@@ -8,6 +8,9 @@ locals {
 
   log_group_name = "/ecs/${var.project_name}"
 
+  ecr_repository_name = coalesce(var.ecr_repository_name, var.project_name)
+  container_image     = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
+
   merged_environment_variables = merge(
     var.environment_variables,
     {

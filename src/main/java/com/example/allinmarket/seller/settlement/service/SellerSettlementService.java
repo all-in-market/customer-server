@@ -9,6 +9,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,7 +35,7 @@ public class SellerSettlementService {
                             .map(SettlementDetailResponse::from)
             );
 
-            redisTemplate.opsForValue().set(key, response, 10);
+            redisTemplate.opsForValue().set(key, response, Duration.ofMinutes(10));
             return response;
         }
 

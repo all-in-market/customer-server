@@ -70,6 +70,10 @@ public class Product extends DeletableEntity {
         stock -= amount;
     }
 
+    public void releaseStock(int amount) {
+        stock += amount;
+    }
+
     public void updateCategory(Category category) {
         this.category = category;
     }

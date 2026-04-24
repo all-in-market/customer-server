@@ -66,4 +66,10 @@ public class Order extends ModifiableEntity {
             this.status = OrderStatus.PAID;
         }
     }
+
+    public void fail() {
+        if (this.status.canTransitToTargetStatus(OrderStatus.FAILED)) {
+            this.status = OrderStatus.FAILED;
+        }
+    }
 }

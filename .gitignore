@@ -7,6 +7,11 @@ build/
 .env
 
 # Terraform
+infra-bootstrap/.terraform/
+infra-bootstrap/*.tfstate
+infra-bootstrap/*.tfstate.*
+infra-bootstrap/.terraform.tfstate.lock.info
+
 infra/.terraform/
 infra/*.tfstate
 infra/*.tfstate.*

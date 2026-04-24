@@ -132,7 +132,7 @@ variable "health_check_path" {
 variable "log_retention_in_days" {
   description = "CloudWatch log retention days"
   type        = number
-  default     = 1
+  default     = 30
 }
 
 variable "environment_variables" {

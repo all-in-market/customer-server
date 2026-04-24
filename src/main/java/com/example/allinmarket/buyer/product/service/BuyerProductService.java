@@ -26,7 +26,7 @@ public class BuyerProductService {
 
     public Page<ProductDetailResponse> findAllProducts(Pageable pageable) {
         if (pageable.getPageNumber() < 10) {
-            String key = "products:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
+            String key = "products:search:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
 
             Object cachedObject = redisTemplate.opsForValue().get(key);
 

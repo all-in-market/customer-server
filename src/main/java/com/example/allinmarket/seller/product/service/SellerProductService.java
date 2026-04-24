@@ -7,6 +7,7 @@ import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.entity.Product;
+import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
@@ -16,12 +17,17 @@ import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -88,6 +94,8 @@ public class SellerProductService {
     @Transactional
     public ProductDetailResponse update(Long sellerId, Long productId, SellerProductUpdateRequest request) {
 
+        boolean changed = false;
+
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
         );
@@ -99,22 +107,32 @@ public class SellerProductService {
                     () -> new BaseException(ErrorEnum.CATEGORY_NOT_FOUND)
             );
             product.updateCategory(category);
+            changed = true;
         }
 
         if (StringUtils.hasText(request.name())) {
             product.updateName(request.name());
+            changed = true;
         }
 
         if (request.price() != null) {
             product.updatePrice(request.price());
+            changed = true;
         }
 
         if (request.status() != null) {
             product.updateStatus(request.status());
+            changed = true;
         }
 
         if (StringUtils.hasText(request.description())) {
             product.updateDescription(request.description());
+            changed = true;
+        }
+
+        if(changed) {
+            evictSearchProductCache(null);
+            evictSearchProductCache(sellerId);
         }
 
         return ProductDetailResponse.from(product);
@@ -130,6 +148,10 @@ public class SellerProductService {
 
         product.delete();
 
+        // 상품 삭제 시 캐시 삭제
+        evictSearchProductCache(null);
+        evictSearchProductCache(sellerId);
+
         return ProductDetailResponse.from(product);
     }
 
@@ -144,6 +166,39 @@ public class SellerProductService {
         product.updateStock(request.stock());
 
         return ProductDetailResponse.from(product);
+    }
+
+    public void evictSearchProductCache(Long sellerId) {
+
+        String pattern = sellerId == null ? "products:search:*" : "sellerProducts:" + sellerId + ":*";
+
+        ScanOptions options = ScanOptions.scanOptions()
+                .match(pattern)
+                .count(100)
+                .build();
+
+        RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
+
+        try (Cursor<byte[]> cursor = connection.scan(options)) {
+
+            List<byte[]> batch = new ArrayList<>();
+
+            while (cursor.hasNext()) {
+                batch.add(cursor.next());
+
+                if (batch.size() >= 100) {
+                    connection.del(batch.toArray(new byte[0][]));
+                    batch.clear();
+                }
+            }
+
+            if (!batch.isEmpty()) {
+                connection.del(batch.toArray(new byte[0][]));
+            }
+
+        } finally {
+            connection.close();
+        }
     }
 
     private void validationForbidden(Long sellerId, Product product) {

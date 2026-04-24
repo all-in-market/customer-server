@@ -4,6 +4,7 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,9 +63,21 @@ public class GlobalExceptionHandler {
     // 3. DB 제약조건 (Unique 충돌)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException e) {
+        String rootMessage = NestedExceptionUtils.getMostSpecificCause(e).getMessage();
+
+        boolean uniqueConflict = rootMessage != null &&
+                (rootMessage.contains("duplicate key")
+                        || rootMessage.contains("Duplicate entry")
+                        || rootMessage.contains("UNIQUE"));
+
+        if (uniqueConflict) {
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT).body(ApiResponse.fail(ErrorEnum.DATA_CONFLICT));
+        }
+
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(ApiResponse.fail(ErrorEnum.DATA_CONFLICT));
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(ErrorEnum.INVALID_INPUT));
     }
 
 

@@ -60,6 +60,8 @@ public class SellerProductService {
 
         Product savedProduct = productRepository.save(product);
 
+        evictSearchProductCache(sellerId);
+
         return ProductDetailResponse.from(savedProduct);
     }
 
@@ -164,6 +166,8 @@ public class SellerProductService {
         validationForbidden(sellerId, product);
 
         product.updateStock(request.stock());
+
+        evictSearchProductCache(sellerId);
 
         return ProductDetailResponse.from(product);
     }

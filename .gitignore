@@ -7,12 +7,20 @@ build/
 .env
 
 # Terraform
+infra-bootstrap/.terraform/
+infra-bootstrap/*.tfstate
+infra-bootstrap/*.tfstate.*
+infra-bootstrap/.terraform.tfstate.lock.info
 infra/.terraform/
 infra/*.tfstate
 infra/*.tfstate.*
 infra/.terraform.tfstate.lock.info
 
 # 민감정보
+infra-bootstrap/*.tfvars
+infra-bootstrap/*.tfvars.json
+infra-bootstrap/*.auto.tfvars
+infra-bootstrap/*.auto.tfvars.json
 infra/*.tfvars
 infra/*.tfvars.json
 infra/*.auto.tfvars

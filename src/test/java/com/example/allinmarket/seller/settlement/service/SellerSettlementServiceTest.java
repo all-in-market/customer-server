@@ -87,7 +87,7 @@ class SellerSettlementServiceTest {
 
         // DB 조회 및 캐시 저장 검증
         verify(settlementRepository).findAllBySellerId(sellerId, pageable);
-        verify(valueOperations).set(eq(key), any(PageResponse.class), eq(10L));
+        verify(valueOperations).set(eq(key), any(PageResponse.class), eq(Duration.ofMinutes(10)));
     }
 
     @Test

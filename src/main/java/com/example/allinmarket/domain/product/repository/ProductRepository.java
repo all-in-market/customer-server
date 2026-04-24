@@ -24,6 +24,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
          FROM Product p
          JOIN FETCH p.seller
          WHERE p.id In :productIds
+          AND p.status = 'ON_SALE'
+          AND p.deletedAt IS NULL
     """)
     List<Product> findAllByIdInWithSellerWithLock(@Param("productIds") List<Long> productIds);
 

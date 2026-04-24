@@ -45,7 +45,9 @@ public class BuyerCartService {
     public CartDetailResponse addProductToCart(Long currentUserId, AddProductToCartRequest request, Pageable pageable) {
         Cart cart = findCartOrThrow(currentUserId);
 
-        Product product = findProductOrThrow(request.productId());
+        Product product = productRepository.findVisibleProductById(request.productId()).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
 
         if (product.getStock() <= 0 || product.getStock() < request.quantity()) {
             throw new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK);

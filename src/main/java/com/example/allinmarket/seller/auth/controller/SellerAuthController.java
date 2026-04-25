@@ -6,15 +6,17 @@ import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
 import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
 import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
 import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
+import com.example.allinmarket.seller.auth.dto.response.SellerLoginResult;
 import com.example.allinmarket.seller.auth.service.SellerAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/seller/auth")
@@ -36,16 +38,51 @@ public class SellerAuthController {
     public ResponseEntity<ApiResponse<SellerLoginResponse>> login(
             @Valid @RequestBody SellerLoginRequest request
     ) {
-        SellerLoginResponse response = sellerAuthService.login(request);
-        String token = response.accessToken();
+        SellerLoginResult result = sellerAuthService.login(request);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/seller/auth")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Strict")
+                .build();
         return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + token)
-                .body(ApiResponse.success(SuccessEnum.LOGIN_SUCCESS, response));
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(ApiResponse.success(SuccessEnum.LOGIN_SUCCESS, result.response()));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<SellerLoginResponse>> refresh(
+            @CookieValue("refreshToken") String refreshToken
+    ) {
+        SellerLoginResult result = sellerAuthService.refresh(refreshToken);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/seller/auth")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Strict")
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(ApiResponse.success(SuccessEnum.TOKEN_REFRESHED, result.response()));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout() {
-        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.LOGOUT_SUCCESS, null));
-    }
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestHeader("Authorization") String authHeader,
+            @CookieValue(value = "refreshToken", required = false) String refreshToken
+    ) {
+        String accessToken = authHeader.substring(7);
+        sellerAuthService.logout(accessToken, refreshToken);
 
+        ResponseCookie expired = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .maxAge(0)
+                .path("/seller/auth")
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, expired.toString())
+                .body(ApiResponse.success(SuccessEnum.LOGOUT_SUCCESS, null));
+    }
 }

@@ -1,9 +1,13 @@
 package com.example.allinmarket.seller.orderitem.controller;
 
 import com.example.allinmarket.common.response.PageResponse;
-import com.example.allinmarket.common.security.JwtProvider;
+import com.example.allinmarket.common.security.JwtAuthenticationFilter;
 import com.example.allinmarket.domain.orderitem.dto.OrderItemDetailResponse;
 import com.example.allinmarket.seller.orderitem.service.SellerOrderItemService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -19,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(SellerOrderItemController.class)
@@ -29,10 +34,19 @@ public class SellerOrderItemControllerTest {
     private RestTestClient restTestClient;
 
     @MockitoBean
-    private JwtProvider jwtProvider;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
     private SellerOrderItemService sellerOrderItemService;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+    }
 
     private void setAuth() {
         UsernamePasswordAuthenticationToken auth =

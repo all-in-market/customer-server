@@ -8,9 +8,8 @@ import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
 import com.example.allinmarket.buyer.auth.service.BuyerAuthService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
-import com.example.allinmarket.common.enums.UserRole;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtAuthenticationFilter;
-import com.example.allinmarket.common.security.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -19,16 +18,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 
 @WebMvcTest(BuyerAuthController.class)
 @AutoConfigureRestTestClient
@@ -40,16 +38,7 @@ public class BuyerAuthControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
-    private JwtProvider jwtProvider;
-
-    @MockitoBean
     private BuyerAuthService buyerAuthService;
-
-    @MockitoBean
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @SuppressWarnings("unchecked")
-    private final ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
 
     @BeforeEach
     void setUp() throws Exception {
@@ -169,16 +158,19 @@ public class BuyerAuthControllerTest {
     @Test
     void 토큰_재발급_성공_테스트() {
         // given
-        given(redisTemplate.opsForValue()).willReturn(valueOperations);
-        given(valueOperations.get("refresh:valid-refresh-token")).willReturn(1L);
-        given(jwtProvider.generateToken(1L, UserRole.BUYER)).willReturn("new-accessToken");
+        LoginResult loginResult = new LoginResult(
+                new BuyerLoginResponse("new-accessToken"),
+                "new-refresh-token"
+        );
+
+        given(buyerAuthService.refresh("valid-refresh-token")).willReturn(loginResult);
 
         // when & then
         restTestClient.post().uri("/auth/refresh")
                 .cookie("refreshToken", "valid-refresh-token")
                 .exchange()
                 .expectStatus().isOk()
-                .expectHeader().valueMatches("Authorization", "Bearer new-accessToken")
+                .expectHeader().valueMatches("Set-Cookie", ".*refreshToken=new-refresh-token.*")
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.status").isEqualTo(SuccessEnum.TOKEN_REFRESHED.getStatus())
@@ -189,8 +181,8 @@ public class BuyerAuthControllerTest {
     @Test
     void 토큰_재발급_실패_만료된_토큰_테스트() {
         // given
-        given(redisTemplate.opsForValue()).willReturn(valueOperations);
-        given(valueOperations.get("refresh:expired-token")).willReturn(null);
+        given(buyerAuthService.refresh(anyString()))
+                .willThrow(new BaseException(ErrorEnum.TOKEN_EXPIRED));
 
         // when & then
         restTestClient.post().uri("/auth/refresh")

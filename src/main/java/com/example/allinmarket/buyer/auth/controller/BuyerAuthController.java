@@ -6,15 +6,10 @@ import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerLoginResponse;
 import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
 import com.example.allinmarket.buyer.auth.service.BuyerAuthService;
-import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
-import com.example.allinmarket.common.enums.UserRole;
-import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.ApiResponse;
-import com.example.allinmarket.common.security.JwtProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -28,8 +23,6 @@ import java.time.Duration;
 @RequestMapping("/auth")
 public class BuyerAuthController {
     private final BuyerAuthService buyerAuthService;
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final JwtProvider jwtProvider;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<BuyerAuthResponse>> signup(@Valid @RequestBody BuyerSignupRequest request) {
@@ -44,7 +37,7 @@ public class BuyerAuthController {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true) // JS에서 document.cookie로 접근 불가 -> XSS 공격으로 토큰 탈취 방지
                 .secure(false) // HTTPS 연결에서만 쿠키를 전송. 배포 환경에서는 true로 설정 필요
-                .path("/auth/refresh") // 액세스 토큰 만료 시 요청할 경로, 이 경로로 요청할 때만 쿠키가 자동 포함
+                .path("/auth") // 이 경로로 요청할 때만 쿠키가 자동 포함
                 .maxAge(Duration.ofDays(7)) // 브라우저가 쿠키를 보관하는 기간. Redis TTL과 맞춰두는 것이 일반적
                 .sameSite("Strict") // 다른 도메인에서 온 요청에는 쿠키를 포함하지 않음. CSRF 공격 방어.
                 .build(); // 위 설정을 조합해 ResponseCookie 객체를 생성
@@ -53,19 +46,37 @@ public class BuyerAuthController {
                 .body(ApiResponse.success(SuccessEnum.LOGIN_SUCCESS, result.response()));
     }
 
-    // TODO: Access Token 재발급
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<BuyerLoginResponse>> refresh(@CookieValue("refreshToken") String refreshToken) {
-        Long userId = (Long) redisTemplate.opsForValue().get("refresh:" + refreshToken);
-
-        if (userId == null) {
-            throw new BaseException(ErrorEnum.TOKEN_EXPIRED);
-        }
-
-        String newAccessToken = jwtProvider.generateToken(userId, UserRole.BUYER);
+    public ResponseEntity<ApiResponse<BuyerLoginResponse>> refresh(
+            @CookieValue("refreshToken") String refreshToken) {
+        LoginResult result = buyerAuthService.refresh(refreshToken);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/auth")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Strict")
+                .build();
         return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + newAccessToken)
-                .body(ApiResponse.success(SuccessEnum.TOKEN_REFRESHED, new BuyerLoginResponse(newAccessToken)));
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(ApiResponse.success(SuccessEnum.TOKEN_REFRESHED, result.response()));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestHeader("Authorization") String authHeader,
+            @CookieValue(value = "refreshToken", required = false) String refreshToken
+    ) {
+        String accessToken = authHeader.substring(7);
+        buyerAuthService.logout(accessToken, refreshToken);
+
+        ResponseCookie expired = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .maxAge(0)
+                .path("/auth")
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, expired.toString())
+                .body(ApiResponse.success(SuccessEnum.LOGOUT_SUCCESS, null));
+    }
 }

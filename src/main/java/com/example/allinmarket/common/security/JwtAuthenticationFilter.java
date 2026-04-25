@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
 
         if (token != null) {
-//            Redis 블랙리스트 확인 — 장애 시 fail-closed (503 반환)
+
             try {
                 if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + token))) {
                     sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ErrorEnum.TOKEN_INVALID);

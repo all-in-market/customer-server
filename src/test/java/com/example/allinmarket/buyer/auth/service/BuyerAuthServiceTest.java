@@ -24,11 +24,16 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class BuyerAuthServiceTest {
@@ -199,5 +204,35 @@ public class BuyerAuthServiceTest {
         assertThatThrownBy(() -> buyerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
                 .hasMessage(ErrorEnum.PASSWORD_MISMATCH.getMessage());
+    }
+
+    @Test
+    void 토큰_재발급_성공_테스트() {
+        // given
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("refresh:old-refresh-token")).willReturn(1L);
+        given(jwtProvider.generateToken(1L, UserRole.BUYER)).willReturn("new-accessToken");
+
+        // when
+        LoginResult result = buyerAuthService.refresh("old-refresh-token");
+
+        // then
+        assertThat(result.response().accessToken()).isEqualTo("new-accessToken");
+        assertThat(result.refreshToken()).isNotNull();
+        assertThat(result.refreshToken()).isNotEqualTo("old-refresh-token");
+        verify(redisTemplate).delete("refresh:old-refresh-token");
+        verify(valueOperations).set(anyString(), eq(1L), eq(7L), eq(TimeUnit.DAYS));
+    }
+
+    @Test
+    void 토큰_재발급_실패_만료된_토큰_테스트() {
+        // given
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("refresh:expired-token")).willReturn(null);
+
+        // when & then
+        assertThatThrownBy(() -> buyerAuthService.refresh("expired-token"))
+                .isInstanceOf(BaseException.class)
+                .hasMessage(ErrorEnum.TOKEN_EXPIRED.getMessage());
     }
 }

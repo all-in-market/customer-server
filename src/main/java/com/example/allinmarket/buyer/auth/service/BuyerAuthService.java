@@ -8,6 +8,7 @@ import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;
 import com.example.allinmarket.domain.cart.entity.Cart;
@@ -75,5 +76,27 @@ public class BuyerAuthService {
 
         BuyerLoginResponse response = new BuyerLoginResponse(accessToken);
         return new LoginResult(response, refreshToken);
+    }
+
+    public LoginResult refresh(String refreshToken) {
+        Long userId = (Long) redisTemplate.opsForValue().get("refresh:" + refreshToken);
+        if (userId == null) {
+            throw new BaseException(ErrorEnum.TOKEN_EXPIRED);
+        }
+
+        redisTemplate.delete("refresh:" + refreshToken);
+        String newRefreshToken = UUID.randomUUID().toString();
+        redisTemplate.opsForValue().set("refresh:" + newRefreshToken, userId, 7, TimeUnit.DAYS);
+
+        String newAccessToken = jwtProvider.generateToken(userId, UserRole.BUYER);
+        return new LoginResult(new BuyerLoginResponse(newAccessToken), newRefreshToken);
+    }
+
+    public void logout(String accessToken, String refreshToken) {
+        long remaining = jwtProvider.getRemainingExpiration(accessToken);
+        redisTemplate.opsForValue()
+                .set("blacklist:" + accessToken, "logout", remaining, TimeUnit.MILLISECONDS);
+
+        redisTemplate.delete("refresh:" + refreshToken);
     }
 }

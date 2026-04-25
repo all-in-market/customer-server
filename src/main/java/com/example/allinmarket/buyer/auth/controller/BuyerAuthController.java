@@ -6,18 +6,20 @@ import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerLoginResponse;
 import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
 import com.example.allinmarket.buyer.auth.service.BuyerAuthService;
+import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
+import com.example.allinmarket.common.enums.UserRole;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.ApiResponse;
+import com.example.allinmarket.common.security.JwtProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 
@@ -26,6 +28,8 @@ import java.time.Duration;
 @RequestMapping("/auth")
 public class BuyerAuthController {
     private final BuyerAuthService buyerAuthService;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final JwtProvider jwtProvider;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<BuyerAuthResponse>> signup(@Valid @RequestBody BuyerSignupRequest request) {
@@ -49,13 +53,19 @@ public class BuyerAuthController {
                 .body(ApiResponse.success(SuccessEnum.LOGIN_SUCCESS, result.response()));
     }
 
-//    @PostMapping("/logout")
-//    public ResponseEntity<ApiResponse<Void>> logout() {
-//        buyerAuthService.logout(SecurityUtils.getCurrentUserId());
-//        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.LOGOUT_SUCCESS, null));
-//    }
-//
-//    // TODO: Access Token 재발급
-//    @PostMapping("/refresh")
+    // TODO: Access Token 재발급
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<BuyerLoginResponse>> refresh(@CookieValue("refreshToken") String refreshToken) {
+        Long userId = (Long) redisTemplate.opsForValue().get("refresh:" + refreshToken);
+
+        if (userId == null) {
+            throw new BaseException(ErrorEnum.TOKEN_EXPIRED);
+        }
+
+        String newAccessToken = jwtProvider.generateToken(userId, UserRole.BUYER);
+        return ResponseEntity.ok()
+                .header("Authorization", "Bearer " + newAccessToken)
+                .body(ApiResponse.success(SuccessEnum.TOKEN_REFRESHED, new BuyerLoginResponse(newAccessToken)));
+    }
 
 }

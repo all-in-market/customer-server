@@ -71,7 +71,7 @@ public class BuyerAuthService {
         String refreshToken = UUID.randomUUID().toString();
 
         // Refresh 토큰 유효기간 일주일로 설정
-        redisTemplate.opsForValue().set("refresh:" + buyer.getId(), refreshToken, 7, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set("refresh:" + refreshToken, buyer.getId(), 7, TimeUnit.DAYS);
 
         BuyerLoginResponse response = new BuyerLoginResponse(accessToken);
         return new LoginResult(response, refreshToken);

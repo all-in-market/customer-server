@@ -137,7 +137,7 @@ public class BuyerAuthServiceTest {
     }
 
     @Test
-    void 로그인_실패_테스트() {
+    void 로그인_실패_이메일_없음_테스트() {
         // given
         BuyerLoginRequest request = new BuyerLoginRequest(
                 "테스트@테스트.com",
@@ -151,5 +151,53 @@ public class BuyerAuthServiceTest {
         assertThatThrownBy(() -> buyerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorEnum.BUYER_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 로그인_실패_탈퇴회원_테스트() {
+        // given
+        BuyerLoginRequest request = new BuyerLoginRequest(
+                "테스트@테스트.com",
+                "12345678"
+        );
+
+        Buyer buyer = Buyer.of(
+                "테스트@테스트.com",
+                "비밀번호암호화",
+                "테스트",
+                "010-1234-1234"
+        );
+        buyer.delete();
+
+        given(buyerRepository.findByEmail("테스트@테스트.com")).willReturn(Optional.of(buyer));
+
+        // when & then
+        assertThatThrownBy(() -> buyerAuthService.login(request))
+                .isInstanceOf(BaseException.class)
+                .hasMessage(ErrorEnum.BUYER_ALREADY_DELETED.getMessage());
+    }
+
+    @Test
+    void 로그인_실패_비밀번호_불일치_테스트() {
+        // given
+        BuyerLoginRequest request = new BuyerLoginRequest(
+                "테스트@테스트.com",
+                "틀린비밀번호"
+        );
+
+        Buyer buyer = Buyer.of(
+                "테스트@테스트.com",
+                "비밀번호암호화",
+                "테스트",
+                "010-1234-1234"
+        );
+
+        given(buyerRepository.findByEmail("테스트@테스트.com")).willReturn(Optional.of(buyer));
+        given(passwordEncoder.matches("틀린비밀번호", "비밀번호암호화")).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> buyerAuthService.login(request))
+                .isInstanceOf(BaseException.class)
+                .hasMessage(ErrorEnum.PASSWORD_MISMATCH.getMessage());
     }
 }

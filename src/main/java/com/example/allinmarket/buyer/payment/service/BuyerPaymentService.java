@@ -1,5 +1,6 @@
 package com.example.allinmarket.buyer.payment.service;
 
+import com.example.allinmarket.buyer.order.service.StockReleaseService;
 import com.example.allinmarket.buyer.payment.client.dto.PortOnePaymentResponse;
 import com.example.allinmarket.buyer.payment.dto.request.PaymentCreateRequest;
 import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
@@ -36,6 +37,7 @@ public class BuyerPaymentService {
     private final TransactionHistoryService transactionHistoryService;
     private final PaymentStateService paymentStateService;
     private final DashboardService dashboardService;
+    private final StockReleaseService stockReleaseService;
 
     /**
      * 결제 생성 및 DB 저장
@@ -98,6 +100,7 @@ public class BuyerPaymentService {
          */
         if (!payment.isPaid()) {
             paymentStateService.failAndSaveHistory(dbPayment);
+            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder());
             throw new BaseException(ErrorEnum.PAYMENT_NOT_COMPLETED);
         }
 
@@ -106,6 +109,7 @@ public class BuyerPaymentService {
          */
         if (payment.getTotalAmount() == null) {
             paymentStateService.failAndSaveHistory(dbPayment);
+            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder());
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
         }
         /**
@@ -115,6 +119,7 @@ public class BuyerPaymentService {
         if (dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
             paymentStateService.failAndSaveHistory(dbPayment);
             buyerRefundService.createRefundForAmountMismatch(currentUserId, dbPayment, payment);
+            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder());
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
         }
 

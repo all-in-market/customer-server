@@ -76,7 +76,7 @@ public class SellerAuthService {
             throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }
 
-        if (seller.getStatus().equals(SellerStatus.PENDING)) {
+        if (seller.getStatus() != SellerStatus.APPROVED) {
             log.warn("로그인 실패: {}", ErrorEnum.FORBIDDEN);
             throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }

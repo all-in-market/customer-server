@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
@@ -37,6 +38,7 @@ public class BuyerPaymentService {
     private final TransactionHistoryService transactionHistoryService;
     private final PaymentStateService paymentStateService;
     private final DashboardService dashboardService;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     /**
      * 결제 생성 및 DB 저장
@@ -119,7 +121,7 @@ public class BuyerPaymentService {
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
         }
 
-        dbPayment.success(LocalDateTime.now());
+        dbPayment.success(LocalDateTime.now(KST));
         dbPayment.getOrder().paid();
 
         // flush를 commit 전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생

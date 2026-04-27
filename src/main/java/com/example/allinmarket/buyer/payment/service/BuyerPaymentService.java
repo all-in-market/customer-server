@@ -88,7 +88,7 @@ public class BuyerPaymentService {
      * 결제 확인 및 상태 업데이트
      */
     @Transactional
-    public PaymentDetailResponse confirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) throws JsonProcessingException {
+    public PaymentDetailResponse confirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) {
 
         Payment dbPayment = paymentRepository.findByImpUidWithOrder(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
@@ -151,7 +151,16 @@ public class BuyerPaymentService {
                 statDate
         );
 
-        String payload = objectMapper.writeValueAsString(dashboardUpdatePayload);
+        String payload;
+
+        // 페이로드 직렬화 실패 시 예외 처리
+        try {
+            payload = objectMapper.writeValueAsString(dashboardUpdatePayload);
+        } catch (JsonProcessingException e) {
+            log.error("Outbox payload 직렬화 실패 orderId = {}", dbPayment.getOrder().getId(), e);
+
+            throw new BaseException(ErrorEnum.PAYLOAD_SERIALIZATION_FAILED);
+        }
 
         // Outbox 이벤트 생성
         DashboardOutbox dashboardOutbox = DashboardOutbox.of(

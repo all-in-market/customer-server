@@ -1,7 +1,8 @@
 package com.example.allinmarket.common.outbox.service;
 
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
-import com.example.allinmarket.common.outbox.enums.OutboxEventType;
 import com.example.allinmarket.common.outbox.payload.DashboardUpdatePayload;
 import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
@@ -27,17 +28,25 @@ public class DashboardOutboxService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processSingleEvent(DashboardOutbox dashboardOutbox) throws JsonProcessingException {
         try {
-            if (OutboxEventType.DASHBOARD_UPDATE.equals(dashboardOutbox.getEventType())) {
-                // 저장 시 문자열로 직렬화 했기 때문에 처리 시 역직렬화 필요
-                DashboardUpdatePayload dashboardUpdatePayload = objectMapper.readValue(
-                        dashboardOutbox.getPayload(),
-                        DashboardUpdatePayload.class
-                );
+            switch (dashboardOutbox.getEventType()) {
+                case DASHBOARD_UPDATE -> {
+                    // 저장 시 문자열로 직렬화 했기 때문에 처리 시 역직렬화 필요
+                    DashboardUpdatePayload dashboardUpdatePayload = objectMapper.readValue(
+                            dashboardOutbox.getPayload(),
+                            DashboardUpdatePayload.class
+                    );
 
-                dashboardService.updateSellerDashboard(
-                        dashboardUpdatePayload.orderId(),
-                        dashboardUpdatePayload.statDate()
-                );
+                    dashboardService.updateSellerDashboard(
+                            dashboardUpdatePayload.orderId(),
+                            dashboardUpdatePayload.statDate()
+                    );
+                }
+
+                default -> {
+                    log.error("알 수 없는 Outbox 이벤트 타입 eventType = {}, eventId = {}", dashboardOutbox.getEventType(), dashboardOutbox.getId());
+
+                    throw new BaseException(ErrorEnum.OUTBOX_EVENT_TYPE_NOT_FOUND);
+                }
             }
 
             // 대시보드 업데이트 성공 시 processed = true 설정

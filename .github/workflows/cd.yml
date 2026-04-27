@@ -12,6 +12,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: cd-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       # 1. 소스코드 checkout

@@ -17,6 +17,7 @@ import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -217,7 +218,7 @@ class BuyerPaymentServiceTest {
 
         @Test
         @DisplayName("결제 확인 성공")
-        void confirmPayment_success() {
+        void confirmPayment_success() throws JsonProcessingException {
             // given
             Long currentUserId = 1L;
             String paymentId = "payment_10_abc";
@@ -248,7 +249,7 @@ class BuyerPaymentServiceTest {
 
         @Test
         @DisplayName("이미 성공한 결제면 멱등하게 성공 응답")
-        void confirmPayment_alreadySuccess_idempotent() {
+        void confirmPayment_alreadySuccess_idempotent() throws JsonProcessingException {
             // given
             Long currentUserId = 1L;
             String paymentId = "payment_10_abc";

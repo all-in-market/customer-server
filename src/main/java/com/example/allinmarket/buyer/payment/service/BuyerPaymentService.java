@@ -7,6 +7,10 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
+import com.example.allinmarket.common.outbox.enums.OutboxEventType;
+import com.example.allinmarket.common.outbox.payload.DashboardUpdatePayload;
+import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
@@ -16,6 +20,8 @@ import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +47,8 @@ public class BuyerPaymentService {
     private final DashboardService dashboardService;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final StockReleaseService stockReleaseService;
+    private final ObjectMapper objectMapper;
+    private final DashboardOutboxRepository dashboardOutboxRepository;
 
     /**
      * 결제 생성 및 DB 저장
@@ -80,7 +88,7 @@ public class BuyerPaymentService {
      * 결제 확인 및 상태 업데이트
      */
     @Transactional
-    public PaymentDetailResponse confirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) {
+    public PaymentDetailResponse confirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) throws JsonProcessingException {
 
         Payment dbPayment = paymentRepository.findByImpUidWithOrder(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
@@ -136,7 +144,21 @@ public class BuyerPaymentService {
 
         LocalDate statDate = dbPayment.getPaidAt().toLocalDate();
 
-        dashboardService.updateSellerDashboard(dbPayment.getOrder().getId(), statDate);
+        DashboardUpdatePayload dashboardUpdatePayload = new DashboardUpdatePayload(
+                dbPayment.getOrder().getId(),
+                statDate
+        );
+
+        String payload = objectMapper.writeValueAsString(dashboardUpdatePayload);
+
+        DashboardOutbox dashboardOutbox = DashboardOutbox.of(
+                OutboxEventType.DASHBOARD_UPDATE,
+                dbPayment.getOrder().getId(),
+                payload
+        );
+
+        dashboardOutboxRepository.save(dashboardOutbox);
+
         transactionHistoryService.savePaymentHistory(dbPayment);
 
         return PaymentDetailResponse.from(dbPayment);

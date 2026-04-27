@@ -11,6 +11,7 @@ import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
 import com.example.allinmarket.common.outbox.enums.OutboxEventType;
 import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
+import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -20,7 +21,6 @@ import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,14 +31,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -71,13 +70,13 @@ class BuyerPaymentServiceTest {
     private DashboardService dashboardService;
 
     @Mock
-    private TransactionHistoryService transactionHistoryService;
-
-    @Mock
     private StockReleaseService stockReleaseService;
 
     @Mock
     private DashboardOutboxRepository dashboardOutboxRepository;
+
+    @Mock
+    private HistoryOutBoxService historyOutBoxService;
 
     @BeforeEach
     void setUp() {
@@ -230,7 +229,7 @@ class BuyerPaymentServiceTest {
 
         @Test
         @DisplayName("결제 확인 성공")
-        void confirmPayment_success() throws JsonProcessingException {
+        void confirmPayment_success() {
             // given
             Long currentUserId = 1L;
             String paymentId = "payment_10_abc";
@@ -248,7 +247,8 @@ class BuyerPaymentServiceTest {
             given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            PaymentDetailResponse response = paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
+            PaymentDetailResponse response = assertDoesNotThrow(() ->
+                    paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(response).isNotNull();
@@ -271,7 +271,7 @@ class BuyerPaymentServiceTest {
 
         @Test
         @DisplayName("이미 성공한 결제면 멱등하게 성공 응답")
-        void confirmPayment_alreadySuccess_idempotent() throws JsonProcessingException {
+        void confirmPayment_alreadySuccess_idempotent() {
             // given
             Long currentUserId = 1L;
             String paymentId = "payment_10_abc";
@@ -290,7 +290,8 @@ class BuyerPaymentServiceTest {
             given(paymentRepository.findByImpUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            PaymentDetailResponse response = paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
+            PaymentDetailResponse response = assertDoesNotThrow(() ->
+                    paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(response).isNotNull();

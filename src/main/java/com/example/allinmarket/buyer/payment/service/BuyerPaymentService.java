@@ -7,6 +7,7 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
 import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
 import com.example.allinmarket.common.outbox.enums.OutboxEventType;
 import com.example.allinmarket.common.outbox.payload.DashboardUpdatePayload;
@@ -47,6 +48,7 @@ public class BuyerPaymentService {
     private final DashboardService dashboardService;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final StockReleaseService stockReleaseService;
+    private final HistoryOutBoxService historyOutBoxService;
     private final ObjectMapper objectMapper;
     private final DashboardOutboxRepository dashboardOutboxRepository;
 
@@ -79,7 +81,7 @@ public class BuyerPaymentService {
         paymentRepository.save(payment);
         log.info("결제 생성 성공: paymentId = {}", payment.getId());
 
-        transactionHistoryService.savePaymentHistory(payment);
+        historyOutBoxService.save(payment);
 
         return PaymentDetailResponse.from(payment);
     }
@@ -171,7 +173,7 @@ public class BuyerPaymentService {
 
         dashboardOutboxRepository.save(dashboardOutbox);
 
-        transactionHistoryService.savePaymentHistory(dbPayment);
+        historyOutBoxService.save(dbPayment);
 
         return PaymentDetailResponse.from(dbPayment);
     }

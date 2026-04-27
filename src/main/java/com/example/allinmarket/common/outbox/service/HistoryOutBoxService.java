@@ -54,7 +54,7 @@ public class HistoryOutBoxService {
 
     @Transactional
     public void process(Long outBoxId) {
-        HistoryOutBox outBox = historyOutBoxRepository.findById(outBoxId)
+        HistoryOutBox outBox = historyOutBoxRepository.findByIdForUpdate(outBoxId)
                 .orElseThrow(() -> new BaseException(ErrorEnum.HISTORY_OUTBOX_NOT_FOUND));
 
         if (outBox.isProcessed()) {

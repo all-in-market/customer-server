@@ -9,10 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface HistoryOutBoxRepository extends JpaRepository<HistoryOutBox, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT h FROM HistoryOutBox h WHERE h.processed = false AND h.retryCount < :maxRetryCount")
     List<HistoryOutBox> findUnprocessed(@Param("maxRetryCount") int maxRetryCount, Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT h FROM HistoryOutBox h WHERE h.id = :outBoxId")
+    Optional<HistoryOutBox> findByIdForUpdate(@Param("outBoxId") Long outBoxId);
 }

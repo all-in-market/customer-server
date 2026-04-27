@@ -72,7 +72,6 @@ public class SellerAuthControllerTest {
                 "010-1234-5678",
                 "홍길동상점",
                 "123-45-67890",
-                "110-123-456789",
                 SellerStatus.PENDING,
                 UserRole.SELLER
         );
@@ -88,8 +87,7 @@ public class SellerAuthControllerTest {
                             "name": "홍길동",
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890",
-                            "bankAccount": "110-123-456789"
+                            "bizNumber": "123-45-67890"
                         }
                         """)
                 .exchange()
@@ -113,8 +111,7 @@ public class SellerAuthControllerTest {
                             "name": "홍길동",
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890",
-                            "bankAccount": "110-123-456789"
+                            "bizNumber": "123-45-67890"
                         }
                         """)
                 .exchange()
@@ -137,8 +134,7 @@ public class SellerAuthControllerTest {
                             "name": "홍길동",
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890",
-                            "bankAccount": "110-123-456789"
+                            "bizNumber": "123-45-67890"
                         }
                         """)
                 .exchange()
@@ -162,8 +158,7 @@ public class SellerAuthControllerTest {
                             "name": "   ",
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890",
-                            "bankAccount": "110-123-456789"
+                            "bizNumber": "123-45-67890"
                         }
                         """)
                 .exchange()

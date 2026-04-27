@@ -12,7 +12,6 @@ public record SellerDetailResponse(
         String phone,
         String storeName,
         String bizNumber,
-        String bankAccount,
         SellerStatus status,
         UserRole role
 ) {
@@ -24,7 +23,6 @@ public record SellerDetailResponse(
                 seller.getPhone(),
                 seller.getStoreName(),
                 seller.getBizNumber(),
-                seller.getBankAccount(),
                 seller.getStatus(),
                 seller.getRole()
         );

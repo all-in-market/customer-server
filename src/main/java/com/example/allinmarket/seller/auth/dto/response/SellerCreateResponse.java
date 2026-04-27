@@ -11,7 +11,6 @@ public record SellerCreateResponse(
         String phone,
         String storeName,
         String bizNumber,
-        String bankAccount,
         SellerStatus status,
         UserRole role
 ) {
@@ -23,7 +22,6 @@ public record SellerCreateResponse(
                 seller.getPhone(),
                 seller.getStoreName(),
                 seller.getBizNumber(),
-                seller.getBankAccount(),
                 seller.getStatus(),
                 seller.getRole()
         );

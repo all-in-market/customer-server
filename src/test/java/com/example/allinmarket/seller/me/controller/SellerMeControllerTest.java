@@ -88,7 +88,6 @@ public class SellerMeControllerTest {
                 "010-1234-5678",
                 "홍길동상점",
                 "123-45-67890",
-                "110-123-456789",
                 SellerStatus.PENDING,
                 UserRole.SELLER
         );
@@ -109,7 +108,6 @@ public class SellerMeControllerTest {
                 .jsonPath("$.data.phone").isEqualTo("010-1234-5678")
                 .jsonPath("$.data.storeName").isEqualTo("홍길동상점")
                 .jsonPath("$.data.bizNumber").isEqualTo("123-45-67890")
-                .jsonPath("$.data.bankAccount").isEqualTo("110-123-456789")
                 .jsonPath("$.data.status").isEqualTo("PENDING")
                 .jsonPath("$.data.role").isEqualTo("SELLER");
     }
@@ -158,7 +156,6 @@ public class SellerMeControllerTest {
                 "010-9999-8888",
                 "김철수상점",
                 "987-65-43210",
-                "220-999-123456",
                 SellerStatus.PENDING,
                 UserRole.SELLER
         );

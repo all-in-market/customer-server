@@ -70,6 +70,13 @@ public class Product extends DeletableEntity {
         stock -= amount;
     }
 
+    public void releaseStock(int amount) {
+        if(amount <= 0) {
+            throw new BaseException(ErrorEnum.INVALID_INPUT);
+        }
+        this.stock += amount;
+    }
+
     public void updateCategory(Category category) {
         this.category = category;
     }

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -34,6 +35,12 @@ class DashboardServiceTest {
 
     @Mock
     private OrderItemRepository orderItemRepository;
+
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private DashboardRowCreatorService dashboardRowCreatorService;
 
     private Seller createSeller(Long id) {
         Seller seller = Seller.of(
@@ -65,6 +72,7 @@ class DashboardServiceTest {
             // given
             Long orderId = 1L;
             Seller seller = createSeller(1L);
+            LocalDate today = LocalDate.now();
 
             // 아이템 2개: 10000 * 2 + 5000 * 1 = 25000, 수량 합계 3
             List<OrderItem> items = List.of(
@@ -73,12 +81,13 @@ class DashboardServiceTest {
             );
 
             given(orderItemRepository.findAllByOrderIdWithSeller(orderId)).willReturn(items);
+            given(sellerDashboardRepository.addOrder(seller.getId(), new BigDecimal("25000"), 3, COMMISSION_RATE, today)).willReturn(0, 1);
 
             // when
-            dashboardService.updateSellerDashboard(orderId);
+            dashboardService.updateSellerDashboard(orderId, today);
 
             // then - 원자적 UPDATE 쿼리 호출 검증
-            verify(sellerDashboardRepository).addOrder(seller.getId(), new BigDecimal("25000"), 3, COMMISSION_RATE);
+            verify(sellerDashboardRepository, times(2)).addOrder(seller.getId(), new BigDecimal("25000"), 3, COMMISSION_RATE, today);
         }
 
         @Test
@@ -87,18 +96,20 @@ class DashboardServiceTest {
             // given
             Long orderId = 1L;
             Seller seller = createSeller(1L);
+            LocalDate today = LocalDate.now();
 
             List<OrderItem> items = List.of(
                     createOrderItem(seller, new BigDecimal("10000"), 1)
             );
 
             given(orderItemRepository.findAllByOrderIdWithSeller(orderId)).willReturn(items);
+            given(sellerDashboardRepository.addOrder(seller.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today)).willReturn(1);
 
             // when
-            dashboardService.updateSellerDashboard(orderId);
+            dashboardService.updateSellerDashboard(orderId, today);
 
             // then - DB 레벨 원자적 누적(+1 order, +1 product, +10000 sales)
-            verify(sellerDashboardRepository).addOrder(seller.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE);
+            verify(sellerDashboardRepository, times(1)).addOrder(seller.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today);
         }
 
         @Test
@@ -108,6 +119,7 @@ class DashboardServiceTest {
             Long orderId = 1L;
             Seller sellerA = createSeller(1L);
             Seller sellerB = createSeller(2L);
+            LocalDate today = LocalDate.now();
 
             List<OrderItem> items = List.of(
                     createOrderItem(sellerA, new BigDecimal("10000"), 1),
@@ -115,13 +127,15 @@ class DashboardServiceTest {
             );
 
             given(orderItemRepository.findAllByOrderIdWithSeller(orderId)).willReturn(items);
+            given(sellerDashboardRepository.addOrder(sellerA.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today)).willReturn(1);
+            given(sellerDashboardRepository.addOrder(sellerB.getId(), new BigDecimal("40000"), 2, COMMISSION_RATE, today)).willReturn(1);
 
             // when
-            dashboardService.updateSellerDashboard(orderId);
+            dashboardService.updateSellerDashboard(orderId, today);
 
             // then - 판매자별로 각각 addOrder 호출
-            verify(sellerDashboardRepository).addOrder(sellerA.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE);
-            verify(sellerDashboardRepository).addOrder(sellerB.getId(), new BigDecimal("40000"), 2, COMMISSION_RATE);
+            verify(sellerDashboardRepository, times(1)).addOrder(sellerA.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today);
+            verify(sellerDashboardRepository, times(1)).addOrder(sellerB.getId(), new BigDecimal("40000"), 2, COMMISSION_RATE, today);
         }
 
         @Test
@@ -129,14 +143,16 @@ class DashboardServiceTest {
         void updateSellerDashboard_emptyItems() {
             // given
             Long orderId = 1L;
+            LocalDate today = LocalDate.now();
             given(orderItemRepository.findAllByOrderIdWithSeller(orderId)).willReturn(List.of());
 
             // when
-            dashboardService.updateSellerDashboard(orderId);
+            dashboardService.updateSellerDashboard(orderId, today);
 
             // then
-            verify(sellerDashboardRepository, never()).findBySellerId(any());
+            verify(sellerDashboardRepository, never()).findBySellerIdAndStatDate(any(), eq(today));
             verify(sellerDashboardRepository, never()).save(any());
+            verifyNoInteractions(sellerDashboardRepository, dashboardRowCreatorService, redisTemplate);
         }
     }
 }

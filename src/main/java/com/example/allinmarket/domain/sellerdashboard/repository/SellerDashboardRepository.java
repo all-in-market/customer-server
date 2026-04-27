@@ -12,8 +12,6 @@ import java.util.Optional;
 
 public interface SellerDashboardRepository extends JpaRepository<SellerDashboard, Long> {
 
-    Optional<SellerDashboard> findBySellerId(Long sellerId);
-
     @Modifying(clearAutomatically = true)
     @Query("""
             UPDATE SellerDashboard d SET
@@ -23,9 +21,13 @@ public interface SellerDashboardRepository extends JpaRepository<SellerDashboard
               d.feeAmount          = (d.totalSales + :salesAmount - d.refundAmount ) * :commissionRate,
               d.settlementAmount   = (d.totalSales + :salesAmount - d.refundAmount) * (1 - :commissionRate)
             WHERE d.seller.id = :sellerId
+            AND d.statDate = :statDate
             """)
-    void addOrder(@Param("sellerId") Long sellerId,
+    int addOrder(@Param("sellerId") Long sellerId,
                   @Param("salesAmount") BigDecimal salesAmount,
                   @Param("productsSold") int productsSold,
-                  @Param("commissionRate") BigDecimal commissionRate);
+                  @Param("commissionRate") BigDecimal commissionRate,
+                  @Param("statDate") LocalDate statDate);
+
+    Optional<SellerDashboard> findBySellerIdAndStatDate(Long sellerId, LocalDate statDate);
 }

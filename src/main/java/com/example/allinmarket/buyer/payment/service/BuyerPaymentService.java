@@ -23,7 +23,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
@@ -37,6 +39,7 @@ public class BuyerPaymentService {
     private final BuyerRefundService buyerRefundService;
     private final PaymentStateService paymentStateService;
     private final DashboardService dashboardService;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final StockReleaseService stockReleaseService;
     private final HistoryOutBoxService historyOutBoxService;
 
@@ -124,14 +127,17 @@ public class BuyerPaymentService {
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
         }
 
-        dbPayment.success(LocalDateTime.now());
+        LocalDateTime paidAt = LocalDateTime.now(KST);
+        dbPayment.success(paidAt);
         dbPayment.getOrder().paid();
 
         // flush를 commit 전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생
         paymentRepository.saveAndFlush(dbPayment);
         log.info("결제 승인 성공: paymentId = {}", dbPayment.getId());
 
-        dashboardService.updateSellerDashboard(dbPayment.getOrder().getId());
+        LocalDate statDate = dbPayment.getPaidAt().toLocalDate();
+
+        dashboardService.updateSellerDashboard(dbPayment.getOrder().getId(), statDate);
         historyOutBoxService.save(dbPayment.getId(), TransactionType.PAYMENT);
 
         return PaymentDetailResponse.from(dbPayment);

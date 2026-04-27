@@ -15,7 +15,15 @@ import static com.example.allinmarket.seller.consts.sellerConsts.COMMISSION_RATE
 
 @Getter
 @Entity
-@Table(name = "seller_dashboard")
+@Table(
+        name = "seller_dashboard",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_seller_stat_date",
+                        columnNames = {"seller_id", "stat_date"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SellerDashboard extends ModifiableEntity {
 

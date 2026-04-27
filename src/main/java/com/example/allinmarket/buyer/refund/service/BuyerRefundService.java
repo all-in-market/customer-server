@@ -5,6 +5,7 @@ import com.example.allinmarket.buyer.refund.dto.request.RefundCreateRequest;
 import com.example.allinmarket.buyer.refund.dto.response.RefundDetailResponse;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
@@ -15,6 +16,7 @@ import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.repository.RefundRepository;
+import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +36,7 @@ public class BuyerRefundService {
     private final RefundRepository refundRepository;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
-    private final TransactionHistoryService transactionHistoryService;
+    private final HistoryOutBoxService historyOutBoxService;
 
     @Transactional
     public RefundDetailResponse createRefundByOrder(Long currentUserId, Long orderId, RefundCreateRequest request) {
@@ -69,7 +71,7 @@ public class BuyerRefundService {
         );
         refundRepository.save(refund);
 
-        transactionHistoryService.saveRefundHistory(refund);
+        historyOutBoxService.save(refund.getId(), TransactionType.REFUND);
 
         return RefundDetailResponse.from(refund);
     }
@@ -120,7 +122,7 @@ public class BuyerRefundService {
         );
         refundRepository.save(refund);
 
-        transactionHistoryService.saveRefundHistory(refund);
+        historyOutBoxService.save(refund.getId(), TransactionType.REFUND);
     }
 
     public PageResponse<RefundDetailResponse> getRefunds(Long buyerId, Pageable pageable) {

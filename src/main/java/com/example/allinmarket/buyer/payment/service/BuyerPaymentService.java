@@ -6,6 +6,7 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
@@ -14,6 +15,7 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
+import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,9 +35,9 @@ public class BuyerPaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final BuyerRefundService buyerRefundService;
-    private final TransactionHistoryService transactionHistoryService;
     private final PaymentStateService paymentStateService;
     private final DashboardService dashboardService;
+    private final HistoryOutBoxService historyOutBoxService;
 
     /**
      * 결제 생성 및 DB 저장
@@ -66,7 +68,7 @@ public class BuyerPaymentService {
         paymentRepository.save(payment);
         log.info("결제 생성 성공: paymentId = {}", payment.getId());
 
-        transactionHistoryService.savePaymentHistory(payment);
+        historyOutBoxService.save(payment.getId(), TransactionType.PAYMENT);
 
         return PaymentDetailResponse.from(payment);
     }
@@ -126,7 +128,7 @@ public class BuyerPaymentService {
         log.info("결제 승인 성공: paymentId = {}", dbPayment.getId());
 
         dashboardService.updateSellerDashboard(dbPayment.getOrder().getId());
-        transactionHistoryService.savePaymentHistory(dbPayment);
+        historyOutBoxService.save(dbPayment.getId(), TransactionType.PAYMENT);
 
         return PaymentDetailResponse.from(dbPayment);
     }

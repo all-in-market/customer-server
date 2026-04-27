@@ -23,6 +23,7 @@ public class DashboardOutboxService {
     private final DashboardOutboxRepository dashboardOutboxRepository;
     private final DashboardService dashboardService;
     private final ObjectMapper objectMapper;
+    private final DashboardOutboxStatusService dashboardOutboxStatusService;
     private static final int MAX_RETRY = 5;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -51,26 +52,20 @@ public class DashboardOutboxService {
 
             // 대시보드 업데이트 성공 시 processed = true 설정
             // 추후 status 값으로 변경 할지는 판단 필요함
-            dashboardOutbox.markProcessed();
-
-            dashboardOutboxRepository.saveAndFlush(dashboardOutbox);
+            dashboardOutboxStatusService.markProcessed(dashboardOutbox);
 
         } catch (Exception e) {
             log.error("Outbox 처리 실패 eventId = {}", dashboardOutbox.getId(), e);
 
-            dashboardOutbox.increaseRetryCount();
+            int retryCount = dashboardOutboxStatusService.increaseRetry(dashboardOutbox);
 
-            if (dashboardOutbox.getRetryCount() >= MAX_RETRY) {
+            if (retryCount >= MAX_RETRY) {
                 log.error("Outbox 재시도 횟수 초과 eventId = {}", dashboardOutbox.getId());
 
-                dashboardOutbox.markProcessed();
-
-                dashboardOutboxRepository.saveAndFlush(dashboardOutbox);
+                dashboardOutboxStatusService.markProcessed(dashboardOutbox);
 
                 return;
             }
-
-            dashboardOutboxRepository.saveAndFlush(dashboardOutbox);
 
             throw e;
         }

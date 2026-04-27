@@ -168,3 +168,13 @@ variable "github_branches" {
   type        = list(string)
   default     = ["dev", "main"]
 }
+
+variable "environment" {
+  type    = string
+  default = "dev"
+
+  validation {
+    condition     = contains(["dev", "prod"], var.environment)
+    error_message = "environment는 dev 또는 prod만 가능합니다."
+  }
+}

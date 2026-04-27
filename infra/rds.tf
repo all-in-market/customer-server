@@ -24,8 +24,10 @@ resource "aws_db_instance" "this" {
 
   auto_minor_version_upgrade = true
 
-  skip_final_snapshot    = true
-  deletion_protection    = false
+  deletion_protection = local.db_deletion_protection
+  skip_final_snapshot = local.db_skip_final_snapshot
+
+  final_snapshot_identifier = local.db_skip_final_snapshot ? null : "${local.name_prefix}-final-snapshot"
 
   monitoring_interval    = 0
 

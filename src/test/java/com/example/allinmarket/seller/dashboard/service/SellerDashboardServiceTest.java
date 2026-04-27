@@ -82,7 +82,7 @@ public class SellerDashboardServiceTest {
         // then
         assertNotNull(response);
         assertEquals(0L, response.sellerId());
-        assertEquals(LocalDate.now(), response.statDate());
+        assertEquals(today, response.statDate());
         assertEquals(10, response.totalOrders());
         assertEquals(BigDecimal.valueOf(500000), response.totalSales());
         assertEquals(8, response.totalProductsSold());
@@ -102,7 +102,7 @@ public class SellerDashboardServiceTest {
         // given - 캐시에 이미 데이터가 있는 상황
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         SellerDashboardResponse cachedResponse = new SellerDashboardResponse(
-                sellerId, LocalDate.now(), 10, BigDecimal.valueOf(500000), 8,
+                sellerId, today, 10, BigDecimal.valueOf(500000), 8,
                 2, BigDecimal.valueOf(30000), BigDecimal.valueOf(445000), BigDecimal.valueOf(25000)
         );
         given(valueOperations.get(expectedKey)).willReturn(cachedResponse);
@@ -122,7 +122,7 @@ public class SellerDashboardServiceTest {
         // given
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         Long notExistSellerId = 999L;
-        String notExistKey = "dashboard:" + notExistSellerId + ":" + LocalDate.now();
+        String notExistKey = "dashboard:" + notExistSellerId + ":" + today;
 
         given(valueOperations.get(notExistKey)).willReturn(null);
         given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(notExistSellerId), eq(today)))
@@ -149,7 +149,7 @@ public class SellerDashboardServiceTest {
 
         // then
         assertNotNull(response);
-        assertEquals(LocalDate.now(), response.statDate());
+        assertEquals(today, response.statDate());
         assertEquals(10, response.totalOrders());
         assertEquals(BigDecimal.valueOf(500000), response.totalSales());
         assertEquals(8, response.totalProductsSold());

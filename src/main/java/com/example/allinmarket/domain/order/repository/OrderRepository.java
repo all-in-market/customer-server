@@ -44,6 +44,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o WHERE o.status = :status AND o.createdAt < :threshold")
     List<Order> findByStatusAndCreatedAtBefore(
             @Param("status") OrderStatus status,
-            @Param("threshold") LocalDateTime threshold
+            @Param("threshold") LocalDateTime threshold,
+            Pageable pageable
     );
 }

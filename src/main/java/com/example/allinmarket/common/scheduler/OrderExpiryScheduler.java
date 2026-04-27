@@ -6,6 +6,8 @@ import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,16 +25,24 @@ public class OrderExpiryScheduler {
     @Scheduled(fixedDelay = 60_000)
     public void expireUnpaidOrders() {
         LocalDateTime threshold = LocalDateTime.now().minusMinutes(30);
+        Pageable pageable = PageRequest.of(0, 100);
 
-        List<Order> expiredOrders = orderRepository.findByStatusAndCreatedAtBefore(
-                OrderStatus.CREATED,
-                threshold
-        );
+        List<Order> expiredOrders;
+        do {
+            expiredOrders = orderRepository.findByStatusAndCreatedAtBefore(
+                    OrderStatus.CREATED,
+                    threshold,
+                    pageable
+            );
 
-        if (expiredOrders.isEmpty()) return;
+            if (expiredOrders.isEmpty()) return;
 
-        log.info("만료 대상 주문 수: {}", expiredOrders.size());
+            log.info("만료 대상 주문 수: {}", expiredOrders.size());
 
-        expiredOrders.forEach(stockReleaseService::releaseStockAndFailOrder);
+            expiredOrders.forEach(order ->
+                    stockReleaseService.releaseStockAndFailOrder(order.getId())
+            );
+
+        } while (expiredOrders.size() == 100);
     }
 }

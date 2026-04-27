@@ -100,7 +100,7 @@ public class BuyerPaymentService {
          */
         if (!payment.isPaid()) {
             paymentStateService.failAndSaveHistory(dbPayment);
-            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder());
+            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder().getId());
             throw new BaseException(ErrorEnum.PAYMENT_NOT_COMPLETED);
         }
 
@@ -109,7 +109,7 @@ public class BuyerPaymentService {
          */
         if (payment.getTotalAmount() == null) {
             paymentStateService.failAndSaveHistory(dbPayment);
-            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder());
+            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder().getId());
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_INVALID);
         }
         /**
@@ -119,7 +119,7 @@ public class BuyerPaymentService {
         if (dbPayment.getAmount().compareTo(payment.getTotalAmount()) != 0) {
             paymentStateService.failAndSaveHistory(dbPayment);
             buyerRefundService.createRefundForAmountMismatch(currentUserId, dbPayment, payment);
-            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder());
+            stockReleaseService.releaseStockAndFailOrder(dbPayment.getOrder().getId());
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
         }
 

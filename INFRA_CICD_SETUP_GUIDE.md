@@ -1,8 +1,8 @@
-# 🚀 자동 배포 (CI/CD + Terraform) 가이드
+# 자동 배포 (CI/CD + Terraform) 가이드
 
 ---
 
-## 1️⃣ Terraform 설치
+## 1. Terraform 설치
 
 - Terraform 설치  
   https://developer.hashicorp.com/terraform/install
@@ -16,7 +16,7 @@ terraform -version
 
 ---
 
-## 2️⃣ IAM 생성 (Terraform용 - AWS 콘솔에서 직접 생성)
+## 2. IAM 생성 (Terraform용 - AWS 콘솔에서 직접 생성)
 
 - AWS IAM 사용자 생성
 - 권한:
@@ -26,7 +26,7 @@ terraform -version
 
 ---
 
-## 3️⃣ AWS CLI 인증
+## 3. AWS CLI 인증
 - 아래 명령어를 통해 터미널에서 AWS CLI 인증 절차 진행
 ```bash
 aws configure
@@ -34,7 +34,7 @@ aws configure
 
 ---
 
-## 4️⃣ Terraform Backend (bootstrap)
+## 4. Terraform Backend (bootstrap)
 - infra-bootstrap 디렉토리로 이동
 - S3, KMS, DynamoDB 기본 인프라 우선적으로 생성
 ```bash
@@ -45,7 +45,7 @@ terraform apply
 
 ---
 
-## 5️⃣ backend.tf 설정
+## 5. backend.tf 설정
 
 - 4단계에서 apply 후 출력된 아래 세개의 output 값을 infra/backend.tf 에 넣어서 수정
 
@@ -57,7 +57,7 @@ kms_key_id
 
 ---
 
-## 6️⃣ 인프라 생성
+## 6. 인프라 생성
 - infra 디렉토리에서 아래 명령어를 통해 메인 인프라 생성
 ```bash
 cd infra
@@ -67,7 +67,7 @@ terraform apply
 
 ---
 
-## 7️⃣ GitHub Secrets 설정
+## 7. GitHub Secrets 설정
 - 6단계에서 apply 후 출력된 output을 확인하여 GitHub Repository에서 아래와 같이 GitHub Secrets으로 등록
 
 ```
@@ -81,13 +81,13 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 8️⃣ main / dev 브랜치에 merge
+## 8. main / dev 브랜치에 merge
 
 - main / dev 브랜치에 merge 시 CI /CD 절차 진행
 
 ---
 
-## 9️⃣ CI
+## 9. CI
 
 - main / dev 에 PR, push 시 CI 실행
 1. GitHub Actions 실행
@@ -97,7 +97,7 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 🔟 CD
+## 10. CD
 
 - main / dev에  push 시 실행
 
@@ -113,7 +113,7 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 1️⃣1️⃣  배포 확인 
+## 11.  배포 확인 
 
 - 주소창에 http://alb_dns_name/actuator/health 확인
 - AWS 콘솔에서 ECS 서비스 상태 확인
@@ -122,8 +122,3 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 
 
----
-
-## ✅ 요약
-
-Terraform + ECS + OIDC + GitHub Actions 기반 자동 배포

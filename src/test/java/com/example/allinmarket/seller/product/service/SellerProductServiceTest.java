@@ -35,8 +35,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SellerProductServiceTest {
@@ -116,6 +115,7 @@ public class SellerProductServiceTest {
             assertEquals(50, response.stock());
             assertEquals(ProductStatus.ON_SALE, response.status());
             assertEquals("상품 설명", response.description());
+            thenRedisCacheEvictInvoked(1);
         }
     }
 
@@ -256,6 +256,7 @@ public class SellerProductServiceTest {
             assertEquals(BigDecimal.valueOf(20000), response.price());
             assertEquals(ProductStatus.ON_SALE, response.status());
             assertEquals("수정된 설명", response.description());
+            thenRedisCacheEvictInvoked(2);
         }
     }
 
@@ -300,6 +301,7 @@ public class SellerProductServiceTest {
             assertEquals("수정된 상품", response.name());
             assertEquals(BigDecimal.valueOf(10000), response.price()); // 기존값 유지
             assertEquals("기존 설명", response.description());         // 기존값 유지
+            thenRedisCacheEvictInvoked(2);
         }
     }
 
@@ -421,6 +423,7 @@ public class SellerProductServiceTest {
             // then
             assertNotNull(response);
             assertEquals("테스트 상품", response.name());
+            thenRedisCacheEvictInvoked(2);
         }
     }
 
@@ -504,6 +507,7 @@ public class SellerProductServiceTest {
         // then
         assertNotNull(response);
         assertEquals(100, response.stock());
+        thenRedisCacheEvictInvoked(1);
     }
 
     @Test
@@ -575,5 +579,11 @@ public class SellerProductServiceTest {
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
+    }
+
+    private void thenRedisCacheEvictInvoked(int expectedScanCalls) {
+            verify(redisTemplate, times(expectedScanCalls)).getConnectionFactory();
+            verify(redisConnectionFactory, times(expectedScanCalls)).getConnection();
+            verify(redisConnection, times(expectedScanCalls)).scan(any(ScanOptions.class));
     }
 }

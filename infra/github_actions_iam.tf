@@ -9,12 +9,14 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     }
 
     # token.actions.githubusercontent.com 는 Github Actions 에서 발급한 oidc 토큰을 의미
+    # 해당 토큰이 아마존 STS를 대상으로 발급된 것인지 확인
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
 
+    # ${var.github_owner}/${var.github_repo} 레포의 ${var.github_branch} 브랜치에서 실행된 GitHub Actions만 접근 가능
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
@@ -91,6 +93,11 @@ data "aws_iam_policy_document" "github_actions_deploy" {
       aws_iam_role.ecs_task_execution.arn,
       aws_iam_role.ecs_task.arn
     ]
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PassedToService"
+      values   = ["ecs-tasks.amazonaws.com"]
+    }
   }
 }
 

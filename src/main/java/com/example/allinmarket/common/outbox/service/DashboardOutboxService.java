@@ -28,6 +28,7 @@ public class DashboardOutboxService {
     public void processSingleEvent(DashboardOutbox dashboardOutbox) throws JsonProcessingException {
         try {
             if (OutboxEventType.DASHBOARD_UPDATE.equals(dashboardOutbox.getEventType())) {
+                // 저장 시 문자열로 직렬화 했기 때문에 처리 시 역직렬화 필요
                 DashboardUpdatePayload dashboardUpdatePayload = objectMapper.readValue(
                         dashboardOutbox.getPayload(),
                         DashboardUpdatePayload.class
@@ -39,6 +40,8 @@ public class DashboardOutboxService {
                 );
             }
 
+            // 대시보드 업데이트 성공 시 processed = true 설정
+            // 추후 status 값으로 변경 할지는 판단 필요함
             dashboardOutbox.markProcessed();
 
             dashboardOutboxRepository.saveAndFlush(dashboardOutbox);

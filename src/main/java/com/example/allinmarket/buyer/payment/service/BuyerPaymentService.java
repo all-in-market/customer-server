@@ -144,6 +144,8 @@ public class BuyerPaymentService {
 
         LocalDate statDate = dbPayment.getPaidAt().toLocalDate();
 
+        // 결제 트랜잭션 내부에서 Outbox 저장
+        // 결제 성공 시에만 Outbox도 커밋 됨
         DashboardUpdatePayload dashboardUpdatePayload = new DashboardUpdatePayload(
                 dbPayment.getOrder().getId(),
                 statDate
@@ -151,6 +153,7 @@ public class BuyerPaymentService {
 
         String payload = objectMapper.writeValueAsString(dashboardUpdatePayload);
 
+        // Outbox 이벤트 생성
         DashboardOutbox dashboardOutbox = DashboardOutbox.of(
                 OutboxEventType.DASHBOARD_UPDATE,
                 dbPayment.getOrder().getId(),

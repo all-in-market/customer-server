@@ -48,10 +48,19 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         String key = KEY_PREFIX + ip;
 
         String countStr = stringRedisTemplate.opsForValue().get(key);
-        if (countStr != null && Integer.parseInt(countStr) >= MAX_FAILURES) {
-            log.warn("[RateLimit] 로그인 시도 횟수 초과 - IP: {}", ip);
-            sendRateLimitError(response);
-            return;
+        if (countStr != null) {
+            int count;
+            try {
+                count = Integer.parseInt(countStr);
+            } catch (NumberFormatException e) {
+                log.warn("[RateLimit] 실패 횟수 파싱 오류 - IP: {}, key: {}, value: '{}'", ip, key, countStr);
+                count = 0;
+            }
+            if (count >= MAX_FAILURES) {
+                log.warn("[RateLimit] 로그인 시도 횟수 초과 - IP: {}", ip);
+                sendRateLimitError(response);
+                return;
+            }
         }
 
         ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);

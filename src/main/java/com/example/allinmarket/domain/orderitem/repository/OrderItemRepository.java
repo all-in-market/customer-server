@@ -34,18 +34,19 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("""
             SELECT new com.example.allinmarket.seller.dailystatistics.dto.DailyStatsResponse(
-            COUNT(DISTINCT oi.order.id), SUM(oi.quantity),
-            SUM(CASE WHEN oi.order.status = com.example.allinmarket.domain.order.enums.OrderStatus.REFUNDED THEN 1L ELSE 0L END),
-            CAST(SUM(oi.unitPrice * oi.quantity) AS BIGDECIMAL),
-            CAST(SUM(CASE WHEN oi.order.status = com.example.allinmarket.domain.order.enums.OrderStatus.REFUNDED THEN oi.unitPrice * oi.quantity ELSE 0 END)AS BIGDECIMAL))
-            FROM OrderItem oi WHERE oi.seller.id = :sellerId AND oi.order.createdAt >= :start AND oi.order.createdAt < :end
+            COUNT(DISTINCT o.id), SUM(oi.quantity),
+            SUM(CASE WHEN r.status = com.example.allinmarket.domain.refund.enums.RefundStatus.SUCCESS
+            AND r.processedAt >= :start AND r.processedAt < :end THEN 1 ELSE 0 END),
+            CAST(SUM(CASE WHEN p.status = com.example.allinmarket.domain.payment.enums.PaymentStatus.SUCCESS
+            THEN oi.unitPrice * oi.quantity ELSE 0 END) AS BIGDECIMAL),
+            CAST(SUM(CASE WHEN r.status = com.example.allinmarket.domain.refund.enums.RefundStatus.SUCCESS
+            AND r.processedAt >= :start AND r.processedAt < :end THEN oi.unitPrice * oi.quantity ELSE 0 END)AS BIGDECIMAL))
+            FROM OrderItem oi JOIN oi.order o JOIN Payment p ON p.order = o LEFT JOIN Refund r ON r.payment = p WHERE oi.seller.id = :sellerId
+            AND p.status = com.example.allinmarket.domain.payment.enums.PaymentStatus.SUCCESS AND p.paidAt >= :start AND p.paidAt < :end
             """)
     DailyStatsResponse aggregateStats(@Param("sellerId") Long sellerId,
                                       @Param("start") LocalDateTime start,
                                       @Param("end") LocalDateTime end);
-
-    @Query("SELECT DISTINCT oi.seller.id FROM OrderItem oi JOIN oi.seller s WHERE oi.order.createdAt >= :start AND oi.order.createdAt < :end")
-    List<Long> findActiveSellerIds(LocalDateTime start, LocalDateTime end);
 
     @Query("SELECT oi FROM OrderItem oi JOIN FETCH oi.product WHERE oi.order.id = :orderId")
     List<OrderItem> findAllByOrderIdWithProduct(@Param("orderId") Long orderId);

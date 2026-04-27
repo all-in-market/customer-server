@@ -4,6 +4,7 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtAuthenticationFilter;
+import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import com.example.allinmarket.seller.me.dto.request.SellerUpdateRequest;
 import com.example.allinmarket.seller.me.dto.response.SellerDetailResponse;
@@ -42,6 +43,9 @@ public class SellerMeControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
+    private LoginRateLimitFilter loginRateLimitFilter;
+
+    @MockitoBean
     private SellerMeService sellerMeService;
 
     @BeforeEach
@@ -51,6 +55,12 @@ public class SellerMeControllerTest {
             chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
             return null;
         }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
     }
 
     // SecurityUtils가 (Long) authentication.getPrincipal()로 캐스팅하므로

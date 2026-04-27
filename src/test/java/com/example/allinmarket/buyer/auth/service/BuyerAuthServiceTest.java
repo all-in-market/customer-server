@@ -155,7 +155,7 @@ public class BuyerAuthServiceTest {
         // when & then
         assertThatThrownBy(() -> buyerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
-                .hasMessageContaining(ErrorEnum.BUYER_NOT_FOUND.getMessage());
+                .hasMessage(ErrorEnum.LOGIN_FAILED.getMessage());
     }
 
     @Test
@@ -179,7 +179,7 @@ public class BuyerAuthServiceTest {
         // when & then
         assertThatThrownBy(() -> buyerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
-                .hasMessage(ErrorEnum.BUYER_ALREADY_DELETED.getMessage());
+                .hasMessage(ErrorEnum.LOGIN_FAILED.getMessage());
     }
 
     @Test
@@ -203,7 +203,7 @@ public class BuyerAuthServiceTest {
         // when & then
         assertThatThrownBy(() -> buyerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
-                .hasMessage(ErrorEnum.PASSWORD_MISMATCH.getMessage());
+                .hasMessage(ErrorEnum.LOGIN_FAILED.getMessage());
     }
 
     @Test

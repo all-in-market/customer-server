@@ -50,7 +50,7 @@ public class BuyerInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        Seller seller = sellerRepository.findByEmailAndDeletedAtIsNull(sellerEmail).orElse(null);
+        Seller seller = sellerRepository.findByEmail(sellerEmail).orElse(null);
         if (seller == null) {
             log.warn("판매자 계정을 찾을 수 없어 구매자 예시 데이터를 생성하지 않습니다.");
             return;

@@ -17,7 +17,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -35,22 +37,25 @@ public class DailyStatisticsScheduler {
         LocalDateTime start = yesterday.atStartOfDay();
         LocalDateTime end = yesterday.plusDays(1).atStartOfDay();
 
-        // 무판매일에도 집계 0 보장을 위해 모든 판매자 조회
-        List<Seller> sellers = sellerRepository.findAll();
+        // 전체 seller Id 조회
+        List<Long> sellerIds = sellerRepository.findAllIds();
+
+        // 이미 생성된 통계 seller Id (한번만 조회)
+        Set<Long> existingSellerIds = new HashSet<>(sellerDailyStatisticsRepository.findExistingSellerIds(yesterday));
 
         List<SellerDailyStatistics> statisticsList = new ArrayList<>();
 
-        for (Seller seller : sellers) {
+        for (Long sellerId : sellerIds) {
 
-            Long sellerId = seller.getId();
-            boolean exists = sellerDailyStatisticsRepository.existsBySellerIdAndStatDate(sellerId, yesterday);
-
-            if (exists) { // 중복 검증 추가
+            // 중복 검증
+            if (existingSellerIds.contains(sellerId)) {
                 continue;
             }
 
-            // 판매가 없으면 null 반환 위험
+            // 판매 집계
             SalesStats salesStats = orderItemRepository.aggregateSalesStats(sellerId, start, end);
+
+            // 환불 집계
             RefundStats refundStats = refundRepository.aggregateRefundStats(sellerId, start, end);
 
             //쿼리문에서 반환 값이 int 가 아닌 Long으로 지정 되어 null 검증 및 타입 변환 추가
@@ -61,7 +66,7 @@ public class DailyStatisticsScheduler {
             BigDecimal refundAmount = refundStats.refundAmount() != null ? refundStats.refundAmount() : BigDecimal.ZERO;
 
             SellerDailyStatistics yesterdayStatistics = SellerDailyStatistics.of(
-                    seller,
+                    sellerRepository.getReferenceById(sellerId),
                     yesterday,
                     totalOrders,
                     totalItems,

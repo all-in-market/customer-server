@@ -2,13 +2,17 @@ package com.example.allinmarket.seller.product.controller;
 
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.security.JwtProvider;
+import com.example.allinmarket.common.security.JwtAuthenticationFilter;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
 import com.example.allinmarket.seller.product.service.SellerProductService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -25,6 +29,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(SellerProductController.class)
@@ -35,10 +40,19 @@ public class SellerProductControllerTest {
     private RestTestClient restTestClient;
 
     @MockitoBean
-    private JwtProvider jwtProvider;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
     private SellerProductService sellerProductService;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+    }
 
     @Test
     void 판매자_상품_등록_성공_테스트() {

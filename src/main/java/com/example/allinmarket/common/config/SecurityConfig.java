@@ -25,11 +25,13 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/auth/logout").authenticated()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/seller/auth/logout").hasRole("SELLER")
+                        .requestMatchers("/seller/auth/**").permitAll()
                         .requestMatchers("/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categories").permitAll()
-                        .requestMatchers("/seller/auth/**").permitAll()
                         .requestMatchers("/seller/**").hasRole("SELLER")
                         .requestMatchers("/sellers/**").hasRole("SELLER")
                         .anyRequest().hasRole("BUYER")

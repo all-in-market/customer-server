@@ -4,9 +4,13 @@ import com.example.allinmarket.buyer.product.service.BuyerProductService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.security.JwtProvider;
+import com.example.allinmarket.common.security.JwtAuthenticationFilter;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -22,6 +26,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(BuyerProductController.class)
@@ -32,10 +37,19 @@ public class BuyerProductControllerTest {
     private RestTestClient restTestClient;
 
     @MockitoBean
-    private JwtProvider jwtProvider;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
     private BuyerProductService buyerProductService;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+    }
 
     @Test
     @WithMockUser

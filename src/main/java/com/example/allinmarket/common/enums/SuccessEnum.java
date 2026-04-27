@@ -12,6 +12,7 @@ public enum SuccessEnum {
     REGISTER_SUCCESS(201, "회원가입에 성공하였습니다."),
     LOGIN_SUCCESS(200,  "로그인에 성공하였습니다."),
     LOGOUT_SUCCESS(200,  "로그아웃에 성공하였습니다."),
+    TOKEN_REFRESHED(201, "액세스 토큰이 재발급되었습니다"),
 
     // 성공한 경우 별도로 구분하지 않음
     CREATE_SUCCESS(201,  "데이터 생성에 성공하였습니다."),

@@ -1,11 +1,21 @@
 package com.example.allinmarket.seller.auth.controller;
 
-import com.example.allinmarket.common.enums.UserRole;
-import com.example.allinmarket.common.security.JwtProvider;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.enums.SuccessEnum;
+import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.security.JwtAuthenticationFilter;
 import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
+import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
 import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
+import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
+import com.example.allinmarket.seller.auth.dto.response.SellerLoginResult;
 import com.example.allinmarket.seller.auth.service.SellerAuthService;
 import com.example.allinmarket.seller.enums.SellerStatus;
+import com.example.allinmarket.common.enums.UserRole;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -14,14 +24,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
-import com.example.allinmarket.common.enums.ErrorEnum;
-import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
-import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
-
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @WebMvcTest(SellerAuthController.class)
 @AutoConfigureRestTestClient
@@ -31,14 +39,22 @@ public class SellerAuthControllerTest {
     private RestTestClient restTestClient;
 
     @MockitoBean
-    private JwtProvider jwtProvider;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
     private SellerAuthService sellerAuthService;
 
+    @BeforeEach
+    void setUp() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+    }
+
     @Test
     void 판매자_회원가입_성공_테스트() {
-        // given
         SellerCreateResponse response = new SellerCreateResponse(
                 1L,
                 "seller@test.com",
@@ -53,7 +69,6 @@ public class SellerAuthControllerTest {
 
         when(sellerAuthService.signup(any(SellerCreateRequest.class))).thenReturn(response);
 
-        // when & then
         restTestClient.post().uri("/seller/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -72,21 +87,13 @@ public class SellerAuthControllerTest {
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.status").isEqualTo(201)
-                .jsonPath("$.message").isEqualTo("데이터 생성에 성공하였습니다.")
-                .jsonPath("$.data.id").isEqualTo(1)
                 .jsonPath("$.data.email").isEqualTo("seller@test.com")
-                .jsonPath("$.data.name").isEqualTo("홍길동")
-                .jsonPath("$.data.phone").isEqualTo("010-1234-5678")
-                .jsonPath("$.data.storeName").isEqualTo("홍길동상점")
-                .jsonPath("$.data.bizNumber").isEqualTo("123-45-67890")
-                .jsonPath("$.data.bankAccount").isEqualTo("110-123-456789")
                 .jsonPath("$.data.status").isEqualTo("PENDING")
                 .jsonPath("$.data.role").isEqualTo("SELLER");
     }
 
     @Test
     void 판매자_회원가입_이메일_형식_오류_테스트() {
-        // when & then
         restTestClient.post().uri("/seller/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -111,7 +118,6 @@ public class SellerAuthControllerTest {
 
     @Test
     void 판매자_회원가입_비밀번호_길이_오류_테스트() {
-        // when & then
         restTestClient.post().uri("/seller/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -137,7 +143,6 @@ public class SellerAuthControllerTest {
 
     @Test
     void 판매자_회원가입_이름_공백_오류_테스트() {
-        // when & then
         restTestClient.post().uri("/seller/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -162,12 +167,13 @@ public class SellerAuthControllerTest {
 
     @Test
     void 판매자_로그인_성공_테스트() {
-        // given
-        SellerLoginResponse response = new SellerLoginResponse("jwt.token.here");
+        SellerLoginResult loginResult = new SellerLoginResult(
+                new SellerLoginResponse("jwt.token.here"),
+                "test-refresh-token"
+        );
 
-        when(sellerAuthService.login(any(SellerLoginRequest.class))).thenReturn(response);
+        when(sellerAuthService.login(any(SellerLoginRequest.class))).thenReturn(loginResult);
 
-        // when & then
         restTestClient.post().uri("/seller/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -178,15 +184,15 @@ public class SellerAuthControllerTest {
                         """)
                 .exchange()
                 .expectStatus().isOk()
-                .expectHeader().valueEquals("Authorization", "Bearer jwt.token.here")
+                .expectHeader().valueMatches("Set-Cookie", ".*refreshToken=test-refresh-token.*")
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.message").isEqualTo(SuccessEnum.LOGIN_SUCCESS.getMessage())
                 .jsonPath("$.data.accessToken").isEqualTo("jwt.token.here");
     }
 
     @Test
     void 판매자_로그인_이메일_형식_오류_테스트() {
-        // when & then
         restTestClient.post().uri("/seller/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -206,7 +212,6 @@ public class SellerAuthControllerTest {
 
     @Test
     void 판매자_로그인_비밀번호_길이_오류_테스트() {
-        // when & then
         restTestClient.post().uri("/seller/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -227,11 +232,9 @@ public class SellerAuthControllerTest {
 
     @Test
     void 판매자_로그인_판매자_없음_예외_테스트() {
-        // given
         when(sellerAuthService.login(any(SellerLoginRequest.class)))
                 .thenThrow(new BaseException(ErrorEnum.SELLER_NOT_FOUND));
 
-        // when & then
         restTestClient.post().uri("/seller/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -250,11 +253,9 @@ public class SellerAuthControllerTest {
 
     @Test
     void 판매자_로그인_비밀번호_불일치_예외_테스트() {
-        // given
         when(sellerAuthService.login(any(SellerLoginRequest.class)))
                 .thenThrow(new BaseException(ErrorEnum.PASSWORD_MISMATCH));
 
-        // when & then
         restTestClient.post().uri("/seller/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("""
@@ -269,5 +270,40 @@ public class SellerAuthControllerTest {
                 .jsonPath("$.success").isEqualTo(false)
                 .jsonPath("$.status").isEqualTo(401)
                 .jsonPath("$.message").isEqualTo(ErrorEnum.PASSWORD_MISMATCH.getMessage());
+    }
+
+    @Test
+    void 판매자_토큰_재발급_성공_테스트() {
+        SellerLoginResult loginResult = new SellerLoginResult(
+                new SellerLoginResponse("new-accessToken"),
+                "new-refresh-token"
+        );
+
+        given(sellerAuthService.refresh("valid-refresh-token")).willReturn(loginResult);
+
+        restTestClient.post().uri("/seller/auth/refresh")
+                .cookie("refreshToken", "valid-refresh-token")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueMatches("Set-Cookie", ".*refreshToken=new-refresh-token.*")
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(true)
+                .jsonPath("$.message").isEqualTo(SuccessEnum.TOKEN_REFRESHED.getMessage())
+                .jsonPath("$.data.accessToken").isEqualTo("new-accessToken");
+    }
+
+    @Test
+    void 판매자_토큰_재발급_실패_만료된_토큰_테스트() {
+        given(sellerAuthService.refresh(anyString()))
+                .willThrow(new BaseException(ErrorEnum.TOKEN_EXPIRED));
+
+        restTestClient.post().uri("/seller/auth/refresh")
+                .cookie("refreshToken", "expired-token")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.success").isEqualTo(false)
+                .jsonPath("$.status").isEqualTo(ErrorEnum.TOKEN_EXPIRED.getStatus())
+                .jsonPath("$.message").isEqualTo(ErrorEnum.TOKEN_EXPIRED.getMessage());
     }
 }

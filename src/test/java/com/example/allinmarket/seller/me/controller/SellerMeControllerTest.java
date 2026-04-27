@@ -3,12 +3,16 @@ package com.example.allinmarket.seller.me.controller;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.security.JwtProvider;
+import com.example.allinmarket.common.security.JwtAuthenticationFilter;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import com.example.allinmarket.seller.me.dto.request.SellerUpdateRequest;
 import com.example.allinmarket.seller.me.dto.response.SellerDetailResponse;
 import com.example.allinmarket.seller.me.service.SellerMeService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -23,6 +27,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -34,10 +39,19 @@ public class SellerMeControllerTest {
     private RestTestClient restTestClient;
 
     @MockitoBean
-    private JwtProvider jwtProvider;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
     private SellerMeService sellerMeService;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+    }
 
     // SecurityUtils가 (Long) authentication.getPrincipal()로 캐스팅하므로
     // principal을 반드시 Long 타입으로 설정해야 합니다.

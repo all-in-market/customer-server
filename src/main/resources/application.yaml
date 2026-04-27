@@ -37,7 +37,7 @@ management:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000} # 하루
+  expiration: ${JWT_EXPIRATION:3600000} # 1시간
 
 server:
   port: 8080

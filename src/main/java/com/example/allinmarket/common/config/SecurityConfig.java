@@ -38,8 +38,8 @@ public class SecurityConfig {
                         .requestMatchers("/sellers/**").hasRole("SELLER")
                         .anyRequest().hasRole("BUYER")
                 )
-                .addFilterBefore(loginRateLimitFilter, JwtAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(loginRateLimitFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

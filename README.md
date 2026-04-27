@@ -25,7 +25,7 @@ class OrderControllerTest {
     @Test
     @WithMockUser
     void 주문_조회_성공() throws Exception {
-        given(orderService.findById(1L)).willReturn(new OrderResponse(...))
+        given(orderService.findById(1L)).willReturn(new OrderResponse(...));
 
         mockMvc.perform(get("/orders/1"))
                 .andExpect(status().isOk())
@@ -49,7 +49,7 @@ class OrderControllerTest {
     @Test
     @WithMockUser
     void 주문_조회_성공() {
-        given(orderService.findById(1L)).willReturn(new OrderResponse(...))
+        given(orderService.findById(1L)).willReturn(new OrderResponse(...));
 
         restTestClient.get().uri("/orders/1")
                 .exchange()

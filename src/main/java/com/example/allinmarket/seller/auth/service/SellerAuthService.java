@@ -61,20 +61,25 @@ public class SellerAuthService {
     }
 
     public SellerLoginResult login(SellerLoginRequest request) {
-        Seller seller = sellerRepository.findByEmailAndDeletedAtIsNull(request.email()).orElseThrow(
-                () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
+        Seller seller = sellerRepository.findByEmailAndDeletedAtIsNull(request.email()).orElseThrow(() -> {
+                    log.warn("로그인 실패: {}", ErrorEnum.SELLER_NOT_FOUND);
+                    return new BaseException(ErrorEnum.LOGIN_FAILED);
+                }
         );
 
         if (seller.getStatus().equals(SellerStatus.PENDING)) {
-            throw new BaseException(ErrorEnum.FORBIDDEN);
+            log.warn("로그인 실패: {}", ErrorEnum.FORBIDDEN);
+            throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }
 
         if (seller.getDeletedAt() != null) {
-            throw new BaseException(ErrorEnum.SELLER_ALREADY_DELETED);
+            log.warn("로그인 실패: {}", ErrorEnum.SELLER_ALREADY_DELETED);
+            throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }
 
         if (!passwordEncoder.matches(request.password(), seller.getPassword())) {
-            throw new BaseException(ErrorEnum.PASSWORD_MISMATCH);
+            log.warn("로그인 실패: {}", ErrorEnum.PASSWORD_MISMATCH);
+            throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }
 
         String accessToken = jwtProvider.generateToken(seller.getId(), seller.getRole());

@@ -58,7 +58,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, responseWrapper);
 
         int status = responseWrapper.getStatus();
-        if (status >= 400) {
+        if (status == 400) {
             incrementFailureCount(key, ip);
         } else if (status < 300) {
             stringRedisTemplate.delete(key);

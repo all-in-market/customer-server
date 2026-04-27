@@ -39,8 +39,14 @@ public class OrderExpiryScheduler {
 
             log.info("만료 대상 주문 수: {}", expiredOrders.size());
 
-            expiredOrders.forEach(order ->
-                    stockReleaseService.releaseStockAndFailOrder(order.getId())
+            expiredOrders.forEach(order -> {
+                try {
+                    stockReleaseService.releaseStockAndFailOrder(order.getId());
+                } catch (Exception e) {
+                    log.error("만료 주문 처리 실패: orderId={}", order.getId(), e);
+                }
+            }
+
             );
 
         } while (expiredOrders.size() == 100);

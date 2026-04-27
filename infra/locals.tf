@@ -11,10 +11,14 @@ locals {
   ecr_repository_name = coalesce(var.ecr_repository_name, var.project_name)
   container_image     = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
 
+  # 환경별 RDS 삭제 정책
+  db_deletion_protection = var.environment == "prod" ? true : false
+  db_skip_final_snapshot = var.environment == "prod" ? false : true
+
   merged_environment_variables = merge(
     var.environment_variables,
     {
-      SPRING_PROFILES_ACTIVE = "prod"
+      SPRING_PROFILES_ACTIVE = var.environment == "prod" ? "prod" : "dev"
 
       DB_HOST    = aws_db_instance.this.address
       DB_PORT    = "5432"

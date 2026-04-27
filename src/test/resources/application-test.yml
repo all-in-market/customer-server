@@ -2,6 +2,8 @@ spring:
   sql:
     init:
       mode: never  # 테스트 시 SQL 초기화 스크립트 실행 안 함
+  flyway:
+    enabled: false  # 테스트 시 Flyway 마이그레이션 비활성화 (H2가 PostgreSQL 문법 미지원)
   datasource:
     url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1  # 인메모리 H2 DB, MySQL 호환 모드
     username: sa

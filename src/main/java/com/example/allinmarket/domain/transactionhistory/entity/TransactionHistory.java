@@ -5,7 +5,6 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.refund.enums.RefundStatus;
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionStatus;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -67,5 +66,15 @@ public class TransactionHistory extends CreatableEntity {
         transactionHistory.amount = refund.getPayment().getAmount();
 
         return transactionHistory;
+    }
+
+    public static TransactionHistory of(Long transactionId, TransactionType type, PaymentStatus paymentStatus, RefundStatus refundStatus, BigDecimal amount) {
+        TransactionHistory history = new TransactionHistory();
+        history.transactionId = transactionId;
+        history.type = type;
+        history.paymentStatus = paymentStatus;
+        history.refundStatus = refundStatus;
+        history.amount = amount;
+        return history;
     }
 }

@@ -6,6 +6,8 @@ import com.example.allinmarket.common.outbox.repository.HistoryOutBoxRepository;
 import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +23,13 @@ public class HistoryOutBoxScheduler {
 
     @Scheduled(fixedDelay = 10_000)
     public void processOutboxEvents() {
-        List<HistoryOutBox> outBoxes = historyOutBoxRepository.findUnprocessed(HistoryOutBoxConst.MAX_RETRY_COUNT);
+        Pageable pageable = PageRequest.of(0, 200);
+        List<HistoryOutBox> outBoxes = historyOutBoxRepository.findUnprocessed(HistoryOutBoxConst.MAX_RETRY_COUNT, pageable);
 
         if (outBoxes.isEmpty()) return;
 
         log.info("미처리 OutboxEvent 수: {}", outBoxes.size());
 
-        outBoxes.forEach(historyOutBoxService::process);
+        outBoxes.forEach(outBox ->  historyOutBoxService.process(outBox.getId()));
     }
 }

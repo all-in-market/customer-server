@@ -94,7 +94,9 @@ public enum ErrorEnum {
     LOGIN_RATE_LIMITED(429, "로그인 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요."),
 
     // Statistics
-    STATISTICS_NOT_FOUND(404, "존재하지 않는 통계 데이터입니다.");
+    STATISTICS_NOT_FOUND(404, "존재하지 않는 통계 데이터입니다."),
+
+    HISTORY_OUTBOX_NOT_FOUND(404, "존재하지 않는 Outbox 이벤트입니다.");
 
     private final int status;
     private final String message;

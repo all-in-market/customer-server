@@ -1,7 +1,6 @@
 package com.example.allinmarket.common.outbox.entity;
 
 import com.example.allinmarket.common.entity.CreatableEntity;
-import com.example.allinmarket.common.outbox.consts.HistoryOutBoxConst;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,12 +17,12 @@ public class HistoryOutBox extends CreatableEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long transactionId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String payload;
 
     @Column(nullable = false)
     private boolean processed = false;
@@ -31,11 +30,11 @@ public class HistoryOutBox extends CreatableEntity {
     @Column(nullable = false)
     private int retryCount = 0;
 
-    public static HistoryOutBox of(Long transactionId, TransactionType type) {
-        HistoryOutBox event = new HistoryOutBox();
-        event.transactionId = transactionId;
-        event.type = type;
-        return event;
+    public static HistoryOutBox of(TransactionType type, String payload) {
+        HistoryOutBox outBox = new HistoryOutBox();
+        outBox.type = type;
+        outBox.payload = payload;
+        return outBox;
     }
 
     public void markProcessed() {

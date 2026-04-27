@@ -16,7 +16,6 @@ import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -72,7 +71,7 @@ public class BuyerPaymentService {
         paymentRepository.save(payment);
         log.info("결제 생성 성공: paymentId = {}", payment.getId());
 
-        historyOutBoxService.save(payment.getId(), TransactionType.PAYMENT);
+        historyOutBoxService.save(payment);
 
         return PaymentDetailResponse.from(payment);
     }
@@ -138,7 +137,7 @@ public class BuyerPaymentService {
         LocalDate statDate = dbPayment.getPaidAt().toLocalDate();
 
         dashboardService.updateSellerDashboard(dbPayment.getOrder().getId(), statDate);
-        historyOutBoxService.save(dbPayment.getId(), TransactionType.PAYMENT);
+        historyOutBoxService.save(dbPayment);
 
         return PaymentDetailResponse.from(dbPayment);
     }

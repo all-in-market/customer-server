@@ -16,8 +16,6 @@ import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.repository.RefundRepository;
-import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
-import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -71,7 +69,7 @@ public class BuyerRefundService {
         );
         refundRepository.save(refund);
 
-        historyOutBoxService.save(refund.getId(), TransactionType.REFUND);
+        historyOutBoxService.save(refund);
 
         return RefundDetailResponse.from(refund);
     }
@@ -122,7 +120,7 @@ public class BuyerRefundService {
         );
         refundRepository.save(refund);
 
-        historyOutBoxService.save(refund.getId(), TransactionType.REFUND);
+        historyOutBoxService.save(refund);
     }
 
     public PageResponse<RefundDetailResponse> getRefunds(Long buyerId, Pageable pageable) {

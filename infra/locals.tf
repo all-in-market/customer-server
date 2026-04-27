@@ -14,6 +14,8 @@ locals {
   merged_environment_variables = merge(
     var.environment_variables,
     {
+      SPRING_PROFILES_ACTIVE = "prod"
+
       DB_HOST    = aws_db_instance.this.address
       DB_PORT    = "5432"
       DB_NAME    = var.db_name

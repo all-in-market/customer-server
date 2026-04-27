@@ -20,16 +20,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.test.util.ReflectionTestUtils;
-
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import java.util.function.Supplier;
 import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SellerProductServiceTest {
@@ -43,12 +49,27 @@ public class SellerProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private RedisConnectionFactory redisConnectionFactory;
+
+    @Mock
+    private RedisConnection redisConnection;
+
+    @Mock
+    private Cursor<byte[]> cursor;
+
     @InjectMocks
     private SellerProductService sellerProductService;
 
     @Test
     void 판매자_상품_등록_성공_테스트() {
         // given
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
 
         Seller seller = mock(Seller.class);
@@ -83,7 +104,9 @@ public class SellerProductServiceTest {
             given(productRepository.save(any(Product.class))).willReturn(product);
 
             // when
-            ProductDetailResponse response = sellerProductService.create(sellerId, request);
+            ProductDetailResponse response = executeWithTransactionSync(
+                    () -> sellerProductService.create(sellerId, request)
+            );
 
             // then
             assertNotNull(response);
@@ -92,6 +115,7 @@ public class SellerProductServiceTest {
             assertEquals(50, response.stock());
             assertEquals(ProductStatus.ON_SALE, response.status());
             assertEquals("상품 설명", response.description());
+            thenRedisCacheEvictInvoked(1);
         }
     }
 
@@ -185,6 +209,9 @@ public class SellerProductServiceTest {
     @Test
     void 판매자_상품_수정_성공_테스트() {
         // given
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
         Long productId = 1L;
 
@@ -219,7 +246,9 @@ public class SellerProductServiceTest {
             given(categoryRepository.findByIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(category));
 
             // when
-            ProductDetailResponse response = sellerProductService.update(sellerId, productId, request);
+            ProductDetailResponse response = executeWithTransactionSync(
+                    () -> sellerProductService.update(sellerId, productId, request)
+            );
 
             // then
             assertNotNull(response);
@@ -227,12 +256,16 @@ public class SellerProductServiceTest {
             assertEquals(BigDecimal.valueOf(20000), response.price());
             assertEquals(ProductStatus.ON_SALE, response.status());
             assertEquals("수정된 설명", response.description());
+            thenRedisCacheEvictInvoked(2);
         }
     }
 
     @Test
     void 판매자_상품_수정_일부필드만_수정_성공_테스트() {
         // given - name만 수정, 나머지는 null
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
         Long productId = 1L;
 
@@ -260,12 +293,15 @@ public class SellerProductServiceTest {
             given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
             // when
-            ProductDetailResponse response = sellerProductService.update(sellerId, productId, request);
+            ProductDetailResponse response = executeWithTransactionSync(
+                    () -> sellerProductService.update(sellerId, productId, request)
+            );
 
             // then
             assertEquals("수정된 상품", response.name());
             assertEquals(BigDecimal.valueOf(10000), response.price()); // 기존값 유지
             assertEquals("기존 설명", response.description());         // 기존값 유지
+            thenRedisCacheEvictInvoked(2);
         }
     }
 
@@ -359,6 +395,9 @@ public class SellerProductServiceTest {
     @Test
     void 판매자_상품_삭제_성공_테스트() {
         // given
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
         Long productId = 1L;
 
@@ -377,11 +416,14 @@ public class SellerProductServiceTest {
             given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
             // when
-            ProductDetailResponse response = sellerProductService.delete(sellerId, productId);
+            ProductDetailResponse response = executeWithTransactionSync(
+                    () -> sellerProductService.delete(sellerId, productId)
+            );
 
             // then
             assertNotNull(response);
             assertEquals("테스트 상품", response.name());
+            thenRedisCacheEvictInvoked(2);
         }
     }
 
@@ -437,6 +479,9 @@ public class SellerProductServiceTest {
     @Test
     void 판매자_상품_재고수정_성공_테스트() {
         // given
+
+        givenRedisCacheEvictWorks();
+
         Long sellerId = 1L;
         Long productId = 1L;
 
@@ -455,11 +500,14 @@ public class SellerProductServiceTest {
         given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
         // when
-        ProductDetailResponse response = sellerProductService.stockUpdate(sellerId, productId, request);
+        ProductDetailResponse response = executeWithTransactionSync(
+                () -> sellerProductService.stockUpdate(sellerId, productId, request)
+        );
 
         // then
         assertNotNull(response);
         assertEquals(100, response.stock());
+        thenRedisCacheEvictInvoked(1);
     }
 
     @Test
@@ -507,5 +555,35 @@ public class SellerProductServiceTest {
                 () -> sellerProductService.stockUpdate(sellerId, productId, request)
         );
         assertEquals(ErrorEnum.FORBIDDEN, exception.getErrorEnum());
+    }
+
+    private void givenRedisCacheEvictWorks() {
+        given(redisTemplate.getConnectionFactory()).willReturn(redisConnectionFactory);
+        given(redisConnectionFactory.getConnection()).willReturn(redisConnection);
+        given(redisConnection.scan(any(ScanOptions.class))).willReturn(cursor);
+        given(cursor.hasNext()).willReturn(false);
+    }
+
+    private <T> T executeWithTransactionSync(Supplier<T> supplier) {
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            T result = supplier.get();
+
+            for (TransactionSynchronization synchronization :
+                    TransactionSynchronizationManager.getSynchronizations()) {
+                synchronization.afterCommit();
+            }
+
+            return result;
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    private void thenRedisCacheEvictInvoked(int expectedScanCalls) {
+            verify(redisTemplate, times(expectedScanCalls)).getConnectionFactory();
+            verify(redisConnectionFactory, times(expectedScanCalls)).getConnection();
+            verify(redisConnection, times(expectedScanCalls)).scan(any(ScanOptions.class));
     }
 }

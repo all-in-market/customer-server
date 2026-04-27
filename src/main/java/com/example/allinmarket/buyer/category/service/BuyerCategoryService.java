@@ -29,7 +29,7 @@ public class BuyerCategoryService {
             return (List<CategoryDetailResponse>) cached;
         }
 
-        List<Category> categories = categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "sortOrder"));
+        List<Category> categories = categoryRepository.findByDeletedAtIsNull(Sort.by(Sort.Direction.ASC, "sortOrder"));
 
         List<CategoryDetailResponse> responses = categories.stream()
                 .map(CategoryDetailResponse::from)

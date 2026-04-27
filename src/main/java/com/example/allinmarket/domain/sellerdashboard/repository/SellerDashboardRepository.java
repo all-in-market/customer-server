@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface SellerDashboardRepository extends JpaRepository<SellerDashboard, Long> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
             UPDATE SellerDashboard d SET
               d.totalOrders        = d.totalOrders + 1,

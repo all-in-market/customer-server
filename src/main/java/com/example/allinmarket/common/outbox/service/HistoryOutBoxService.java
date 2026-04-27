@@ -33,7 +33,7 @@ public class HistoryOutBoxService {
             HistoryOutBoxPayload payload = HistoryOutBoxPayload.from(payment);
             json = objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
-            throw new BaseException(ErrorEnum.OUTBOX_SERIALIZATION_FAILED);
+            throw new BaseException(ErrorEnum.PAYLOAD_SERIALIZATION_FAILED);
         }
         historyOutBoxRepository.save(HistoryOutBox.of(TransactionType.PAYMENT, json));
         log.info("OutboxEvent 저장 성공: transactionId={}, type={}", payment.getId(), TransactionType.PAYMENT);
@@ -46,7 +46,7 @@ public class HistoryOutBoxService {
             HistoryOutBoxPayload payload = HistoryOutBoxPayload.from(refund);
             json = objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
-            throw new BaseException(ErrorEnum.OUTBOX_SERIALIZATION_FAILED);
+            throw new BaseException(ErrorEnum.PAYLOAD_SERIALIZATION_FAILED);
         }
         historyOutBoxRepository.save(HistoryOutBox.of(TransactionType.REFUND, json));
         log.info("OutboxEvent 저장 성공: transactionId={}, type={}", refund.getId(), TransactionType.REFUND);

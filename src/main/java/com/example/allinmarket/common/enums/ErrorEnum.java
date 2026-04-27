@@ -98,7 +98,8 @@ public enum ErrorEnum {
 
     // Outbox
     HISTORY_OUTBOX_NOT_FOUND(404, "존재하지 않는 Outbox 이벤트입니다."),
-    OUTBOX_SERIALIZATION_FAILED(500, "이력 이벤트 직렬화에 실패했습니다.");
+    PAYLOAD_SERIALIZATION_FAILED(409, "페이로드 직렬화에 실패했습니다."),
+    OUTBOX_EVENT_TYPE_NOT_FOUND(404, "알 수 없는 Outbox 이벤트 타입 입니다.");
 
     private final int status;
     private final String message;

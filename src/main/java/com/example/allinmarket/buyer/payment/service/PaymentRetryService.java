@@ -7,6 +7,7 @@ import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -25,7 +26,7 @@ public class PaymentRetryService {
     private final PaymentStateService paymentStateService;
 
     @Retryable(retryFor = OptimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 100, multiplier = 2))
-    public PaymentDetailResponse retryConfirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) {
+    public PaymentDetailResponse retryConfirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) throws JsonProcessingException {
         return buyerPaymentService.confirmPayment(currentUserId, paymentId, payment);
     }
 
@@ -39,5 +40,4 @@ public class PaymentRetryService {
         paymentStateService.failAndSaveHistory(dbPayment);
         throw new BaseException(ErrorEnum.PAYMENT_FAILED); // 적절한 에러 응답
     }
-
 }

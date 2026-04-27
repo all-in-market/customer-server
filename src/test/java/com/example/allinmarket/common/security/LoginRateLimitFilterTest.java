@@ -106,18 +106,18 @@ class LoginRateLimitFilterTest {
     }
 
     @Test
-    void X_Forwarded_For_헤더의_첫번째_IP를_사용한다() throws Exception {
+    void X_Forwarded_For_헤더의_마지막_IP를_사용한다() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/auth/login");
         request.addHeader("X-Forwarded-For", "10.0.0.1, 192.168.1.1");
         MockHttpServletResponse response = new MockHttpServletResponse();
         given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        given(valueOps.get("login:fail:10.0.0.1")).willReturn(null);
+        given(valueOps.get("login:fail:192.168.1.1")).willReturn(null);
         doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(200); return null; })
                 .when(filterChain).doFilter(any(), any());
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(stringRedisTemplate).delete("login:fail:10.0.0.1");
+        verify(stringRedisTemplate).delete("login:fail:192.168.1.1");
     }
 
     @Test

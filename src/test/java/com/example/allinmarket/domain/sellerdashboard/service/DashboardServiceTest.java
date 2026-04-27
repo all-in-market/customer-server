@@ -39,6 +39,9 @@ class DashboardServiceTest {
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Mock
+    private DashboardRowCreatorService dashboardRowCreatorService;
+
     private Seller createSeller(Long id) {
         Seller seller = Seller.of(
                 "seller" + id + "@test.com",
@@ -81,7 +84,7 @@ class DashboardServiceTest {
             given(sellerDashboardRepository.addOrder(seller.getId(), new BigDecimal("25000"), 3, COMMISSION_RATE, today)).willReturn(0, 1);
 
             // when
-            dashboardService.updateSellerDashboard(orderId);
+            dashboardService.updateSellerDashboard(orderId, today);
 
             // then - 원자적 UPDATE 쿼리 호출 검증
             verify(sellerDashboardRepository, times(2)).addOrder(seller.getId(), new BigDecimal("25000"), 3, COMMISSION_RATE, today);
@@ -103,7 +106,7 @@ class DashboardServiceTest {
             given(sellerDashboardRepository.addOrder(seller.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today)).willReturn(1);
 
             // when
-            dashboardService.updateSellerDashboard(orderId);
+            dashboardService.updateSellerDashboard(orderId, today);
 
             // then - DB 레벨 원자적 누적(+1 order, +1 product, +10000 sales)
             verify(sellerDashboardRepository, times(1)).addOrder(seller.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today);
@@ -128,7 +131,7 @@ class DashboardServiceTest {
             given(sellerDashboardRepository.addOrder(sellerB.getId(), new BigDecimal("40000"), 2, COMMISSION_RATE, today)).willReturn(1);
 
             // when
-            dashboardService.updateSellerDashboard(orderId);
+            dashboardService.updateSellerDashboard(orderId, today);
 
             // then - 판매자별로 각각 addOrder 호출
             verify(sellerDashboardRepository, times(1)).addOrder(sellerA.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today);
@@ -144,7 +147,7 @@ class DashboardServiceTest {
             given(orderItemRepository.findAllByOrderIdWithSeller(orderId)).willReturn(List.of());
 
             // when
-            dashboardService.updateSellerDashboard(orderId);
+            dashboardService.updateSellerDashboard(orderId, today);
 
             // then
             verify(sellerDashboardRepository, never()).findBySellerIdAndStatDate(any(), eq(today));

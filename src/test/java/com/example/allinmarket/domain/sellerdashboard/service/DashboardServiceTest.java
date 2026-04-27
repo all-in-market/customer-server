@@ -152,6 +152,7 @@ class DashboardServiceTest {
             // then
             verify(sellerDashboardRepository, never()).findBySellerIdAndStatDate(any(), eq(today));
             verify(sellerDashboardRepository, never()).save(any());
+            verifyNoInteractions(sellerDashboardRepository, dashboardRowCreatorService, redisTemplate);
         }
     }
 }

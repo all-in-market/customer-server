@@ -31,6 +31,10 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 public class SellerAuthService {
 
+    // USER_NOT_FOUND와 PASSWORD_MISMATCH 두 경로의 응답 시간을 통계적으로 일치시키기 위한 더미 해시값
+    private static final String DUMMY_HASH =
+            "$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG";
+
     private final SellerRepository sellerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
@@ -61,11 +65,11 @@ public class SellerAuthService {
     }
 
     public SellerLoginResult login(SellerLoginRequest request) {
-        Seller seller = sellerRepository.findByEmail(request.email()).orElseThrow(() -> {
-                    log.warn("로그인 실패: {}", ErrorEnum.SELLER_NOT_FOUND);
-                    return new BaseException(ErrorEnum.LOGIN_FAILED);
-                }
-        );
+        Seller seller = sellerRepository.findByEmail(request.email()).orElseGet(() -> {
+            passwordEncoder.matches(request.password(), DUMMY_HASH);
+            log.warn("로그인 실패: {}", ErrorEnum.SELLER_NOT_FOUND);
+            throw new BaseException(ErrorEnum.LOGIN_FAILED);
+        });
 
         if (seller.getDeletedAt() != null) {
             log.warn("로그인 실패: {}", ErrorEnum.SELLER_ALREADY_DELETED);

@@ -85,7 +85,7 @@ class SellerAuthServiceTest {
 
         assertThatThrownBy(() -> sellerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
-                .hasMessage(ErrorEnum.SELLER_NOT_FOUND.getMessage());
+                .hasMessage(ErrorEnum.LOGIN_FAILED.getMessage());
     }
 
     @Test
@@ -99,7 +99,7 @@ class SellerAuthServiceTest {
 
         assertThatThrownBy(() -> sellerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
-                .hasMessage(ErrorEnum.FORBIDDEN.getMessage());
+                .hasMessage(ErrorEnum.LOGIN_FAILED.getMessage());
     }
 
     @Test
@@ -114,7 +114,7 @@ class SellerAuthServiceTest {
 
         assertThatThrownBy(() -> sellerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
-                .hasMessage(ErrorEnum.SELLER_ALREADY_DELETED.getMessage());
+                .hasMessage(ErrorEnum.LOGIN_FAILED.getMessage());
     }
 
     @Test
@@ -131,7 +131,7 @@ class SellerAuthServiceTest {
 
         assertThatThrownBy(() -> sellerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
-                .hasMessage(ErrorEnum.PASSWORD_MISMATCH.getMessage());
+                .hasMessage(ErrorEnum.LOGIN_FAILED.getMessage());
     }
 
     @Test

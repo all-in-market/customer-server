@@ -8,6 +8,7 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -18,6 +19,7 @@ import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -40,6 +42,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BuyerPaymentServiceTest {
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private BuyerPaymentService buyerPaymentService;
@@ -66,6 +71,9 @@ class BuyerPaymentServiceTest {
 
     @Mock
     private StockReleaseService stockReleaseService;
+
+    @Mock
+    private DashboardOutboxRepository dashboardOutboxRepository;
 
     @BeforeEach
     void setUp() {

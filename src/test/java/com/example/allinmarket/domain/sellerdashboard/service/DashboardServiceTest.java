@@ -4,6 +4,7 @@ import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
 import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboardRepository;
+import com.example.allinmarket.seller.dashboard.service.SellerDashboardProcessor;
 import com.example.allinmarket.seller.entity.Seller;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -41,6 +42,9 @@ class DashboardServiceTest {
 
     @Mock
     private DashboardRowCreatorService dashboardRowCreatorService;
+
+    @Mock
+    private SellerDashboardProcessor sellerDashboardProcessor;
 
     private Seller createSeller(Long id) {
         Seller seller = Seller.of(
@@ -81,13 +85,12 @@ class DashboardServiceTest {
             );
 
             given(orderItemRepository.findAllByOrderIdWithSeller(orderId)).willReturn(items);
-            given(sellerDashboardRepository.addOrder(seller.getId(), new BigDecimal("25000"), 3, COMMISSION_RATE, today)).willReturn(0, 1);
 
             // when
             dashboardService.updateSellerDashboard(orderId, today);
 
             // then - 원자적 UPDATE 쿼리 호출 검증
-            verify(sellerDashboardRepository, times(2)).addOrder(seller.getId(), new BigDecimal("25000"), 3, COMMISSION_RATE, today);
+            verify(sellerDashboardProcessor, times(1)).processSingleSeller(seller, items, today, orderId);
         }
 
         @Test
@@ -103,13 +106,12 @@ class DashboardServiceTest {
             );
 
             given(orderItemRepository.findAllByOrderIdWithSeller(orderId)).willReturn(items);
-            given(sellerDashboardRepository.addOrder(seller.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today)).willReturn(1);
 
             // when
             dashboardService.updateSellerDashboard(orderId, today);
 
             // then - DB 레벨 원자적 누적(+1 order, +1 product, +10000 sales)
-            verify(sellerDashboardRepository, times(1)).addOrder(seller.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today);
+            verify(sellerDashboardProcessor, times(1)).processSingleSeller(seller, items, today, orderId);
         }
 
         @Test
@@ -121,21 +123,19 @@ class DashboardServiceTest {
             Seller sellerB = createSeller(2L);
             LocalDate today = LocalDate.now();
 
-            List<OrderItem> items = List.of(
-                    createOrderItem(sellerA, new BigDecimal("10000"), 1),
-                    createOrderItem(sellerB, new BigDecimal("20000"), 2)
-            );
+            OrderItem itemA = createOrderItem(sellerA, new BigDecimal("10000"), 1);
+            OrderItem itemB = createOrderItem(sellerB, new BigDecimal("20000"), 2);
+
+            List<OrderItem> items = List.of(itemA, itemB);
 
             given(orderItemRepository.findAllByOrderIdWithSeller(orderId)).willReturn(items);
-            given(sellerDashboardRepository.addOrder(sellerA.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today)).willReturn(1);
-            given(sellerDashboardRepository.addOrder(sellerB.getId(), new BigDecimal("40000"), 2, COMMISSION_RATE, today)).willReturn(1);
 
             // when
             dashboardService.updateSellerDashboard(orderId, today);
 
             // then - 판매자별로 각각 addOrder 호출
-            verify(sellerDashboardRepository, times(1)).addOrder(sellerA.getId(), new BigDecimal("10000"), 1, COMMISSION_RATE, today);
-            verify(sellerDashboardRepository, times(1)).addOrder(sellerB.getId(), new BigDecimal("40000"), 2, COMMISSION_RATE, today);
+            verify(sellerDashboardProcessor, times(1)).processSingleSeller(eq(sellerA), eq(List.of(itemA)), eq(today), eq(orderId));
+            verify(sellerDashboardProcessor, times(1)).processSingleSeller(eq(sellerB), eq(List.of(itemB)), eq(today), eq(orderId));
         }
 
         @Test

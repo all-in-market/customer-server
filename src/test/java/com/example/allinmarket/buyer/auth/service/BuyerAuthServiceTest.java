@@ -155,7 +155,7 @@ public class BuyerAuthServiceTest {
         // when & then
         assertThatThrownBy(() -> buyerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
-                .hasMessageContaining(ErrorEnum.LOGIN_FAILED.getMessage());
+                .hasMessage(ErrorEnum.LOGIN_FAILED.getMessage());
     }
 
     @Test

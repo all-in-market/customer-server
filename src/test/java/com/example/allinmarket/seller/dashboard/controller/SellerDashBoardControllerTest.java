@@ -3,6 +3,7 @@ package com.example.allinmarket.seller.dashboard.controller;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtAuthenticationFilter;
+import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.seller.dashboard.dto.response.SellerDashboardResponse;
 import com.example.allinmarket.seller.dashboard.service.SellerDashboardService;
 import jakarta.servlet.FilterChain;
@@ -38,6 +39,9 @@ public class SellerDashBoardControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
+    private LoginRateLimitFilter loginRateLimitFilter;
+
+    @MockitoBean
     private SellerDashboardService sellerDashboardService;
 
     @BeforeEach
@@ -47,6 +51,12 @@ public class SellerDashBoardControllerTest {
             chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
             return null;
         }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
     }
 
     private void setAuthContext(Long userId) {

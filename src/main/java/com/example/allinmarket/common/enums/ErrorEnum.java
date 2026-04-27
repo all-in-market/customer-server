@@ -62,10 +62,9 @@ public enum ErrorEnum {
     // Address
     ADDRESS_NOT_FOUND(404, "존재하지 않는 주소입니다."),
 
-    // User
-    USER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
-    USER_ALREADY_DELETED(400, "이미 탈퇴한 사용자입니다."),
-  
+    // USER
+    LOGIN_FAILED(400, "사용자 정보가 일치하지 않습니다."),
+
     // BUYER
     BUYER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
     BUYER_ALREADY_DELETED(400, "이미 탈퇴한 사용자입니다."),
@@ -91,6 +90,9 @@ public enum ErrorEnum {
     REDIS_LOCK_CONFLICT(409, "현재 요청이 처리 중입니다. 잠시 후 다시 시도해주세요."),
     REDIS_LOCK_INTERRUPTED(409, "요청 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."),
   
+    // Rate Limit
+    LOGIN_RATE_LIMITED(429, "로그인 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요."),
+
     // Statistics
     STATISTICS_NOT_FOUND(404, "존재하지 않는 통계 데이터입니다.");
 

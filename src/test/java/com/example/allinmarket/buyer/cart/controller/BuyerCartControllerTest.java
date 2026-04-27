@@ -10,6 +10,7 @@ import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.JwtAuthenticationFilter;
+import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -45,6 +46,9 @@ public class BuyerCartControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
+    private LoginRateLimitFilter loginRateLimitFilter;
+
+    @MockitoBean
     private BuyerCartService buyerCartService;
 
     @BeforeEach
@@ -54,6 +58,12 @@ public class BuyerCartControllerTest {
             chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
             return null;
         }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
 
         Authentication auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         SecurityContextHolder.getContext().setAuthentication(auth);

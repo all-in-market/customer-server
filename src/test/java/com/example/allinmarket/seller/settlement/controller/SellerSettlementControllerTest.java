@@ -1,6 +1,7 @@
 package com.example.allinmarket.seller.settlement.controller;
 
 import com.example.allinmarket.common.security.JwtAuthenticationFilter;
+import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.domain.settlement.dto.response.SettlementDetailResponse;
 import com.example.allinmarket.domain.settlement.enums.SettlementStatus;
 import com.example.allinmarket.domain.settlement.enums.SettlementType;
@@ -40,6 +41,9 @@ class SellerSettlementControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
+    private LoginRateLimitFilter loginRateLimitFilter;
+
+    @MockitoBean
     private SellerSettlementService sellerSettlementService;
 
     @BeforeEach
@@ -49,6 +53,12 @@ class SellerSettlementControllerTest {
             chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
             return null;
         }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
     }
 
     @Test

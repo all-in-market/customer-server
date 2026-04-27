@@ -22,12 +22,28 @@ output "target_group_arn" {
   value = aws_lb_target_group.app.arn
 }
 
+output "ecr_repository_url" {
+  value = aws_ecr_repository.app.repository_url
+}
+
 output "rds_endpoint" {
   value = aws_db_instance.this.address
 }
 
 output "redis_host" {
   value = aws_elasticache_replication_group.this.primary_endpoint_address
+}
+
+output "cloudwatch_log_group_name" {
+  value = aws_cloudwatch_log_group.ecs.name
+}
+
+output "github_actions_aws_role_arn" {
+  value = aws_iam_role.github_actions.arn
+}
+
+output "ecr_repository_name" {
+  value = aws_ecr_repository.app.name
 }
 
 output "ecs_cluster_name" {
@@ -38,14 +54,6 @@ output "ecs_service_name" {
   value = aws_ecs_service.this.name
 }
 
-output "cloudwatch_log_group_name" {
-  value = aws_cloudwatch_log_group.ecs.name
-}
-
-output "github_actions_role_arn" {
-  value = aws_iam_role.github_actions.arn
-}
-
-output "ecr_repository_url" {
-  value = aws_ecr_repository.app.repository_url
+output "ecs_container_name" {
+  value = var.container_name
 }

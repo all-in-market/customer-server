@@ -1,5 +1,6 @@
 package com.example.allinmarket.buyer.payment.service;
 
+import com.example.allinmarket.buyer.order.service.StockReleaseService;
 import com.example.allinmarket.buyer.payment.client.dto.PortOnePaymentResponse;
 import com.example.allinmarket.buyer.payment.dto.request.PaymentCreateRequest;
 import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
@@ -35,8 +36,10 @@ public class BuyerPaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final BuyerRefundService buyerRefundService;
+    private final TransactionHistoryService transactionHistoryService;
     private final PaymentStateService paymentStateService;
     private final DashboardService dashboardService;
+    private final StockReleaseService stockReleaseService;
     private final HistoryOutBoxService historyOutBoxService;
 
     /**
@@ -68,7 +71,7 @@ public class BuyerPaymentService {
         paymentRepository.save(payment);
         log.info("결제 생성 성공: paymentId = {}", payment.getId());
 
-        historyOutBoxService.save(payment.getId(), TransactionType.PAYMENT);
+        transactionHistoryService.savePaymentHistory(payment);
 
         return PaymentDetailResponse.from(payment);
     }
@@ -128,7 +131,7 @@ public class BuyerPaymentService {
         log.info("결제 승인 성공: paymentId = {}", dbPayment.getId());
 
         dashboardService.updateSellerDashboard(dbPayment.getOrder().getId());
-        historyOutBoxService.save(dbPayment.getId(), TransactionType.PAYMENT);
+        transactionHistoryService.savePaymentHistory(dbPayment);
 
         return PaymentDetailResponse.from(dbPayment);
     }

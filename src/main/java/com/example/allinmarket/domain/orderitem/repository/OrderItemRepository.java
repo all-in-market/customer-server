@@ -46,4 +46,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("SELECT DISTINCT oi.seller.id FROM OrderItem oi JOIN oi.seller s WHERE oi.order.createdAt >= :start AND oi.order.createdAt < :end")
     List<Long> findActiveSellerIds(LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT oi FROM OrderItem oi JOIN FETCH oi.product WHERE oi.order.id = :orderId")
+    List<OrderItem> findAllByOrderIdWithProduct(@Param("orderId") Long orderId);
 }

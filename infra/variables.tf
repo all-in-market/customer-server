@@ -163,8 +163,8 @@ variable "github_repo" {
   type        = string
 }
 
-variable "github_branch" {
+variable "github_branches" {
   description = "GitHub branch allowed to deploy"
-  type        = string
-  default     = "dev"
+  type        = list(string)
+  default     = ["dev", "main"]
 }

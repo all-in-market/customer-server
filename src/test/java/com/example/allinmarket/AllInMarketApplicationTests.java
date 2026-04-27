@@ -1,5 +1,6 @@
 package com.example.allinmarket;
 
+import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.redisson.api.RedissonClient;
@@ -13,6 +14,9 @@ class AllInMarketApplicationTests {
 
     @MockitoBean
     RedissonClient redissonClient;
+
+    @MockitoBean
+    LoginRateLimitFilter loginRateLimitFilter;
 
     @Test
     void contextLoads() {

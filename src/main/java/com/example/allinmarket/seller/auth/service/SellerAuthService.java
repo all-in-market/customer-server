@@ -61,19 +61,19 @@ public class SellerAuthService {
     }
 
     public SellerLoginResult login(SellerLoginRequest request) {
-        Seller seller = sellerRepository.findByEmailAndDeletedAtIsNull(request.email()).orElseThrow(() -> {
+        Seller seller = sellerRepository.findByEmail(request.email()).orElseThrow(() -> {
                     log.warn("로그인 실패: {}", ErrorEnum.SELLER_NOT_FOUND);
                     return new BaseException(ErrorEnum.LOGIN_FAILED);
                 }
         );
 
-        if (seller.getStatus().equals(SellerStatus.PENDING)) {
-            log.warn("로그인 실패: {}", ErrorEnum.FORBIDDEN);
+        if (seller.getDeletedAt() != null) {
+            log.warn("로그인 실패: {}", ErrorEnum.SELLER_ALREADY_DELETED);
             throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }
 
-        if (seller.getDeletedAt() != null) {
-            log.warn("로그인 실패: {}", ErrorEnum.SELLER_ALREADY_DELETED);
+        if (seller.getStatus().equals(SellerStatus.PENDING)) {
+            log.warn("로그인 실패: {}", ErrorEnum.FORBIDDEN);
             throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }
 

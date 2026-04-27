@@ -1,11 +1,11 @@
-output "terraform_state_bucket_name" {
+output "backend_bucket" {
   value = aws_s3_bucket.terraform_state.bucket
 }
 
-output "terraform_lock_table_name" {
+output "backend_dynamodb_table" {
   value = aws_dynamodb_table.terraform_lock.name
 }
 
-output "terraform_state_kms_key_arn" {
+output "backend_kms_key_id" {
   value = aws_kms_key.terraform_state.arn
 }

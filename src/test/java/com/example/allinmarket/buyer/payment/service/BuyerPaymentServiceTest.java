@@ -8,6 +8,9 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
+import com.example.allinmarket.common.outbox.enums.OutboxEventType;
+import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -17,6 +20,8 @@ import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,9 +31,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +46,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BuyerPaymentServiceTest {
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private BuyerPaymentService buyerPaymentService;
@@ -65,6 +75,9 @@ class BuyerPaymentServiceTest {
 
     @Mock
     private StockReleaseService stockReleaseService;
+
+    @Mock
+    private DashboardOutboxRepository dashboardOutboxRepository;
 
     @BeforeEach
     void setUp() {
@@ -217,7 +230,7 @@ class BuyerPaymentServiceTest {
 
         @Test
         @DisplayName("결제 확인 성공")
-        void confirmPayment_success() {
+        void confirmPayment_success() throws JsonProcessingException {
             // given
             Long currentUserId = 1L;
             String paymentId = "payment_10_abc";
@@ -244,11 +257,21 @@ class BuyerPaymentServiceTest {
 
             verify(buyerRefundService, never()).createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
             verify(paymentRepository).saveAndFlush(dbPayment);
+
+            ArgumentCaptor<DashboardOutbox> captor = ArgumentCaptor.forClass(DashboardOutbox.class);
+            verify(dashboardOutboxRepository).save(captor.capture());
+
+            DashboardOutbox savedOutbox = captor.getValue();
+
+            assertThat(savedOutbox.getEventType()).isEqualTo(OutboxEventType.DASHBOARD_UPDATE);
+            assertThat(savedOutbox.getAggregateId()).isEqualTo(order.getId());
+            assertThat(savedOutbox.isProcessed()).isFalse();
+            assertThat(savedOutbox.getRetryCount()).isZero();
         }
 
         @Test
         @DisplayName("이미 성공한 결제면 멱등하게 성공 응답")
-        void confirmPayment_alreadySuccess_idempotent() {
+        void confirmPayment_alreadySuccess_idempotent() throws JsonProcessingException {
             // given
             Long currentUserId = 1L;
             String paymentId = "payment_10_abc";

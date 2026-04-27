@@ -69,9 +69,10 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_조회_캐시_미스_성공_테스트() {
         // given - 캐시에 아무것도 없는 상황
+        LocalDate today = LocalDate.now();
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         given(valueOperations.get(expectedKey)).willReturn(null);
-        given(sellerDashboardRepository.findBySellerId(eq(sellerId)))
+        given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(sellerId), eq(today)))
                 .willReturn(Optional.of(dashboard));
 
         // when
@@ -90,7 +91,7 @@ public class SellerDashboardServiceTest {
         assertEquals(0, BigDecimal.valueOf(23500).compareTo(response.feeAmount()));
 
         // DB 조회가 실제로 일어났는지 검증
-        verify(sellerDashboardRepository).findBySellerId(eq(sellerId));
+        verify(sellerDashboardRepository).findBySellerIdAndStatDate(eq(sellerId), eq(today));
         // 캐시에 저장됐는지 검증
         verify(valueOperations).set(eq(expectedKey), any(SellerDashboardResponse.class), eq(Duration.ofMinutes(5)));
     }
@@ -98,6 +99,7 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_조회_캐시_히트_성공_테스트() {
         // given - 캐시에 이미 데이터가 있는 상황
+        LocalDate today = LocalDate.now();
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         SellerDashboardResponse cachedResponse = new SellerDashboardResponse(
                 sellerId, LocalDate.now(), 10, BigDecimal.valueOf(500000), 8,
@@ -112,18 +114,19 @@ public class SellerDashboardServiceTest {
         assertEquals(cachedResponse, response);
 
         // 캐시 히트 시 DB 조회가 일어나지 않았는지 검증
-        verify(sellerDashboardRepository, never()).findBySellerId(any());
+        verify(sellerDashboardRepository, never()).findBySellerIdAndStatDate(any(), eq(today));
     }
 
     @Test
     void 판매자_대시보드_조회_없음_실패_테스트() {
         // given
+        LocalDate today = LocalDate.now();
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         Long notExistSellerId = 999L;
         String notExistKey = "dashboard:" + notExistSellerId + ":" + LocalDate.now();
 
         given(valueOperations.get(notExistKey)).willReturn(null);
-        given(sellerDashboardRepository.findBySellerId(eq(notExistSellerId)))
+        given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(notExistSellerId), eq(today)))
                 .willReturn(Optional.empty());
 
         // when & then
@@ -138,8 +141,9 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_갱신_성공_테스트() {
         // given
+        LocalDate today = LocalDate.now();
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
-        given(sellerDashboardRepository.findBySellerId(eq(sellerId)))
+        given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(sellerId), eq(today)))
                 .willReturn(Optional.of(dashboard));
 
         // when
@@ -157,7 +161,7 @@ public class SellerDashboardServiceTest {
         // 기존 캐시 삭제 검증
         verify(redisTemplate).delete(expectedKey);
         // DB 조회 검증
-        verify(sellerDashboardRepository).findBySellerId(eq(sellerId));
+        verify(sellerDashboardRepository).findBySellerIdAndStatDate(eq(sellerId), eq(today));
         // 새 캐시 저장 검증
         verify(valueOperations).set(eq(expectedKey), any(SellerDashboardResponse.class), any());
     }
@@ -165,7 +169,8 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_갱신_데이터없음_실패_테스트() {
         // given
-        given(sellerDashboardRepository.findBySellerId(eq(sellerId)))
+        LocalDate today = LocalDate.now();
+        given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(sellerId), eq(today)))
                 .willReturn(Optional.empty());
 
         // when & then

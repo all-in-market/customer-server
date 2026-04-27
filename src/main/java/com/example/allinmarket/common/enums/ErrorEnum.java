@@ -85,6 +85,7 @@ public enum ErrorEnum {
 
     // Dashboard
     DASHBOARD_NOT_FOUND(404, "대시보드가 존재하지 않습니다."),
+    DASHBOARD_UPDATE_FAILED(409, "대시보드 업데이트에 실패했습니다."),
 
     // Redis
     REDIS_LOCK_CONFLICT(409, "현재 요청이 처리 중입니다. 잠시 후 다시 시도해주세요."),

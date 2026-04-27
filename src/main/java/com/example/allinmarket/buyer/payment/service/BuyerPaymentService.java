@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -125,7 +126,9 @@ public class BuyerPaymentService {
         paymentRepository.saveAndFlush(dbPayment);
         log.info("결제 승인 성공: paymentId = {}", dbPayment.getId());
 
-        dashboardService.updateSellerDashboard(dbPayment.getOrder().getId());
+        LocalDate statDate = dbPayment.getPaidAt().toLocalDate();
+
+        dashboardService.updateSellerDashboard(dbPayment.getOrder().getId(), statDate);
         transactionHistoryService.savePaymentHistory(dbPayment);
 
         return PaymentDetailResponse.from(dbPayment);

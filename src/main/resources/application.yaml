@@ -29,6 +29,10 @@ spring:
     exclude:
       - org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration
 
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
 management:
   endpoints:
     web:

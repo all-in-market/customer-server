@@ -19,6 +19,9 @@ repositories {
 }
 
 dependencies {
+    // Flyway
+    implementation 'org.flywaydb:flyway-core'
+
     // BOM
     testImplementation platform('org.testcontainers:testcontainers-bom:1.21.3')
 

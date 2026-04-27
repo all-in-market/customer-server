@@ -66,7 +66,7 @@ class SellerAuthServiceTest {
         given(seller.getId()).willReturn(1L);
         given(seller.getRole()).willReturn(UserRole.SELLER);
 
-        given(sellerRepository.findByEmailAndDeletedAtIsNull("seller@test.com")).willReturn(Optional.of(seller));
+        given(sellerRepository.findByEmail("seller@test.com")).willReturn(Optional.of(seller));
         given(passwordEncoder.matches("password123", "encodedPassword")).willReturn(true);
         given(jwtProvider.generateToken(1L, UserRole.SELLER)).willReturn("jwt.token.here");
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
@@ -81,7 +81,7 @@ class SellerAuthServiceTest {
     void 로그인_이메일_없는_판매자_예외_테스트() {
         SellerLoginRequest request = new SellerLoginRequest("notfound@test.com", "password123");
 
-        given(sellerRepository.findByEmailAndDeletedAtIsNull("notfound@test.com")).willReturn(Optional.empty());
+        given(sellerRepository.findByEmail("notfound@test.com")).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> sellerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
@@ -95,7 +95,7 @@ class SellerAuthServiceTest {
         Seller seller = mock(Seller.class);
         given(seller.getStatus()).willReturn(SellerStatus.PENDING);
 
-        given(sellerRepository.findByEmailAndDeletedAtIsNull("seller@test.com")).willReturn(Optional.of(seller));
+        given(sellerRepository.findByEmail("seller@test.com")).willReturn(Optional.of(seller));
 
         assertThatThrownBy(() -> sellerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
@@ -107,10 +107,9 @@ class SellerAuthServiceTest {
         SellerLoginRequest request = new SellerLoginRequest("seller@test.com", "password123");
 
         Seller seller = mock(Seller.class);
-        given(seller.getStatus()).willReturn(SellerStatus.APPROVED);
         given(seller.getDeletedAt()).willReturn(LocalDateTime.now());
 
-        given(sellerRepository.findByEmailAndDeletedAtIsNull("seller@test.com")).willReturn(Optional.of(seller));
+        given(sellerRepository.findByEmail("seller@test.com")).willReturn(Optional.of(seller));
 
         assertThatThrownBy(() -> sellerAuthService.login(request))
                 .isInstanceOf(BaseException.class)
@@ -126,7 +125,7 @@ class SellerAuthServiceTest {
         given(seller.getDeletedAt()).willReturn(null);
         given(seller.getPassword()).willReturn("encodedPassword");
 
-        given(sellerRepository.findByEmailAndDeletedAtIsNull("seller@test.com")).willReturn(Optional.of(seller));
+        given(sellerRepository.findByEmail("seller@test.com")).willReturn(Optional.of(seller));
         given(passwordEncoder.matches("wrongPassword", "encodedPassword")).willReturn(false);
 
         assertThatThrownBy(() -> sellerAuthService.login(request))

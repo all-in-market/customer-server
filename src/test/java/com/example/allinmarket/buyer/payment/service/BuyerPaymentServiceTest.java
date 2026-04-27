@@ -8,6 +8,8 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
+import com.example.allinmarket.common.outbox.enums.OutboxEventType;
 import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
@@ -29,9 +31,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -253,6 +257,16 @@ class BuyerPaymentServiceTest {
 
             verify(buyerRefundService, never()).createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
             verify(paymentRepository).saveAndFlush(dbPayment);
+
+            ArgumentCaptor<DashboardOutbox> captor = ArgumentCaptor.forClass(DashboardOutbox.class);
+            verify(dashboardOutboxRepository).save(captor.capture());
+
+            DashboardOutbox savedOutbox = captor.getValue();
+
+            assertThat(savedOutbox.getEventType()).isEqualTo(OutboxEventType.DASHBOARD_UPDATE);
+            assertThat(savedOutbox.getAggregateId()).isEqualTo(order.getId());
+            assertThat(savedOutbox.isProcessed()).isFalse();
+            assertThat(savedOutbox.getRetryCount()).isZero();
         }
 
         @Test

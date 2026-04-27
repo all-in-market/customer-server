@@ -41,7 +41,7 @@ public class BuyerCategoryServiceTest {
 
         List<Category> categories = List.of(category);
 
-        given(categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "sortOrder"))).willReturn(categories);
+        given(categoryRepository.findByDeletedAtIsNull(Sort.by(Sort.Direction.ASC, "sortOrder"))).willReturn(categories);
 
         given(redisTemplate.opsForValue()).willReturn(Mockito.mock(ValueOperations.class));
 
@@ -57,7 +57,7 @@ public class BuyerCategoryServiceTest {
     @Test
     void 카테고리_목록_조회_실패_테스트() {
         // given
-        given(categoryRepository.findAll(any(Sort.class))).willReturn(Collections.emptyList());
+        given(categoryRepository.findByDeletedAtIsNull(any(Sort.class))).willReturn(Collections.emptyList());
 
         given(redisTemplate.opsForValue()).willReturn(Mockito.mock(ValueOperations.class));
 

@@ -26,7 +26,7 @@ public class StockReleaseService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void releaseStockAndFailOrder(Long orderId) {
 
-        Order order = orderRepository.findById(orderId).orElseThrow(
+        Order order = orderRepository.findByIdForUpdate(orderId).orElseThrow(
                 () -> new BaseException(ErrorEnum.ORDER_NOT_FOUND)
         );
 

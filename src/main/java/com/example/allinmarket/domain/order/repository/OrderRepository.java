@@ -47,4 +47,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("threshold") LocalDateTime threshold,
             Pageable pageable
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM Order o WHERE o.id = :orderId")
+    Optional<Order> findByIdForUpdate(@Param("orderId") Long orderId);
 }

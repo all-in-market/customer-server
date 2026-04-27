@@ -409,10 +409,7 @@ class BuyerPaymentServiceTest {
                 return null;
             }).when(paymentStateService).failAndSaveHistory(any(Payment.class));
 
-            doAnswer(inv -> {
-                inv.getArgument(0, Order.class).fail();
-                return null;
-            }).when(stockReleaseService).releaseStockAndFailOrder(any(Order.class));
+            doNothing().when(stockReleaseService).releaseStockAndFailOrder(order.getId());
 
             // when
             BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
@@ -420,8 +417,7 @@ class BuyerPaymentServiceTest {
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_NOT_COMPLETED);
             assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);
-            verify(stockReleaseService).releaseStockAndFailOrder(order);
+            verify(stockReleaseService).releaseStockAndFailOrder(order.getId());
         }
 
         @Test
@@ -446,10 +442,7 @@ class BuyerPaymentServiceTest {
                 return null;
             }).when(paymentStateService).failAndSaveHistory(any(Payment.class));
 
-            doAnswer(inv -> {
-                inv.getArgument(0, Order.class).fail();
-                return null;
-            }).when(stockReleaseService).releaseStockAndFailOrder(any(Order.class));
+            doNothing().when(stockReleaseService).releaseStockAndFailOrder(order.getId());
 
             // when
             BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
@@ -457,8 +450,7 @@ class BuyerPaymentServiceTest {
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_AMOUNT_INVALID);
             assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);
-            verify(stockReleaseService).releaseStockAndFailOrder(order);
+            verify(stockReleaseService).releaseStockAndFailOrder(order.getId());
             verify(buyerRefundService, never()).createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
         }
 
@@ -484,10 +476,7 @@ class BuyerPaymentServiceTest {
                 return null;
             }).when(paymentStateService).failAndSaveHistory(any(Payment.class));
 
-            doAnswer(inv -> {
-                inv.getArgument(0, Order.class).fail();
-                return null;
-            }).when(stockReleaseService).releaseStockAndFailOrder(any(Order.class));
+            doNothing().when(stockReleaseService).releaseStockAndFailOrder(order.getId());
 
             // when
             BaseException ex = assertThrows(BaseException.class, () -> paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
@@ -495,10 +484,9 @@ class BuyerPaymentServiceTest {
             // then
             assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
             assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);
 
             verify(buyerRefundService).createRefundForAmountMismatch(currentUserId, dbPayment, pgResponse);
-            verify(stockReleaseService).releaseStockAndFailOrder(order);
+            verify(stockReleaseService).releaseStockAndFailOrder(order.getId());
         }
     }
 }

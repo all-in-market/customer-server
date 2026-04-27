@@ -57,6 +57,11 @@ public class HistoryOutBoxService {
         HistoryOutBox outBox = historyOutBoxRepository.findById(outBoxId)
                 .orElseThrow(() -> new BaseException(ErrorEnum.HISTORY_OUTBOX_NOT_FOUND));
 
+        if (outBox.isProcessed()) {
+            log.debug("이미 처리된 OutboxEvent 스킵: outboxId={}", outBoxId);
+            return;
+        }
+
         try {
             HistoryOutBoxPayload payload = objectMapper.readValue(outBox.getPayload(), HistoryOutBoxPayload.class);
             TransactionHistory history = TransactionHistory.of(

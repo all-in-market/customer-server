@@ -119,7 +119,7 @@ public class BuyerAddressService {
         }
 
         // default 배송지 -> 일반 배송지
-        if (Boolean.FALSE.equals(isDefault)) {
+        if (!isDefault) {
             address.unsetDefault();
             return;
         }

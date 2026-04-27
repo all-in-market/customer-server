@@ -148,7 +148,7 @@ JPA 연관관계가 없으므로 `User` 정보가 필요한 경우 별도 조회
 `Order` 엔티티에서 `OrderMenu`를 `@OneToMany`로 연관짓는다.
 ```java
 @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<OrderMenu> orderMenus = new ArrayList<>();
+private final List<OrderMenu> orderMenus = new ArrayList<>();
 ```
 
 ### 근거

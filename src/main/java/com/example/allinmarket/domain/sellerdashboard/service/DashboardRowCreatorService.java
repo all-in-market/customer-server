@@ -57,8 +57,7 @@ public class DashboardRowCreatorService {
         while (cause != null) {
             if (cause instanceof ConstraintViolationException) {
                 String constraintName = ((ConstraintViolationException) cause).getConstraintName();
-                return constraintName != null
-                        && "uk_seller_stat_date".equalsIgnoreCase(constraintName);
+                return "uk_seller_stat_date".equalsIgnoreCase(constraintName);
             }
             cause = cause.getCause();
         }

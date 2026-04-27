@@ -55,7 +55,3 @@ app:
     admin:
       enabled: false
 
-logging:
-  level:
-    org.flywaydb: DEBUG
-

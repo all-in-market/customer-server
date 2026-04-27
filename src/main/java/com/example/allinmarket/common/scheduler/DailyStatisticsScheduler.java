@@ -1,9 +1,11 @@
 package com.example.allinmarket.common.scheduler;
 
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
+import com.example.allinmarket.domain.refund.repository.RefundRepository;
 import com.example.allinmarket.domain.sellerdailystatistics.entity.SellerDailyStatistics;
 import com.example.allinmarket.domain.sellerdailystatistics.repository.SellerDailyStatisticsRepository;
-import com.example.allinmarket.seller.dailystatistics.dto.DailyStatsResponse;
+import com.example.allinmarket.seller.dailystatistics.dto.RefundStats;
+import com.example.allinmarket.seller.dailystatistics.dto.SalesStats;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +18,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class DailyStatisticsScheduler {
     private final SellerRepository sellerRepository;
     private final SellerDailyStatisticsRepository sellerDailyStatisticsRepository;
     private final OrderItemRepository orderItemRepository;
+    private final RefundRepository refundRepository;
 
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
@@ -48,14 +50,15 @@ public class DailyStatisticsScheduler {
             }
 
             // 판매가 없으면 null 반환 위험
-            DailyStatsResponse dailyStatsResponse = orderItemRepository.aggregateStats(sellerId, start, end);
+            SalesStats salesStats = orderItemRepository.aggregateSalesStats(sellerId, start, end);
+            RefundStats refundStats = refundRepository.aggregateRefundStats(sellerId, start, end);
 
             //쿼리문에서 반환 값이 int 가 아닌 Long으로 지정 되어 null 검증 및 타입 변환 추가
-            int totalOrders = dailyStatsResponse.totalOrders() != null ? dailyStatsResponse.totalOrders().intValue() : 0;
-            int totalItems = dailyStatsResponse.totalItems() != null ? dailyStatsResponse.totalItems().intValue() : 0;
-            int totalRefunds = dailyStatsResponse.totalRefunds() != null ? dailyStatsResponse.totalRefunds().intValue() : 0;
-            BigDecimal totalSales = dailyStatsResponse.totalSales() != null ? dailyStatsResponse.totalSales() : BigDecimal.ZERO;
-            BigDecimal refundAmount = dailyStatsResponse.refundAmount() != null ? dailyStatsResponse.refundAmount() : BigDecimal.ZERO;
+            int totalOrders = salesStats.totalOrders() != null ? salesStats.totalOrders().intValue() : 0;
+            int totalItems = salesStats.totalItems() != null ? salesStats.totalItems().intValue() : 0;
+            int totalRefunds = refundStats.totalRefunds() != null ? refundStats.totalRefunds().intValue() : 0;
+            BigDecimal totalSales = salesStats.totalSales() != null ? salesStats.totalSales() : BigDecimal.ZERO;
+            BigDecimal refundAmount = refundStats.refundAmount() != null ? refundStats.refundAmount() : BigDecimal.ZERO;
 
             SellerDailyStatistics yesterdayStatistics = SellerDailyStatistics.of(
                     seller,

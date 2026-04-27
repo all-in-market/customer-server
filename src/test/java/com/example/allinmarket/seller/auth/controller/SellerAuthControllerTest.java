@@ -87,7 +87,8 @@ public class SellerAuthControllerTest {
                             "name": "홍길동",
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890"
+                            "bizNumber": "123-45-67890",
+                            "bankAccount": "123-456-7890"
                         }
                         """)
                 .exchange()
@@ -111,7 +112,8 @@ public class SellerAuthControllerTest {
                             "name": "홍길동",
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890"
+                            "bizNumber": "123-45-67890",
+                            "bankAccount": "123-456-7890"
                         }
                         """)
                 .exchange()
@@ -134,7 +136,8 @@ public class SellerAuthControllerTest {
                             "name": "홍길동",
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890"
+                            "bizNumber": "123-45-67890",
+                            "bankAccount": "123-456-7890"
                         }
                         """)
                 .exchange()
@@ -158,7 +161,8 @@ public class SellerAuthControllerTest {
                             "name": "   ",
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890"
+                            "bizNumber": "123-45-67890",
+                            "bankAccount": "123-456-7890"
                         }
                         """)
                 .exchange()

@@ -23,7 +23,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    defer-datasource-initialization: true
+#    defer-datasource-initialization: true
 
   autoconfigure:
     exclude:
@@ -54,4 +54,8 @@ app:
   init:
     admin:
       enabled: false
+
+logging:
+  level:
+    org.flywaydb: DEBUG
 

@@ -89,6 +89,9 @@ public enum ErrorEnum {
     REDIS_LOCK_CONFLICT(409, "현재 요청이 처리 중입니다. 잠시 후 다시 시도해주세요."),
     REDIS_LOCK_INTERRUPTED(409, "요청 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."),
   
+    // Rate Limit
+    LOGIN_RATE_LIMITED(429, "로그인 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요."),
+
     // Statistics
     STATISTICS_NOT_FOUND(404, "존재하지 않는 통계 데이터입니다.");
 

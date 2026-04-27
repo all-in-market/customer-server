@@ -1,3 +1,7 @@
+resource "random_id" "rds_final_snapshot_suffix" {
+  byte_length = 4
+}
+
 resource "aws_db_instance" "this" {
   identifier             = local.name_prefix
   allocated_storage      = var.db_allocated_storage
@@ -27,7 +31,7 @@ resource "aws_db_instance" "this" {
   deletion_protection = local.db_deletion_protection
   skip_final_snapshot = local.db_skip_final_snapshot
 
-  final_snapshot_identifier = local.db_skip_final_snapshot ? null : "${local.name_prefix}-final-snapshot"
+  final_snapshot_identifier = local.db_skip_final_snapshot ? null : "${local.name_prefix}-final-snapshot-${random_id.rds_final_snapshot_suffix.hex}"
 
   monitoring_interval    = 0
 

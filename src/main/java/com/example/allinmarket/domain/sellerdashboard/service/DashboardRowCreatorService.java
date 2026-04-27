@@ -5,6 +5,7 @@ import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboard
 import com.example.allinmarket.seller.entity.Seller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -52,8 +53,15 @@ public class DashboardRowCreatorService {
     }
 
     private boolean isDuplicateKey(DataIntegrityViolationException e) {
-        return e.getMessage() != null && e.getMessage().contains(
-                "uk_seller_stat_date"
-        );
+        Throwable cause = e;
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException) {
+                String constraintName = ((ConstraintViolationException) cause).getConstraintName();
+                return constraintName != null
+                        && "uk_seller_stat_date".equalsIgnoreCase(constraintName);
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 }

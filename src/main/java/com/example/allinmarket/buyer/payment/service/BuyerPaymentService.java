@@ -121,7 +121,8 @@ public class BuyerPaymentService {
             throw new BaseException(ErrorEnum.PAYMENT_AMOUNT_MISMATCH);
         }
 
-        dbPayment.success(LocalDateTime.now(KST));
+        LocalDateTime paidAt = LocalDateTime.now(KST);
+        dbPayment.success(paidAt);
         dbPayment.getOrder().paid();
 
         // flush를 commit 전에 발생하도록 하여 OptimisticLockingFailureException이 메서드 안에서 발생

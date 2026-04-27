@@ -73,7 +73,7 @@ public class DailyStatisticsScheduler {
                     totalRefunds,
                     totalSales,
                     refundAmount,
-                    totalSales.subtract(refundAmount)
+                    totalSales.subtract(refundAmount).max(BigDecimal.ZERO)
             );
 
             statisticsList.add(yesterdayStatistics);

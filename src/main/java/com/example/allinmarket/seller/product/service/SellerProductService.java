@@ -23,11 +23,15 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization;
 
 @Service
 @RequiredArgsConstructor
@@ -60,7 +64,7 @@ public class SellerProductService {
 
         Product savedProduct = productRepository.save(product);
 
-        evictSearchProductCache(sellerId);
+        evictSellerSearchProductCacheAfterCommit(sellerId);
 
         return ProductDetailResponse.from(savedProduct);
     }
@@ -133,8 +137,7 @@ public class SellerProductService {
         }
 
         if(changed) {
-            evictSearchProductCache(null);
-            evictSearchProductCache(sellerId);
+            evictSearchProductCacheAfterCommit(sellerId);
         }
 
         return ProductDetailResponse.from(product);
@@ -151,8 +154,7 @@ public class SellerProductService {
         product.delete();
 
         // 상품 삭제 시 캐시 삭제
-        evictSearchProductCache(null);
-        evictSearchProductCache(sellerId);
+        evictSearchProductCacheAfterCommit(sellerId);
 
         return ProductDetailResponse.from(product);
     }
@@ -167,7 +169,7 @@ public class SellerProductService {
 
         product.updateStock(request.stock());
 
-        evictSearchProductCache(sellerId);
+        evictSellerSearchProductCacheAfterCommit(sellerId);
 
         return ProductDetailResponse.from(product);
     }
@@ -203,6 +205,25 @@ public class SellerProductService {
         } finally {
             connection.close();
         }
+    }
+
+    private void evictSearchProductCacheAfterCommit(Long sellerId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization(){
+                    @Override
+                    public void afterCommit() {
+                        evictSearchProductCache(null);
+                        evictSearchProductCache(sellerId);
+                    }
+                });
+    }
+
+    private void evictSellerSearchProductCacheAfterCommit(Long sellerId) {
+        registerSynchronization(new TransactionSynchronization(){
+            @Override
+            public void afterCommit() {
+                evictSearchProductCache(sellerId);
+            }
+        });
     }
 
     private void validationForbidden(Long sellerId, Product product) {

@@ -26,7 +26,9 @@ import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.test.util.ReflectionTestUtils;
-
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import java.util.function.Supplier;
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -103,7 +105,9 @@ public class SellerProductServiceTest {
             given(productRepository.save(any(Product.class))).willReturn(product);
 
             // when
-            ProductDetailResponse response = sellerProductService.create(sellerId, request);
+            ProductDetailResponse response = executeWithTransactionSync(
+                    () -> sellerProductService.create(sellerId, request)
+            );
 
             // then
             assertNotNull(response);
@@ -242,7 +246,9 @@ public class SellerProductServiceTest {
             given(categoryRepository.findByIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(category));
 
             // when
-            ProductDetailResponse response = sellerProductService.update(sellerId, productId, request);
+            ProductDetailResponse response = executeWithTransactionSync(
+                    () -> sellerProductService.update(sellerId, productId, request)
+            );
 
             // then
             assertNotNull(response);
@@ -286,7 +292,9 @@ public class SellerProductServiceTest {
             given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
             // when
-            ProductDetailResponse response = sellerProductService.update(sellerId, productId, request);
+            ProductDetailResponse response = executeWithTransactionSync(
+                    () -> sellerProductService.update(sellerId, productId, request)
+            );
 
             // then
             assertEquals("수정된 상품", response.name());
@@ -406,7 +414,9 @@ public class SellerProductServiceTest {
             given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
             // when
-            ProductDetailResponse response = sellerProductService.delete(sellerId, productId);
+            ProductDetailResponse response = executeWithTransactionSync(
+                    () -> sellerProductService.delete(sellerId, productId)
+            );
 
             // then
             assertNotNull(response);
@@ -487,7 +497,9 @@ public class SellerProductServiceTest {
         given(productRepository.findByIdAndDeletedAtIsNull(productId)).willReturn(Optional.of(product));
 
         // when
-        ProductDetailResponse response = sellerProductService.stockUpdate(sellerId, productId, request);
+        ProductDetailResponse response = executeWithTransactionSync(
+                () -> sellerProductService.stockUpdate(sellerId, productId, request)
+        );
 
         // then
         assertNotNull(response);
@@ -546,5 +558,22 @@ public class SellerProductServiceTest {
         given(redisConnectionFactory.getConnection()).willReturn(redisConnection);
         given(redisConnection.scan(any(ScanOptions.class))).willReturn(cursor);
         given(cursor.hasNext()).willReturn(false);
+    }
+
+    private <T> T executeWithTransactionSync(Supplier<T> supplier) {
+        TransactionSynchronizationManager.initSynchronization();
+
+        try {
+            T result = supplier.get();
+
+            for (TransactionSynchronization synchronization :
+                    TransactionSynchronizationManager.getSynchronizations()) {
+                synchronization.afterCommit();
+            }
+
+            return result;
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 }

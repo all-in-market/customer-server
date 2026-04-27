@@ -61,10 +61,10 @@ public class BuyerPaymentService {
             throw new BaseException(ErrorEnum.PAYMENT_ALREADY_EXISTS);
         }
 
-        String impUid = createPaymentId(request.orderId());
+        String merchantUid = createMerchantUid(request.orderId());
         Payment payment = Payment.of(
                 order,
-                impUid,
+                merchantUid,
                 order.getTotalAmount(),
                 request.method()
         );
@@ -82,7 +82,7 @@ public class BuyerPaymentService {
     @Transactional
     public PaymentDetailResponse confirmPayment(Long currentUserId, String paymentId, PortOnePaymentResponse payment) {
 
-        Payment dbPayment = paymentRepository.findByImpUidWithOrder(paymentId).orElseThrow(
+        Payment dbPayment = paymentRepository.findByMerchantUidWithOrder(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
         );
 
@@ -206,10 +206,7 @@ public class BuyerPaymentService {
         }
     }
 
-    /**
-     * 결제ID 생성
-     */
-    private String createPaymentId(Long orderId) {
+    private String createMerchantUid(Long orderId) {
         return "payment_" + orderId + "_" + UUID.randomUUID();
     }
 }

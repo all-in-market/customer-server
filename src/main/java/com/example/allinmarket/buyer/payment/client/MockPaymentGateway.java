@@ -22,7 +22,7 @@ public class MockPaymentGateway implements PaymentGateway {
     @Override
     public PortOnePaymentResponse getPayment(String paymentId) {
 
-        Payment payment = paymentRepository.findByImpUid(paymentId).orElseThrow(
+        Payment payment = paymentRepository.findByMerchantUid(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
         );
 

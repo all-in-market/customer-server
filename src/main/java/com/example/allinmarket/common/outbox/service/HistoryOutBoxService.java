@@ -10,6 +10,7 @@ import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.transactionhistory.entity.TransactionHistory;
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
 import com.example.allinmarket.domain.transactionhistory.repository.TransactionHistoryRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,26 +28,28 @@ public class HistoryOutBoxService {
 
     @Transactional
     public void save(Payment payment) {
+        String json;
         try {
             HistoryOutBoxPayload payload = HistoryOutBoxPayload.from(payment);
-            String json = objectMapper.writeValueAsString(payload);
-            historyOutBoxRepository.save(HistoryOutBox.of(TransactionType.PAYMENT, json));
-            log.info("OutboxEvent 저장 성공: transactionId={}, type={}", payment.getId(), TransactionType.PAYMENT);
-        } catch (Exception e) {
-            log.error("OutboxEvent 저장 실패: transactionId={}, type={}", payment.getId(), TransactionType.PAYMENT, e);
+            json = objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            throw new BaseException(ErrorEnum.OUTBOX_SERIALIZATION_FAILED);
         }
+        historyOutBoxRepository.save(HistoryOutBox.of(TransactionType.PAYMENT, json));
+        log.info("OutboxEvent 저장 성공: transactionId={}, type={}", payment.getId(), TransactionType.PAYMENT);
     }
 
     @Transactional
     public void save(Refund refund) {
+        String json;
         try {
             HistoryOutBoxPayload payload = HistoryOutBoxPayload.from(refund);
-            String json = objectMapper.writeValueAsString(payload);
-            historyOutBoxRepository.save(HistoryOutBox.of(TransactionType.REFUND, json));
-            log.info("OutboxEvent 저장 성공: transactionId={}, type={}", refund.getId(), TransactionType.REFUND);
-        } catch (Exception e) {
-            log.error("OutboxEvent 저장 실패: transactionId={}, type={}", refund.getId(), TransactionType.REFUND, e);
+            json = objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            throw new BaseException(ErrorEnum.OUTBOX_SERIALIZATION_FAILED);
         }
+        historyOutBoxRepository.save(HistoryOutBox.of(TransactionType.REFUND, json));
+        log.info("OutboxEvent 저장 성공: transactionId={}, type={}", refund.getId(), TransactionType.REFUND);
     }
 
     @Transactional

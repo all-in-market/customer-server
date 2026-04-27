@@ -96,7 +96,9 @@ public enum ErrorEnum {
     // Statistics
     STATISTICS_NOT_FOUND(404, "존재하지 않는 통계 데이터입니다."),
 
-    HISTORY_OUTBOX_NOT_FOUND(404, "존재하지 않는 Outbox 이벤트입니다.");
+    // Outbox
+    HISTORY_OUTBOX_NOT_FOUND(404, "존재하지 않는 Outbox 이벤트입니다."),
+    OUTBOX_SERIALIZATION_FAILED(500, "이력 이벤트 직렬화에 실패했습니다.");
 
     private final int status;
     private final String message;

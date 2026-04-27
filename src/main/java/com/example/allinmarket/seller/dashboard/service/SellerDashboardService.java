@@ -23,9 +23,9 @@ public class SellerDashboardService {
 
     // 이 후 관리자가 환불 처리 시 캐시 무효화 필요
     public SellerDashboardResponse getSellerDashboard(Long sellerId) {
-        String key = "dashboard:" + sellerId + ":" + LocalDate.now();
-
         LocalDate today = LocalDate.now();
+
+        String key = "dashboard:" + sellerId + ":" + today;
 
         Object cached = redisTemplate.opsForValue().get(key);
         if (cached instanceof SellerDashboardResponse response) {
@@ -43,10 +43,10 @@ public class SellerDashboardService {
 
     @Transactional
     public SellerDashboardResponse refreshSellerDashboard(Long sellerId) {
-        String key = "dashboard:" + sellerId + ":" + LocalDate.now();
-        redisTemplate.delete(key);
-
         LocalDate today = LocalDate.now();
+
+        String key = "dashboard:" + sellerId + ":" + today;
+        redisTemplate.delete(key);
 
         SellerDashboard sellerDashboard = sellerDashboardRepository.findBySellerIdAndStatDate(sellerId, today)
                 .orElseThrow(() -> new BaseException(ErrorEnum.DASHBOARD_NOT_FOUND));

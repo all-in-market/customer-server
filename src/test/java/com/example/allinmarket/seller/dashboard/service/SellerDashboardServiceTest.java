@@ -45,15 +45,17 @@ public class SellerDashboardServiceTest {
     private Long sellerId;
     private SellerDashboard dashboard;
     private String expectedKey;
+    private LocalDate today;
 
     @BeforeEach
     void setUp() {
         sellerId = 1L;
-        expectedKey = "dashboard:" + sellerId + ":" + LocalDate.now();
+        today = LocalDate.now();
+        expectedKey = "dashboard:" + sellerId + ":" + today;
 
         Seller seller = mock(Seller.class);
 
-        LocalDate today = LocalDate.now();
+
         dashboard = SellerDashboard.of(
                 seller,
                 today,
@@ -69,7 +71,6 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_조회_캐시_미스_성공_테스트() {
         // given - 캐시에 아무것도 없는 상황
-        LocalDate today = LocalDate.now();
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         given(valueOperations.get(expectedKey)).willReturn(null);
         given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(sellerId), eq(today)))
@@ -99,7 +100,6 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_조회_캐시_히트_성공_테스트() {
         // given - 캐시에 이미 데이터가 있는 상황
-        LocalDate today = LocalDate.now();
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         SellerDashboardResponse cachedResponse = new SellerDashboardResponse(
                 sellerId, LocalDate.now(), 10, BigDecimal.valueOf(500000), 8,
@@ -120,7 +120,6 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_조회_없음_실패_테스트() {
         // given
-        LocalDate today = LocalDate.now();
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         Long notExistSellerId = 999L;
         String notExistKey = "dashboard:" + notExistSellerId + ":" + LocalDate.now();
@@ -141,7 +140,6 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_갱신_성공_테스트() {
         // given
-        LocalDate today = LocalDate.now();
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(sellerId), eq(today)))
                 .willReturn(Optional.of(dashboard));
@@ -169,7 +167,6 @@ public class SellerDashboardServiceTest {
     @Test
     void 판매자_대시보드_갱신_데이터없음_실패_테스트() {
         // given
-        LocalDate today = LocalDate.now();
         given(sellerDashboardRepository.findBySellerIdAndStatDate(eq(sellerId), eq(today)))
                 .willReturn(Optional.empty());
 

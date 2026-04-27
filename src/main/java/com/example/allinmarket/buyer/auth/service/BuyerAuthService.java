@@ -14,6 +14,7 @@ import com.example.allinmarket.common.security.JwtProvider;
 import com.example.allinmarket.domain.cart.entity.Cart;
 import com.example.allinmarket.domain.cart.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 public class BuyerAuthService {
@@ -57,15 +59,20 @@ public class BuyerAuthService {
 
     public LoginResult login(BuyerLoginRequest request) {
         Buyer buyer = buyerRepository.findByEmail(request.email()).orElseThrow(
-                () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
+                () -> {
+                    log.warn("로그인 실패: {}", ErrorEnum.BUYER_NOT_FOUND.getMessage());
+                    return new BaseException(ErrorEnum.LOGIN_FAILED);
+                }
         );
 
         if (buyer.getDeletedAt() != null) {
-            throw new BaseException(ErrorEnum.BUYER_ALREADY_DELETED);
+            log.warn("로그인 실패: {}", ErrorEnum.BUYER_ALREADY_DELETED);
+            throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }
 
         if (!passwordEncoder.matches(request.password(), buyer.getPassword())) {
-            throw new BaseException(ErrorEnum.PASSWORD_MISMATCH);
+            log.warn("로그인 실패: {}", ErrorEnum.PASSWORD_MISMATCH);
+            throw new BaseException(ErrorEnum.LOGIN_FAILED);
         }
 
         String accessToken = jwtProvider.generateToken(buyer.getId(), buyer.getRole());

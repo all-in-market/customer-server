@@ -71,7 +71,7 @@ public class HistoryOutBoxService {
                     payload.refundStatus(),
                     payload.amount()
             );
-            transactionHistoryRepository.save(history);
+            transactionHistoryRepository.saveAndFlush(history);
             outBox.markProcessed();
             log.info("OutboxEvent 처리 성공: outboxId={}", outBox.getId());
         } catch (Exception e) {

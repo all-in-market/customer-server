@@ -7,6 +7,7 @@ import com.example.allinmarket.buyer.refund.dto.response.RefundDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -55,7 +56,7 @@ class RefundTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private TransactionHistoryService transactionHistoryService;
+    private HistoryOutBoxService historyOutBoxService;
 
     private Buyer createBuyer(Long id) {
         Buyer buyer = Buyer.of(

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "history_outboxes")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class HistoryOutBox extends CreatableEntity {
+public class HistoryOutbox extends CreatableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,8 +30,8 @@ public class HistoryOutBox extends CreatableEntity {
     @Column(nullable = false)
     private int retryCount = 0;
 
-    public static HistoryOutBox of(TransactionType type, String payload) {
-        HistoryOutBox outBox = new HistoryOutBox();
+    public static HistoryOutbox of(TransactionType type, String payload) {
+        HistoryOutbox outBox = new HistoryOutbox();
         outBox.type = type;
         outBox.payload = payload;
         return outBox;

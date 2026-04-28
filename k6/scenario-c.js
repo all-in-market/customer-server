@@ -68,6 +68,10 @@ export function setup() {
     const productRes = http.get(`${BASE_URL}/products?page=0&size=20`);
     const productIds = productRes.json('data.content').map(p => p.id);
 
+    if (!productIds || productIds.length === 0) {
+        throw new Error('No products found. Seed products before running test.');
+    }
+
     const {tokens} = loginUsers(MAX_VUS);
 
     const users = tokens.map(token => {
@@ -77,8 +81,7 @@ export function setup() {
         const addressId = addresses && addresses.length > 0 ? addresses[0].addressId : null;
 
         if (!addressId) {
-            console.warn(`addressId missing, skipping user. status=${addrRes.status}`);
-            return null;
+            throw new Error('Address missing for token. Seed addresses first.');
         }
 
         return {token, addressId};

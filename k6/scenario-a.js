@@ -53,7 +53,11 @@ export default function () {
     // 2. 목록 응답에서 productId 추출 후 상세 조회
     // 응답 구조: { data: { content: [{ id, name, ... }] } }
     const products = listRes.json('data.content');
-    if (!products || products.length === 0) return;
+
+    if (!products || products.length === 0) {
+        console.error('No products found');
+        return;
+    }
 
     const randomProduct = products[Math.floor(Math.random() * products.length)];
     const detailRes = http.get(`${BASE_URL}/products/${randomProduct.id}`);

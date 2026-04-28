@@ -46,21 +46,45 @@ export const options = {
 export function setup() {
     // 1. 상품 ID 수집 (인증 불필요)
     const productRes = http.get(`${BASE_URL}/products?page=0&size=20`);
+
+    check(productRes, {
+        'product fetch success': (r) => r.status ===200,
+    });
+
+    if (productRes.status !== 200) {
+        throw new Error(`Product fetch failed: status=${productRes.status}`);
+    }
+
     const productIds = productRes.json('data.content').map(p => p.id);
+
+    if (!productIds || productIds.length === 0) {
+        throw new Error('No products found. Seed products before running test.');
+    }
 
     // 2. 로그인 후 배송지 ID 수집
     const { tokens } = loginUsers(MAX_VUS);
 
     const users = tokens.map(token => {
         const addrRes = http.get(`${BASE_URL}/addresses`, authHeaders(token));
-        const addrBody = addrRes.json();
+
+        check(addrRes, {
+            'address fetch success': (r) => r.status === 200,
+        });
+
+        if (addrRes.status !== 200) {
+            throw new Error(`Address fetch failed: status=${addrRes.status}`);
+        }
+
         const addresses = addrRes.json('data');
+
+        if (!addresses || addresses.length === 0) {
+            throw new Error('Address missing. Seed addresses first');
+        }
+
         const addressId = addresses && addresses.length > 0 ? addresses[0].addressId : null;
 
         if (!addressId) {
-            console.log(
-                `addressId missing: ${JSON.stringify(addrBody)}`
-            );
+            throw new Error('Address missing for token. Seed addresses first.');
         }
 
         return { token, addressId };
@@ -111,11 +135,20 @@ export default function (data) {
     const orderId = orderRes.json('data.orderId');
 
     // 3. 결제
+    const paymentPayload = JSON.stringify({
+        orderId: orderId,
+        method:'MOCK'
+    });
+
     const paymentRes = http.post(
         `${BASE_URL}/payments`,
-        JSON.stringify({ orderId, method: 'MOCK' }),
+        paymentPayload,
         jsonAuth(user.token)
     );
 
     check(paymentRes, { 'payment processed 201': (r) => r.status === 201 });
+
+    if (paymentRes.status !== 201) {
+        console.error(`payment failed: status = ${paymentRes.status}, body = ${paymentRes.body}`);
+    }
 }

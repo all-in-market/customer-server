@@ -3,7 +3,6 @@ package com.example.allinmarket.seller.dashboard.service;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
-import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
 import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboardRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardRowCreatorService;
 import com.example.allinmarket.seller.entity.Seller;
@@ -20,7 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import static com.example.allinmarket.seller.consts.sellerConsts.COMMISSION_RATE;
+import static com.example.allinmarket.seller.consts.SellerConsts.COMMISSION_RATE;
 
 @Slf4j
 @Service

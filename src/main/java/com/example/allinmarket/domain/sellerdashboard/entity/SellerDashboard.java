@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import static com.example.allinmarket.seller.consts.sellerConsts.COMMISSION_RATE;
+import static com.example.allinmarket.seller.consts.SellerConsts.COMMISSION_RATE;
 
 @Getter
 @Entity

@@ -1,6 +1,6 @@
 package com.example.allinmarket.common.scheduler;
 
-import com.example.allinmarket.common.outbox.consts.HistoryOutBoxConst;
+import com.example.allinmarket.common.outbox.consts.HistoryOutBoxConsts;
 import com.example.allinmarket.common.outbox.entity.HistoryOutBox;
 import com.example.allinmarket.common.outbox.repository.HistoryOutBoxRepository;
 import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
@@ -24,7 +24,7 @@ public class HistoryOutBoxScheduler {
     @Scheduled(fixedDelay = 10_000)
     public void processOutboxEvents() {
         Pageable pageable = PageRequest.of(0, 200);
-        List<HistoryOutBox> outBoxes = historyOutBoxRepository.findUnprocessed(HistoryOutBoxConst.MAX_RETRY_COUNT, pageable);
+        List<HistoryOutBox> outBoxes = historyOutBoxRepository.findUnprocessed(HistoryOutBoxConsts.MAX_RETRY_COUNT, pageable);
 
         if (outBoxes.isEmpty()) return;
 

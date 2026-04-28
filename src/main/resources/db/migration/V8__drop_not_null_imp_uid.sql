@@ -1,0 +1,2 @@
+ALTER TABLE payments
+ALTER COLUMN imp_uid DROP NOT NULL;

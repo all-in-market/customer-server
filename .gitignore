@@ -61,5 +61,5 @@ out/
 ### Mac ###
 .DS_Store
 
-### application.yaml ###
+### application.yml ###
 src/main/resources/application-local.yml

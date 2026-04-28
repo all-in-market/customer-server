@@ -75,7 +75,11 @@ export const options = {
 
 export function setup() {
     // 1. 상품 ID 수집 (인증 불필요)
-    const productRes = http.get(`${BASE_URL}/products?page=0&size=20`);
+    const productRes = http.get(`${BASE_URL}/products?page=0&size=20`,
+        {
+            tags: {name: 'product_detail'},
+        }
+    );
 
     check(productRes, {
         'product fetch success': (r) => r.status ===200,
@@ -113,7 +117,7 @@ export function setup() {
             throw new Error('Address missing. Seed addresses first');
         }
 
-        const addressId = addresses && addresses.length > 0 ? addresses[0].addressId : null;
+        const addressId = addresses[0].addressId;
 
         if (!addressId) {
             throw new Error('Address missing for token. Seed addresses first.');

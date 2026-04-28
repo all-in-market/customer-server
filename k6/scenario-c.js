@@ -72,6 +72,10 @@ export const options = {
         'http_req_failed{name:payment_create}': [
             'rate<0.01'
         ],
+
+        'http_req_failed{name:order_create}': [
+            'rate<0.01'
+        ],
     },
 };
 
@@ -109,7 +113,6 @@ export function setup() {
 
     const users = tokens.map(token => {
         const addrRes = http.get(`${BASE_URL}/addresses`, authHeaders(token));
-        const addrBody = addrRes.json();
         const addresses = addrRes.json('data');
         const addressId = addresses && addresses.length > 0 ? addresses[0].addressId : null;
 
@@ -118,7 +121,7 @@ export function setup() {
         }
 
         return {token, addressId};
-    }).filter(user => user !== null);
+    });
 
     if (users.length === 0) {
         throw new Error('No users with valid addressId. Seed addresses before running this scenario.');
@@ -139,7 +142,11 @@ export default function (data) {
     );
 
     check(cartRes, {'cart item added 201': r => r.status === 201});
-    if (cartRes.status !== 201) return;
+    if (cartRes.status !== 201) {
+        const bodyPreview = (cartRes.body || '').slice(0, 300);
+        console.error(`CART FAILED: status=${cartRes.status}, bodyPreview=${bodyPreview}`);
+        return;
+    }
 
     const cartItemId = cartRes.json().data.items.content[0].id;
 
@@ -151,7 +158,11 @@ export default function (data) {
     );
 
     check(orderRes, {'order created 201': r => r.status === 201});
-    if (orderRes.status !== 201) return;
+    if (orderRes.status !== 201) {
+        const bodyPreview = (orderRes.body || '').slice(0, 300);
+        console.error(`ORDER FAILED: status=${orderRes.status}, bodyPreview=${bodyPreview}`);
+        return;
+    }
 
     const orderId = orderRes.json('data.orderId');
 

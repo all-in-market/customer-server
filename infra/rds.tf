@@ -15,7 +15,7 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   publicly_accessible    = false
-  multi_az               = false
+  multi_az               = local.rds.multi_az
   storage_type           = "gp3"
 
   backup_retention_period = 7
@@ -28,10 +28,10 @@ resource "aws_db_instance" "this" {
 
   auto_minor_version_upgrade = true
 
-  deletion_protection = local.db_deletion_protection
-  skip_final_snapshot = local.db_skip_final_snapshot
+  deletion_protection = local.rds.deletion_protection
+  skip_final_snapshot = local.rds.skip_final_snapshot
 
-  final_snapshot_identifier = local.db_skip_final_snapshot ? null : "${local.name_prefix}-final-snapshot-${random_id.rds_final_snapshot_suffix.hex}"
+  final_snapshot_identifier = local.rds.skip_final_snapshot ? null : "${local.name_prefix}-final-snapshot-${random_id.rds_final_snapshot_suffix.hex}"
 
   monitoring_interval    = 0
 

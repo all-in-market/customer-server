@@ -16,7 +16,7 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # ${var.github_owner}/${var.github_repo} 레포의 허용된 브랜치들 ${var.github_branches} 브랜치에서 실행된 GitHub Actions만 접근 가능
+    # ${var.github_owner}/${var.github_repo} 레포의 허용된 브랜치들 ${var.github_branches} 브랜치를 대상으로 실행된 GitHub Actions만 접근 가능
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"

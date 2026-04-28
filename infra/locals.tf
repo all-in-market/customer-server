@@ -11,9 +11,23 @@ locals {
   ecr_repository_name = coalesce(var.ecr_repository_name, var.project_name)
   container_image     = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
 
-  # 환경별 RDS 삭제 정책
-  db_deletion_protection = var.environment == "prod" ? true : false
-  db_skip_final_snapshot = var.environment == "prod" ? false : true
+  # 프로파일별 고가용성을 위한 정책 선택
+  ecs = {
+    desired_count = var.environment == "prod" ? 2 : 1
+  }
+
+  rds = {
+    multi_az = var.environment == "prod"
+    deletion_protection = var.environment == "prod"
+    skip_final_snapshot = var.environment != "prod"
+  }
+
+  redis = {
+    num_cache_clusters         = var.environment == "prod" ? 2 : 1
+    automatic_failover_enabled = var.environment == "prod"
+    multi_az_enabled           = var.environment == "prod"
+  }
+
 
   merged_environment_variables = merge(
     var.environment_variables,

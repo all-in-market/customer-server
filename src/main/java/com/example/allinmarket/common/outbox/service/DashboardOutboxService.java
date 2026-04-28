@@ -4,13 +4,11 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
 import com.example.allinmarket.common.outbox.payload.DashboardUpdatePayload;
-import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class DashboardOutboxService {
-    private final DashboardOutboxRepository dashboardOutboxRepository;
+    private static final int MAX_RETRY = 5;
     private final DashboardService dashboardService;
     private final ObjectMapper objectMapper;
     private final DashboardOutboxStatusService dashboardOutboxStatusService;
-    private static final int MAX_RETRY = 5;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processSingleEvent(DashboardOutbox dashboardOutbox) throws JsonProcessingException {

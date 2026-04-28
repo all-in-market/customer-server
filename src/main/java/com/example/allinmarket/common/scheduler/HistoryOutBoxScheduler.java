@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class HistoryOutBoxScheduler {
     private final HistoryOutBoxService historyOutBoxService;
 
     @Scheduled(fixedDelay = 10_000)
+    @Transactional
     public void processOutboxEvents() {
         Pageable pageable = PageRequest.of(0, 200);
         List<HistoryOutBox> outBoxes = historyOutBoxRepository.findUnprocessed(HistoryOutBoxConsts.MAX_RETRY_COUNT, pageable);
@@ -30,6 +32,6 @@ public class HistoryOutBoxScheduler {
 
         log.info("미처리 OutboxEvent 수: {}", outBoxes.size());
 
-        outBoxes.forEach(outBox ->  historyOutBoxService.process(outBox.getId()));
+        outBoxes.forEach(outBox -> historyOutBoxService.process(outBox.getId()));
     }
 }

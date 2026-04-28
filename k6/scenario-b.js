@@ -38,8 +38,38 @@ export const options = {
         },
     },
     thresholds: {
-        http_req_duration: ['p(95)<2000'],  // 쓰기 작업 포함이므로 기준 2초
         http_req_failed:   ['rate<0.01'],
+
+        // 조회는 빠르게
+        'http_req_duration{name:product_list}': [
+            'p(95)<500'
+        ],
+
+        'http_req_duration{name:product_detail}': [
+            'p(95)<500'
+        ],
+
+        // 쓰기 작업
+        'http_req_duration{name:cart_add}': [
+            'p(95)<800'
+        ],
+
+        'http_req_duration{name:order_create}': [
+            'p(95)<1000'
+        ],
+
+        'http_req_duration{name:payment_create}': [
+            'p(95)<1500'
+        ],
+
+        // 실패율 분리
+        'http_req_failed{name:payment_create}': [
+            'rate<0.01'
+        ],
+
+        'http_req_failed{name:order_create}': [
+            'rate<0.01'
+        ],
     },
 };
 
@@ -113,11 +143,18 @@ export default function (data) {
     const cartRes = http.post(
         `${BASE_URL}/carts/items?sort=createdAt,desc&size=1`,
         JSON.stringify({ productId, quantity: 1 }),
-        jsonAuth(user.token)
+        {
+            ...jsonAuth(user.token),
+            tags: {name: 'cart_add'},
+        }
     );
 
     check(cartRes, { 'cart item added 201': (r) => r.status === 201 });
-    if (cartRes.status !== 201) return;
+    if (cartRes.status !== 201) {
+        console.error(`CART FAILED: status = ${cartRes.status}, body = ${cartRes.body}`);
+
+        return;
+    }
 
     const body = cartRes.json();
     const cartItemId = body.data.items.content[0].id;
@@ -126,11 +163,18 @@ export default function (data) {
     const orderRes = http.post(
         `${BASE_URL}/orders`,
         JSON.stringify({ cartItemIds: [cartItemId], addressId: user.addressId }),
-        jsonAuth(user.token)
+        {
+            ...jsonAuth(user.token),
+            tags: {name: 'order_create'},
+        }
     );
 
     check(orderRes, { 'order created 201': (r) => r.status === 201 });
-    if (orderRes.status !== 201) return;
+    if (orderRes.status !== 201) {
+        console.error(`ORDER FAILED: status = ${orderRes.status}, body = ${orderRes.body}`)
+
+        return;
+    }
 
     const orderId = orderRes.json('data.orderId');
 
@@ -143,12 +187,15 @@ export default function (data) {
     const paymentRes = http.post(
         `${BASE_URL}/payments`,
         paymentPayload,
-        jsonAuth(user.token)
+        {
+            ...jsonAuth(user.token),
+            tags: {name: 'payment_create'},
+        }
     );
 
     check(paymentRes, { 'payment processed 201': (r) => r.status === 201 });
 
     if (paymentRes.status !== 201) {
-        console.error(`payment failed: status = ${paymentRes.status}, body = ${paymentRes.body}`);
+        console.error(`PAYMENT FAILED: status = ${paymentRes.status}, body = ${paymentRes.body}`);
     }
 }

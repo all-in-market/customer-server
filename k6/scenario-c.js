@@ -46,10 +46,32 @@ export const options = {
     // 모든 메트릭에 run 태그 자동 부착 → InfluxDB에서 before/after 필터링 가능
     tags: {run: RUN_TAG},
     thresholds: {
-        // POST /payments 에 name 태그를 붙여 이 엔드포인트만 기준 적용
-        'http_req_duration{name:POST /payments}': ['p(95)<2000'],
-        'payment_duration_ms': ['p(95)<2000'],
-        http_req_failed: ['rate<0.01'],
+        // 조회 기준
+        'http_req_duration{name:product_list}': [
+            'p(95)<500'
+        ],
+
+        // 쓰기 기준
+        'http_req_duration{name:cart_add}': [
+            'p(95)<800'
+        ],
+
+        'http_req_duration{name:order_create}': [
+            'p(95)<1000'
+        ],
+
+        // 핵심: 결제
+        'http_req_duration{name:payment_create}': [
+            'p(95)<2000'
+        ],
+
+        'payment_duration_ms': [
+            'p(95)<2000'
+        ],
+
+        'http_req_failed{name:payment_create}': [
+            'rate<0.01'
+        ],
     },
 };
 
@@ -65,7 +87,12 @@ function postParams(token, endpointName) {
 }
 
 export function setup() {
-    const productRes = http.get(`${BASE_URL}/products?page=0&size=20`);
+    const productRes = http.get(`${BASE_URL}/products?page=0&size=20`,
+        {
+            tags: {name: 'product_list'},
+        }
+    );
+
     const productIds = productRes.json('data.content').map(p => p.id);
 
     if (!productIds || productIds.length === 0) {
@@ -102,7 +129,7 @@ export default function (data) {
     const cartRes = http.post(
         `${BASE_URL}/carts/items?sort=createdAt,desc&size=1`,
         JSON.stringify({productId, quantity: 1}),
-        postParams(user.token, 'POST /carts/items')
+        postParams(user.token, 'cart_add')
     );
 
     check(cartRes, {'cart item added 201': r => r.status === 201});
@@ -114,7 +141,7 @@ export default function (data) {
     const orderRes = http.post(
         `${BASE_URL}/orders`,
         JSON.stringify({cartItemIds: [cartItemId], addressId: user.addressId}),
-        postParams(user.token, 'POST /orders')
+        postParams(user.token, 'order_create')
     );
 
     check(orderRes, {'order created 201': r => r.status === 201});
@@ -128,7 +155,7 @@ export default function (data) {
     const paymentRes = http.post(
         `${BASE_URL}/payments`,
         JSON.stringify({orderId, method: 'MOCK'}),
-        postParams(user.token, 'POST /payments')
+        postParams(user.token, 'payment_create')
     );
     paymentDuration.add(Date.now() - paymentStart, {run: RUN_TAG});
 

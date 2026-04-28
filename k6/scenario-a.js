@@ -34,35 +34,62 @@ export const options = {
         },
     },
     thresholds: {
-        http_req_duration: ['p(95)<1000'],   // 95%의 요청이 1초 이내
-        http_req_failed:   ['rate<0.01'],    // 에러율 1% 미만
+        // 전체 기본 기준
+        http_req_failed: ['rate<0.01'],
+
+        // 목록 조회
+        'http_req_duration{name:product_list}': [
+            'p(95)<500'
+        ],
+
+        // 상세 조회
+        'http_req_duration{name:product_detail}': [
+            'p(95)<500'
+        ],
     },
 };
 
 export default function () {
     // 1. 상품 목록 조회 (랜덤 페이지)
     const page = Math.floor(Math.random() * 10);
-    const listRes = http.get(`${BASE_URL}/products?page=${page}&size=20`);
+    const listRes = http.get(`${BASE_URL}/products?page=${page}&size=20`,
+        {
+            tags: {name: 'product_list'},
+        }
+    );
 
     check(listRes, {
         'product list 200': (r) => r.status === 200,
     });
 
-    if (listRes.status !== 200) return;
+    if (listRes.status !== 200) {
+        console.error(`LIST FAILED: status = ${listRes.status}, body = ${listRes.body}`);
+
+        return;
+    }
 
     // 2. 목록 응답에서 productId 추출 후 상세 조회
     // 응답 구조: { data: { content: [{ id, name, ... }] } }
     const products = listRes.json('data.content');
 
     if (!products || products.length === 0) {
-        console.error('No products found');
+        console.error(`NO PRODUCTS: body = ${listRes.body}`);
+
         return;
     }
 
     const randomProduct = products[Math.floor(Math.random() * products.length)];
-    const detailRes = http.get(`${BASE_URL}/products/${randomProduct.id}`);
+    const detailRes = http.get(`${BASE_URL}/products/${randomProduct.id}`,
+        {
+            tags: {name: 'product_detail'},
+        }
+    );
 
     check(detailRes, {
         'product detail 200': (r) => r.status === 200,
     });
+
+    if (detailRes.status !== 200) {
+        console.error(`DETAIL FAILED: id = ${randomProduct.id}`);
+    }
 }

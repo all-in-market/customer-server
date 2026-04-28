@@ -13,8 +13,7 @@ import java.util.Optional;
 
 public interface HistoryOutBoxRepository extends JpaRepository<HistoryOutBox, Long> {
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT h FROM HistoryOutBox h WHERE h.processed = false AND h.retryCount < :maxRetryCount")
+    @Query("SELECT h FROM HistoryOutBox h WHERE h.processed = false AND h.retryCount < :maxRetryCount ORDER BY h.id")
     List<HistoryOutBox> findUnprocessed(@Param("maxRetryCount") int maxRetryCount, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

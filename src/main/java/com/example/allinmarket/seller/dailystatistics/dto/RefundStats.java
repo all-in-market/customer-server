@@ -2,11 +2,8 @@ package com.example.allinmarket.seller.dailystatistics.dto;
 
 import java.math.BigDecimal;
 
-public record DailyStatsResponse(
-        Long totalOrders,
-        Long totalItems,
+public record RefundStats (
         Long totalRefunds,
-        BigDecimal totalSales,
         BigDecimal refundAmount
 ) {
 }

@@ -3,7 +3,7 @@ package com.example.allinmarket.common.outbox.service;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.outbox.dto.HistoryOutBoxPayload;
-import com.example.allinmarket.common.outbox.entity.HistoryOutBox;
+import com.example.allinmarket.common.outbox.entity.HistoryOutbox;
 import com.example.allinmarket.common.outbox.repository.HistoryOutBoxRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.refund.entity.Refund;
@@ -36,7 +36,7 @@ public class HistoryOutBoxService {
         } catch (JsonProcessingException e) {
             throw new BaseException(ErrorEnum.PAYLOAD_SERIALIZATION_FAILED);
         }
-        historyOutBoxRepository.save(HistoryOutBox.of(TransactionType.PAYMENT, json));
+        historyOutBoxRepository.save(HistoryOutbox.of(TransactionType.PAYMENT, json));
         log.info("OutboxEvent 저장 성공: transactionId={}, type={}", payment.getId(), TransactionType.PAYMENT);
     }
 
@@ -48,13 +48,13 @@ public class HistoryOutBoxService {
         } catch (JsonProcessingException e) {
             throw new BaseException(ErrorEnum.PAYLOAD_SERIALIZATION_FAILED);
         }
-        historyOutBoxRepository.save(HistoryOutBox.of(TransactionType.REFUND, json));
+        historyOutBoxRepository.save(HistoryOutbox.of(TransactionType.REFUND, json));
         log.info("OutboxEvent 저장 성공: transactionId={}, type={}", refund.getId(), TransactionType.REFUND);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void process(Long outBoxId) {
-        HistoryOutBox outBox = historyOutBoxRepository.findByIdForUpdate(outBoxId)
+        HistoryOutbox outBox = historyOutBoxRepository.findByIdForUpdate(outBoxId)
                 .orElseThrow(() -> new BaseException(ErrorEnum.HISTORY_OUTBOX_NOT_FOUND));
 
         if (outBox.isProcessed()) {

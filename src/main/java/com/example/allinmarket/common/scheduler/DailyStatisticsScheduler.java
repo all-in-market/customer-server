@@ -1,9 +1,11 @@
 package com.example.allinmarket.common.scheduler;
 
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
+import com.example.allinmarket.domain.refund.repository.RefundRepository;
 import com.example.allinmarket.domain.sellerdailystatistics.entity.SellerDailyStatistics;
 import com.example.allinmarket.domain.sellerdailystatistics.repository.SellerDailyStatisticsRepository;
-import com.example.allinmarket.seller.dailystatistics.dto.DailyStatsResponse;
+import com.example.allinmarket.seller.dailystatistics.dto.RefundStats;
+import com.example.allinmarket.seller.dailystatistics.dto.SalesStats;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +17,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class DailyStatisticsScheduler {
     private final SellerRepository sellerRepository;
     private final SellerDailyStatisticsRepository sellerDailyStatisticsRepository;
     private final OrderItemRepository orderItemRepository;
+    private final RefundRepository refundRepository;
 
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
@@ -33,45 +37,43 @@ public class DailyStatisticsScheduler {
         LocalDateTime start = yesterday.atStartOfDay();
         LocalDateTime end = yesterday.plusDays(1).atStartOfDay();
 
-        // 전일 판매가 있었던 판매자만 조회
-        List<Long> activeSellerIds = orderItemRepository.findActiveSellerIds(start, end);
+        // 전체 seller Id 조회
+        List<Long> sellerIds = sellerRepository.findAllIds();
+
+        // 이미 생성된 통계 seller Id (한번만 조회)
+        Set<Long> existingSellerIds = new HashSet<>(sellerDailyStatisticsRepository.findExistingSellerIds(yesterday));
 
         List<SellerDailyStatistics> statisticsList = new ArrayList<>();
 
-        for (Long sellerId : activeSellerIds) {
-            boolean exists = sellerDailyStatisticsRepository.existsBySellerIdAndStatDate(sellerId, yesterday);
+        for (Long sellerId : sellerIds) {
 
-            if (exists) { // 중복 검증 추가
+            // 중복 검증
+            if (existingSellerIds.contains(sellerId)) {
                 continue;
             }
 
-            // seller 의 값이 없을 경우를 대비해서 검증 추가
-            Optional<Seller> optionalSeller = sellerRepository.findById(sellerId);
+            // 판매 집계
+            SalesStats salesStats = orderItemRepository.aggregateSalesStats(sellerId, start, end);
 
-            if (optionalSeller.isEmpty()) {
-                continue;
-            }
-
-            Seller seller = optionalSeller.get();
-
-            DailyStatsResponse dailyStatsResponse = orderItemRepository.aggregateStats(sellerId, start, end);
+            // 환불 집계
+            RefundStats refundStats = refundRepository.aggregateRefundStats(sellerId, start, end);
 
             //쿼리문에서 반환 값이 int 가 아닌 Long으로 지정 되어 null 검증 및 타입 변환 추가
-            int totalOrders = dailyStatsResponse.totalOrders() != null ? dailyStatsResponse.totalOrders().intValue() : 0;
-            int totalItems = dailyStatsResponse.totalItems() != null ? dailyStatsResponse.totalItems().intValue() : 0;
-            int totalRefunds = dailyStatsResponse.totalRefunds() != null ? dailyStatsResponse.totalRefunds().intValue() : 0;
-            BigDecimal totalSales = dailyStatsResponse.totalSales() != null ? dailyStatsResponse.totalSales() : BigDecimal.ZERO;
-            BigDecimal refundAmount = dailyStatsResponse.refundAmount() != null ? dailyStatsResponse.refundAmount() : BigDecimal.ZERO;
+            int totalOrders = salesStats.totalOrders() != null ? salesStats.totalOrders().intValue() : 0;
+            int totalItems = salesStats.totalItems() != null ? salesStats.totalItems().intValue() : 0;
+            int totalRefunds = refundStats.totalRefunds() != null ? refundStats.totalRefunds().intValue() : 0;
+            BigDecimal totalSales = salesStats.totalSales() != null ? salesStats.totalSales() : BigDecimal.ZERO;
+            BigDecimal refundAmount = refundStats.refundAmount() != null ? refundStats.refundAmount() : BigDecimal.ZERO;
 
             SellerDailyStatistics yesterdayStatistics = SellerDailyStatistics.of(
-                    seller,
+                    sellerRepository.getReferenceById(sellerId),
                     yesterday,
                     totalOrders,
                     totalItems,
                     totalRefunds,
                     totalSales,
                     refundAmount,
-                    totalSales.subtract(refundAmount)
+                    totalSales.subtract(refundAmount).max(BigDecimal.ZERO)
             );
 
             statisticsList.add(yesterdayStatistics);

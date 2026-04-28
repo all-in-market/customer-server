@@ -4,6 +4,7 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -15,11 +16,15 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ApiResponse<Void>> handleBaseException(BaseException e) {
+
+        log.warn("비즈니스 예외 발생 : {}", e.getMessage());
+
         ErrorEnum errorEnum = e.getErrorEnum();
         return ResponseEntity
                 .status(errorEnum.getStatus())
@@ -65,6 +70,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException e) {
         String rootMessage = NestedExceptionUtils.getMostSpecificCause(e).getMessage();
 
+        log.error("DB 제약조건 예외 발생", e);
+
         boolean uniqueConflict = rootMessage != null &&
                 (rootMessage.contains("duplicate key")
                         || rootMessage.contains("Duplicate entry")
@@ -80,9 +87,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ErrorEnum.INVALID_INPUT));
     }
 
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+
+        log.error("예상하지 못한 서버 오류 발생", e);
+
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.fail(ErrorEnum.INTERNAL_SERVER_ERROR));

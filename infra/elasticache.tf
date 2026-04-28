@@ -7,9 +7,9 @@ resource "aws_elasticache_replication_group" "this" {
   parameter_group_name       = "default.redis7"
   subnet_group_name          = aws_elasticache_subnet_group.this.name
   security_group_ids         = [aws_security_group.redis.id]
-  num_cache_clusters         = 1
-  automatic_failover_enabled = false
-  multi_az_enabled           = false
+  num_cache_clusters         = local.redis.num_cache_clusters
+  automatic_failover_enabled = local.redis.automatic_failover_enabled
+  multi_az_enabled           = local.redis.multi_az_enabled
   at_rest_encryption_enabled = false
   transit_encryption_enabled = true
 

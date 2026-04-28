@@ -25,8 +25,9 @@ public class BuyerPaymentFacade {
         // 실제 결제는 FE 에서 결제창을 호출하여 실행
 
         // 결제 이력 조회 (지금은 연동 전이므로 항상 결제 완료 상태를 반환한다고 가정)
-        PortOnePaymentResponse payment = paymentGateway.getPayment(paymentCreateResult.impUid());
+        // 실연동 시 PortOne이 생성한 impUid를 별도로 받아야 함.
+        PortOnePaymentResponse payment = paymentGateway.getPayment(paymentCreateResult.merchantUid());
 
-        return paymentRetryService.retryConfirmPayment(currentUserId, paymentCreateResult.impUid(), payment);
+        return paymentRetryService.retryConfirmPayment(currentUserId, paymentCreateResult.merchantUid(), payment);
     }
 }

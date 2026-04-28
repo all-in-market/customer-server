@@ -34,7 +34,7 @@ public class PaymentRetryService {
     @Recover
     public PaymentDetailResponse recoverConfirmPayment(OptimisticLockingFailureException e, Long currentUserId, String paymentId,
                                                        PortOnePaymentResponse payment) {
-        Payment dbPayment = paymentRepository.findByImpUidWithOrder(paymentId).orElseThrow(
+        Payment dbPayment = paymentRepository.findByMerchantUidWithOrder(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
         );
         paymentStateService.failAndSaveHistory(dbPayment);

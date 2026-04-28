@@ -29,6 +29,9 @@ public class Payment extends ModifiableEntity {
     private Order order;
 
     @Column(nullable = false, unique = true)
+    private String merchantUid;
+
+    @Column
     private String impUid;
 
     @PositiveOrZero
@@ -49,10 +52,10 @@ public class Payment extends ModifiableEntity {
     @Version
     private Long version;
 
-    public static Payment of(Order order, String impUid, BigDecimal amount, MethodEnum method) {
+    public static Payment of(Order order, String merchantUid, BigDecimal amount, MethodEnum method) {
         Payment payment = new Payment();
         payment.order = order;
-        payment.impUid = impUid;
+        payment.merchantUid = merchantUid;
         payment.amount = amount != null ? amount : BigDecimal.ZERO;
         payment.method = method;
         payment.status = PaymentStatus.PENDING;

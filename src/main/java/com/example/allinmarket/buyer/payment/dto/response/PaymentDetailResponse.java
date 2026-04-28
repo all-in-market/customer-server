@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public record PaymentDetailResponse(
         Long paymentId,
         Long orderId,
+        String merchantUid,
         String impUid,
         BigDecimal amount,
         MethodEnum method,
@@ -22,6 +23,7 @@ public record PaymentDetailResponse(
         return new PaymentDetailResponse(
                 payment.getId(),
                 payment.getOrder().getId(),
+                payment.getMerchantUid(),
                 payment.getImpUid(),
                 payment.getAmount(),
                 payment.getMethod(),

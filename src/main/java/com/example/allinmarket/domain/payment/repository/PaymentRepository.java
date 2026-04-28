@@ -19,11 +19,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
                 select p
                 from Payment p
                 join fetch p.order o
-                where p.impUid = :paymentId
+                where p.merchantUid = :merchantUid
             """)
-    Optional<Payment> findByImpUidWithOrder(String paymentId);
+    Optional<Payment> findByMerchantUidWithOrder(@Param("merchantUid") String merchantUid);
 
-    Optional<Payment> findByImpUid(String paymentId);
+    Optional<Payment> findByMerchantUid(String merchantUid);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

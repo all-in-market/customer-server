@@ -4,7 +4,7 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.outbox.dto.HistoryOutBoxPayload;
 import com.example.allinmarket.common.outbox.entity.HistoryOutbox;
-import com.example.allinmarket.common.outbox.repository.HistoryOutBoxRepository;
+import com.example.allinmarket.common.outbox.repository.HistoryOutboxRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
 import com.example.allinmarket.domain.refund.entity.Refund;
 import com.example.allinmarket.domain.transactionhistory.entity.TransactionHistory;
@@ -22,9 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class HistoryOutBoxService {
+public class HistoryOutboxService {
 
-    private final HistoryOutBoxRepository historyOutBoxRepository;
+    private final HistoryOutboxRepository historyOutBoxRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final ObjectMapper objectMapper;
 

@@ -2,8 +2,8 @@ package com.example.allinmarket.common.scheduler;
 
 import com.example.allinmarket.common.outbox.consts.HistoryOutBoxConsts;
 import com.example.allinmarket.common.outbox.entity.HistoryOutbox;
-import com.example.allinmarket.common.outbox.repository.HistoryOutBoxRepository;
-import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
+import com.example.allinmarket.common.outbox.repository.HistoryOutboxRepository;
+import com.example.allinmarket.common.outbox.service.HistoryOutboxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -16,10 +16,10 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class HistoryOutBoxScheduler {
+public class HistoryOutboxScheduler {
 
-    private final HistoryOutBoxRepository historyOutBoxRepository;
-    private final HistoryOutBoxService historyOutBoxService;
+    private final HistoryOutboxRepository historyOutBoxRepository;
+    private final HistoryOutboxService historyOutBoxService;
 
     @Scheduled(fixedDelay = 10_000)
     public void processOutboxEvents() {

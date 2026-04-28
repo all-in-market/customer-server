@@ -11,7 +11,7 @@ import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
 import com.example.allinmarket.common.outbox.enums.OutboxEventType;
 import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
-import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
+import com.example.allinmarket.common.outbox.service.HistoryOutboxService;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -20,7 +20,6 @@ import com.example.allinmarket.domain.payment.enums.MethodEnum;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
-import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -76,7 +75,7 @@ class BuyerPaymentServiceTest {
     private DashboardOutboxRepository dashboardOutboxRepository;
 
     @Mock
-    private HistoryOutBoxService historyOutBoxService;
+    private HistoryOutboxService historyOutBoxService;
 
     @BeforeEach
     void setUp() {

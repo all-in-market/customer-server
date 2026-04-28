@@ -5,7 +5,7 @@ import com.example.allinmarket.buyer.refund.dto.request.RefundCreateRequest;
 import com.example.allinmarket.buyer.refund.dto.response.RefundDetailResponse;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
+import com.example.allinmarket.common.outbox.service.HistoryOutboxService;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
@@ -34,7 +34,7 @@ public class BuyerRefundService {
     private final RefundRepository refundRepository;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
-    private final HistoryOutBoxService historyOutBoxService;
+    private final HistoryOutboxService historyOutBoxService;
 
     @Transactional
     public RefundDetailResponse createRefundByOrder(Long currentUserId, Long orderId, RefundCreateRequest request) {

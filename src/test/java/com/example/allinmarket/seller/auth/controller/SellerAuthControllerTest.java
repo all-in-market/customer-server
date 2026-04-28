@@ -72,7 +72,6 @@ public class SellerAuthControllerTest {
                 "010-1234-5678",
                 "홍길동상점",
                 "123-45-67890",
-                "110-123-456789",
                 SellerStatus.PENDING,
                 UserRole.SELLER
         );
@@ -89,7 +88,7 @@ public class SellerAuthControllerTest {
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
                             "bizNumber": "123-45-67890",
-                            "bankAccount": "110-123-456789"
+                            "bankAccount": "123-456-7890"
                         }
                         """)
                 .exchange()
@@ -114,7 +113,7 @@ public class SellerAuthControllerTest {
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
                             "bizNumber": "123-45-67890",
-                            "bankAccount": "110-123-456789"
+                            "bankAccount": "123-456-7890"
                         }
                         """)
                 .exchange()
@@ -138,7 +137,7 @@ public class SellerAuthControllerTest {
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
                             "bizNumber": "123-45-67890",
-                            "bankAccount": "110-123-456789"
+                            "bankAccount": "123-456-7890"
                         }
                         """)
                 .exchange()
@@ -163,7 +162,7 @@ public class SellerAuthControllerTest {
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
                             "bizNumber": "123-45-67890",
-                            "bankAccount": "110-123-456789"
+                            "bankAccount": "123-456-7890"
                         }
                         """)
                 .exchange()

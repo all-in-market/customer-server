@@ -3,7 +3,8 @@ name: CD
 on:
   workflow_dispatch:
   push:
-    branches: [ main, dev ]
+    # 필요시 dev 추가
+    branches: [ main ]
 
 permissions:
   contents: read

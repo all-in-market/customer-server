@@ -6,6 +6,7 @@ import com.example.allinmarket.buyer.payment.dto.request.PaymentCreateRequest;
 import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.payment.service.BuyerPaymentService;
 import com.example.allinmarket.buyer.payment.service.PaymentRetryService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +18,7 @@ public class BuyerPaymentFacade {
     private final PaymentRetryService paymentRetryService;
     private final PaymentGateway paymentGateway;
 
-    public PaymentDetailResponse processPayment(Long currentUserId, PaymentCreateRequest request) {
-        // 실제로는 merchantUid를 생성해서 넣어줘야 함.
+    public PaymentDetailResponse processPayment(Long currentUserId, PaymentCreateRequest request) throws JsonProcessingException {
         PaymentDetailResponse paymentCreateResult = buyerPaymentService.createPayment(currentUserId, request);
 
         // 결제가 이 부분에서 이루어졌다고 가정

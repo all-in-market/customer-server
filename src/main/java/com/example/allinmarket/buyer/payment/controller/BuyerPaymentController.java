@@ -8,6 +8,7 @@ import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,7 @@ public class BuyerPaymentController {
     @PostMapping
     public ResponseEntity<ApiResponse<PaymentDetailResponse>> processPayment(
             @RequestBody @Valid PaymentCreateRequest request
-    ) {
+    ) throws JsonProcessingException {
         PaymentDetailResponse result = buyerPaymentFacade.processPayment(SecurityUtils.getCurrentUserId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ApiResponse.success(

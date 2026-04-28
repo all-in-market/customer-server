@@ -8,6 +8,10 @@ import com.example.allinmarket.buyer.payment.dto.response.PaymentDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
+import com.example.allinmarket.common.outbox.enums.OutboxEventType;
+import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
+import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -17,6 +21,7 @@ import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
 import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,6 +37,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -39,6 +45,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BuyerPaymentServiceTest {
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private BuyerPaymentService buyerPaymentService;
@@ -61,10 +70,13 @@ class BuyerPaymentServiceTest {
     private DashboardService dashboardService;
 
     @Mock
-    private TransactionHistoryService transactionHistoryService;
+    private StockReleaseService stockReleaseService;
 
     @Mock
-    private StockReleaseService stockReleaseService;
+    private DashboardOutboxRepository dashboardOutboxRepository;
+
+    @Mock
+    private HistoryOutBoxService historyOutBoxService;
 
     @BeforeEach
     void setUp() {
@@ -235,7 +247,8 @@ class BuyerPaymentServiceTest {
             given(paymentRepository.findByMerchantUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            PaymentDetailResponse response = paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
+            PaymentDetailResponse response = assertDoesNotThrow(() ->
+                    paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(response).isNotNull();
@@ -244,6 +257,16 @@ class BuyerPaymentServiceTest {
 
             verify(buyerRefundService, never()).createRefundForAmountMismatch(anyLong(), any(Payment.class), any(PortOnePaymentResponse.class));
             verify(paymentRepository).saveAndFlush(dbPayment);
+
+            ArgumentCaptor<DashboardOutbox> captor = ArgumentCaptor.forClass(DashboardOutbox.class);
+            verify(dashboardOutboxRepository).save(captor.capture());
+
+            DashboardOutbox savedOutbox = captor.getValue();
+
+            assertThat(savedOutbox.getEventType()).isEqualTo(OutboxEventType.DASHBOARD_UPDATE);
+            assertThat(savedOutbox.getAggregateId()).isEqualTo(order.getId());
+            assertThat(savedOutbox.isProcessed()).isFalse();
+            assertThat(savedOutbox.getRetryCount()).isZero();
         }
 
         @Test
@@ -267,7 +290,8 @@ class BuyerPaymentServiceTest {
             given(paymentRepository.findByMerchantUidWithOrder(paymentId)).willReturn(Optional.of(dbPayment));
 
             // when
-            PaymentDetailResponse response = paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse);
+            PaymentDetailResponse response = assertDoesNotThrow(() ->
+                    paymentRetryService.retryConfirmPayment(currentUserId, paymentId, pgResponse));
 
             // then
             assertThat(response).isNotNull();

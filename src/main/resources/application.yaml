@@ -3,7 +3,7 @@ spring:
     name: all-in-market
   sql:
     init:
-      mode: always
+      mode: never
   datasource: # 환경 변수가 설정되어 있으면 그 값을 쓰고, 없으면 기본값을 쓴다.
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:allinmarket}?reWriteBatchedInserts=true
     username: ${DB_USERNAME:postgres}
@@ -17,17 +17,21 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${DDL_AUTO:update}
+      ddl-auto: ${DDL_AUTO:validate}
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    defer-datasource-initialization: true
+#    defer-datasource-initialization: true
 
   autoconfigure:
     exclude:
       - org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 management:
   endpoints:

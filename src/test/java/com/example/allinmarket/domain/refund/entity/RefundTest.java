@@ -7,7 +7,7 @@ import com.example.allinmarket.buyer.refund.dto.response.RefundDetailResponse;
 import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.outbox.service.HistoryOutBoxService;
+import com.example.allinmarket.common.outbox.service.HistoryOutboxService;
 import com.example.allinmarket.domain.order.entity.Order;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.order.repository.OrderRepository;
@@ -18,7 +18,6 @@ import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.enums.RefundStatus;
 import com.example.allinmarket.domain.refund.repository.RefundRepository;
-import com.example.allinmarket.domain.transactionhistory.service.TransactionHistoryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -56,7 +55,7 @@ class RefundTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private HistoryOutBoxService historyOutBoxService;
+    private HistoryOutboxService historyOutBoxService;
 
     private Buyer createBuyer(Long id) {
         Buyer buyer = Buyer.of(

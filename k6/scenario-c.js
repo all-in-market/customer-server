@@ -93,11 +93,17 @@ export function setup() {
         }
     );
 
-    const productIds = productRes.json('data.content').map(p => p.id);
+    if (productRes.status !== 200) {
+        throw new Error(`Product fetch failed: status=${productRes.status}`);
+    }
 
-    if (!productIds || productIds.length === 0) {
+    const products = productRes.json('data.content');
+
+    if (!Array.isArray(products) || products.length === 0) {
         throw new Error('No products found. Seed products before running test.');
     }
+
+    const productIds = products.map(p => p.id);
 
     const {tokens} = loginUsers(MAX_VUS);
 

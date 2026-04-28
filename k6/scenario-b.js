@@ -85,11 +85,13 @@ export function setup() {
         throw new Error(`Product fetch failed: status=${productRes.status}`);
     }
 
-    const productIds = productRes.json('data.content').map(p => p.id);
+    const products = productRes.json('data.content');
 
-    if (!productIds || productIds.length === 0) {
+    if (!Array.isArray(products) || products.length === 0) {
         throw new Error('No products found. Seed products before running test.');
     }
+
+    const productIds = products.map(p => p.id);
 
     // 2. 로그인 후 배송지 ID 수집
     const { tokens } = loginUsers(MAX_VUS);
@@ -151,7 +153,8 @@ export default function (data) {
 
     check(cartRes, { 'cart item added 201': (r) => r.status === 201 });
     if (cartRes.status !== 201) {
-        console.error(`CART FAILED: status = ${cartRes.status}, body = ${cartRes.body}`);
+        const bodyPreview = (cartRes.body || '').slice(0, 300);
+        console.error(`CART FAILED: status = ${cartRes.status}, bodyPreview = ${bodyPreview}`);
 
         return;
     }
@@ -171,7 +174,8 @@ export default function (data) {
 
     check(orderRes, { 'order created 201': (r) => r.status === 201 });
     if (orderRes.status !== 201) {
-        console.error(`ORDER FAILED: status = ${orderRes.status}, body = ${orderRes.body}`)
+        const bodyPreview = (orderRes.body || '').slice(0, 300);
+        console.error(`ORDER FAILED: status = ${orderRes.status}, bodyPreview = ${bodyPreview}`)
 
         return;
     }
@@ -196,6 +200,7 @@ export default function (data) {
     check(paymentRes, { 'payment processed 201': (r) => r.status === 201 });
 
     if (paymentRes.status !== 201) {
-        console.error(`PAYMENT FAILED: status = ${paymentRes.status}, body = ${paymentRes.body}`);
+        const  bodyPreview = (paymentRes.body || '').slice(0, 300);
+        console.error(`PAYMENT FAILED: status = ${paymentRes.status}, bodyPreview = ${bodyPreview}`);
     }
 }

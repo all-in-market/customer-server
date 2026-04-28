@@ -4,7 +4,7 @@ spring:
       ssl:
         enabled: false
 dummy:
-  enabled: true
+  enabled: false
   batch-type:
   category-count: 100
   seller-count: 10000

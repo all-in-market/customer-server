@@ -5,7 +5,6 @@ import com.example.allinmarket.buyer.order.dto.response.OrderWithOrderItemDetail
 import com.example.allinmarket.buyer.repository.BuyerRepository;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.redis.RedisLock;
 import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.domain.address.entity.Address;
 import com.example.allinmarket.domain.address.repository.AddressRepository;
@@ -18,7 +17,6 @@ import com.example.allinmarket.domain.orderitem.dto.OrderItemDetailResponse;
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
 import com.example.allinmarket.domain.product.entity.Product;
-import com.example.allinmarket.buyer.order.dto.request.OrderCreateRequest;
 import com.example.allinmarket.buyer.order.dto.response.OrderDetailResponse;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;

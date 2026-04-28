@@ -10,6 +10,8 @@ import com.example.allinmarket.common.security.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +38,7 @@ public class BuyerRefundController {
 
     @GetMapping("/refunds")
     public ResponseEntity<ApiResponse<PageResponse<RefundDetailResponse>>> getRefunds(
-            Pageable pageable
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessEnum.READ_SUCCESS,

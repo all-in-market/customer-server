@@ -40,7 +40,8 @@ public class BuyerPaymentController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<PaymentDetailResponse>>> getPayments(Pageable pageable) {
+    public ResponseEntity<ApiResponse<PageResponse<PaymentDetailResponse>>> getPayments(
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         SuccessEnum.READ_SUCCESS,

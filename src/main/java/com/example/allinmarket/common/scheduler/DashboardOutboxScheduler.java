@@ -1,7 +1,8 @@
-package com.example.allinmarket.common.outbox.service;
+package com.example.allinmarket.common.scheduler;
 
 import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
 import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
+import com.example.allinmarket.common.outbox.service.DashboardOutboxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -9,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import java.util.List;
 

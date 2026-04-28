@@ -30,6 +30,6 @@ public class HistoryOutBoxScheduler {
 
         log.info("미처리 OutboxEvent 수: {}", outBoxes.size());
 
-        outBoxes.forEach(outBox ->  historyOutBoxService.process(outBox.getId()));
+        outBoxes.forEach(outBox -> historyOutBoxService.process(outBox.getId()));
     }
 }

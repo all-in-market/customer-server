@@ -11,22 +11,23 @@ import com.example.allinmarket.domain.transactionhistory.entity.TransactionHisto
 import com.example.allinmarket.domain.transactionhistory.enums.TransactionType;
 import com.example.allinmarket.domain.transactionhistory.repository.TransactionHistoryRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class HistoryOutBoxService {
 
     private final HistoryOutBoxRepository historyOutBoxRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final ObjectMapper objectMapper;
 
-    @Transactional
     public void save(Payment payment) {
         String json;
         try {
@@ -39,7 +40,6 @@ public class HistoryOutBoxService {
         log.info("OutboxEvent 저장 성공: transactionId={}, type={}", payment.getId(), TransactionType.PAYMENT);
     }
 
-    @Transactional
     public void save(Refund refund) {
         String json;
         try {
@@ -52,7 +52,7 @@ public class HistoryOutBoxService {
         log.info("OutboxEvent 저장 성공: transactionId={}, type={}", refund.getId(), TransactionType.REFUND);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void process(Long outBoxId) {
         HistoryOutbox outBox = historyOutBoxRepository.findByIdForUpdate(outBoxId)
                 .orElseThrow(() -> new BaseException(ErrorEnum.HISTORY_OUTBOX_NOT_FOUND));

@@ -38,29 +38,89 @@ export const options = {
         },
     },
     thresholds: {
-        http_req_duration: ['p(95)<2000'],  // 쓰기 작업 포함이므로 기준 2초
         http_req_failed:   ['rate<0.01'],
+
+        // 조회는 빠르게
+        'http_req_duration{name:product_list}': [
+            'p(95)<500'
+        ],
+
+        'http_req_duration{name:product_detail}': [
+            'p(95)<500'
+        ],
+
+        // 쓰기 작업
+        'http_req_duration{name:cart_add}': [
+            'p(95)<800'
+        ],
+
+        'http_req_duration{name:order_create}': [
+            'p(95)<1000'
+        ],
+
+        'http_req_duration{name:payment_create}': [
+            'p(95)<1500'
+        ],
+
+        // 실패율 분리
+        'http_req_failed{name:payment_create}': [
+            'rate<0.01'
+        ],
+
+        'http_req_failed{name:order_create}': [
+            'rate<0.01'
+        ],
     },
 };
 
 export function setup() {
     // 1. 상품 ID 수집 (인증 불필요)
-    const productRes = http.get(`${BASE_URL}/products?page=0&size=20`);
-    const productIds = productRes.json('data.content').map(p => p.id);
+    const productRes = http.get(`${BASE_URL}/products?page=0&size=20`,
+        {
+            tags: {name: 'product_detail'},
+        }
+    );
+
+    check(productRes, {
+        'product fetch success': (r) => r.status ===200,
+    });
+
+    if (productRes.status !== 200) {
+        throw new Error(`Product fetch failed: status=${productRes.status}`);
+    }
+
+    const products = productRes.json('data.content');
+
+    if (!Array.isArray(products) || products.length === 0) {
+        throw new Error('No products found. Seed products before running test.');
+    }
+
+    const productIds = products.map(p => p.id);
 
     // 2. 로그인 후 배송지 ID 수집
     const { tokens } = loginUsers(MAX_VUS);
 
     const users = tokens.map(token => {
         const addrRes = http.get(`${BASE_URL}/addresses`, authHeaders(token));
-        const addrBody = addrRes.json();
+
+        check(addrRes, {
+            'address fetch success': (r) => r.status === 200,
+        });
+
+        if (addrRes.status !== 200) {
+            throw new Error(`Address fetch failed: status=${addrRes.status}`);
+        }
+
         const addresses = addrRes.json('data');
-        const addressId = addresses && addresses.length > 0 ? addresses[0].addressId : null;
+
+        if (!addresses || addresses.length === 0) {
+            throw new Error('Address missing. Seed addresses first');
+        }
+
+        const addressId = addresses[0].addressId;
 
         if (!addressId) {
-            console.log(
-                `addressId missing: ${JSON.stringify(addrBody)}`
-            );
+            throw new Error('Address missing for token. Seed addresses first.');
         }
 
         return { token, addressId };
@@ -89,11 +149,19 @@ export default function (data) {
     const cartRes = http.post(
         `${BASE_URL}/carts/items?sort=createdAt,desc&size=1`,
         JSON.stringify({ productId, quantity: 1 }),
-        jsonAuth(user.token)
+        {
+            ...jsonAuth(user.token),
+            tags: {name: 'cart_add'},
+        }
     );
 
     check(cartRes, { 'cart item added 201': (r) => r.status === 201 });
-    if (cartRes.status !== 201) return;
+    if (cartRes.status !== 201) {
+        const bodyPreview = (cartRes.body || '').slice(0, 300);
+        console.error(`CART FAILED: status = ${cartRes.status}, bodyPreview = ${bodyPreview}`);
+
+        return;
+    }
 
     const body = cartRes.json();
     const cartItemId = body.data.items.content[0].id;
@@ -102,20 +170,41 @@ export default function (data) {
     const orderRes = http.post(
         `${BASE_URL}/orders`,
         JSON.stringify({ cartItemIds: [cartItemId], addressId: user.addressId }),
-        jsonAuth(user.token)
+        {
+            ...jsonAuth(user.token),
+            tags: {name: 'order_create'},
+        }
     );
 
     check(orderRes, { 'order created 201': (r) => r.status === 201 });
-    if (orderRes.status !== 201) return;
+    if (orderRes.status !== 201) {
+        const bodyPreview = (orderRes.body || '').slice(0, 300);
+        console.error(`ORDER FAILED: status = ${orderRes.status}, bodyPreview = ${bodyPreview}`)
+
+        return;
+    }
 
     const orderId = orderRes.json('data.orderId');
 
     // 3. 결제
+    const paymentPayload = JSON.stringify({
+        orderId: orderId,
+        method:'MOCK'
+    });
+
     const paymentRes = http.post(
         `${BASE_URL}/payments`,
-        JSON.stringify({ orderId, method: 'MOCK' }),
-        jsonAuth(user.token)
+        paymentPayload,
+        {
+            ...jsonAuth(user.token),
+            tags: {name: 'payment_create'},
+        }
     );
 
     check(paymentRes, { 'payment processed 201': (r) => r.status === 201 });
+
+    if (paymentRes.status !== 201) {
+        const  bodyPreview = (paymentRes.body || '').slice(0, 300);
+        console.error(`PAYMENT FAILED: status = ${paymentRes.status}, bodyPreview = ${bodyPreview}`);
+    }
 }

@@ -37,6 +37,9 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .findFirst()
                 .orElse(ErrorEnum.INVALID_INPUT.getMessage());
+
+        log.error("MethodArgumentNotValidException 발생: {}", e.getMessage());
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(ErrorEnum.INVALID_ARGUMENT, message));
@@ -44,6 +47,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+        log.error("HttpMessageNotReadableException 발생: {}", e.getMessage());
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(ErrorEnum.INVALID_INPUT));
@@ -52,6 +57,8 @@ public class GlobalExceptionHandler {
     // 1. Validation (파라미터)
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraint(ConstraintViolationException e) {
+        log.error("ConstraintViolationException 발생: {}", e.getMessage());
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(ErrorEnum.INVALID_INPUT));
@@ -60,6 +67,8 @@ public class GlobalExceptionHandler {
     // 2. Enum / 타입 변환 실패
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        log.warn("MethodArgumentTypeMismatchException 발생: {}", e.getMessage());
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.fail(ErrorEnum.INVALID_INPUT));

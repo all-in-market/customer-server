@@ -16,6 +16,12 @@ public record DailyStatisticsResponse(
         BigDecimal refundAmount,
         BigDecimal netSales
 ) {
+    public DailyStatisticsResponse(Long sellerId, Integer totalOrders, Integer totalItems,
+                                   BigDecimal totalSales, Integer totalRefunds,
+                                   BigDecimal refundAmount, BigDecimal netSales) {
+        this(sellerId, null, null, totalOrders, totalItems, totalSales, totalRefunds, refundAmount, netSales);
+    }
+
     public static DailyStatisticsResponse from(SellerDailyStatistics sellerDailyStatistics) {
         return new DailyStatisticsResponse(
                 sellerDailyStatistics.getSeller().getId(),

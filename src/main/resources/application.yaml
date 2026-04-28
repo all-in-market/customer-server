@@ -18,10 +18,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: ${DDL_AUTO:validate}
-    show-sql: true
+    show-sql: ${SPRING_JPA_SHOW_SQL:true}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: ${HIBERNATE_FORMAT_SQL:true}
         dialect: org.hibernate.dialect.PostgreSQLDialect
 #    defer-datasource-initialization: true
 

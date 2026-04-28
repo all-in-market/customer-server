@@ -13,6 +13,8 @@ import com.example.allinmarket.domain.order.enums.OrderStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,7 +47,7 @@ public class BuyerOrderController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<OrderDetailResponse>>> findAllOrders(
-            Pageable pageable,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable,
             @RequestParam(required = false) OrderStatus status
     ) {
         PageResponse<OrderDetailResponse> result = buyerOrderService.findAllOrders(SecurityUtils.getCurrentUserId(), pageable, status);

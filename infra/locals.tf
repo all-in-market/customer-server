@@ -34,6 +34,10 @@ locals {
     {
       SPRING_PROFILES_ACTIVE = var.environment == "prod" ? "prod" : "dev"
 
+      DDL_AUTO   = "validate"
+      SPRING_JPA_SHOW_SQL = "false"
+      HIBERNATE_FORMAT_SQL = "false"
+
       DB_HOST    = aws_db_instance.this.address
       DB_PORT    = "5432"
       DB_NAME    = var.db_name

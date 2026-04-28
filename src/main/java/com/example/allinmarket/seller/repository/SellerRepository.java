@@ -13,6 +13,6 @@ public interface SellerRepository extends JpaRepository<Seller, Long> {
     boolean existsByIdAndDeletedAtIsNull(Long id);
     Optional<Seller> findByEmail(String email);
 
-    @Query("SELECT s.id FROM Seller s WHERE s.deletedAt IS NULL")
+    @Query("SELECT s.id FROM Seller s WHERE s.deletedAt IS NULL AND s.status = com.example.allinmarket.seller.enums.SellerStatus.APPROVED")
     List<Long> findAllIds();
 }

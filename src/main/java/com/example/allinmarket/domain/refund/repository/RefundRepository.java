@@ -18,6 +18,8 @@ public interface RefundRepository extends JpaRepository<Refund,Long> {
 
     Optional<Refund> findByIdAndBuyerId(Long refundId, Long currentUserId);
 
+    // 현재는 전체 환불만 지원.
+    // 부분 환불 도입 시 RefundItem 도입 후 환불 추적 필요
     @Query("""
             SELECT new com.example.allinmarket.seller.dailystatistics.dto.RefundStats(
             COUNT(DISTINCT r.id),

@@ -35,7 +35,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findAllBySellerIdAndDeletedAtIsNull(Long sellerId, Pageable pageable);
 
 
-    // LIKE로 인해 풀 테이블 스캔 발생 (PostgreSQL의 Full Text Search | Elasticsearch 도입을 고려.)
+    // LIKE로 인해 풀 테이블 스캔 발생 (PostgreSQL의 Full Text Search | Elasticsearch 도입을 고려.) or 가능한 RAG를 사용해서 유사도 검색으로 전환
     @Query("""
         SELECT p FROM Product p 
         WHERE (p.name LIKE %:keyword% OR p.description LIKE %:keyword%)

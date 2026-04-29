@@ -10,6 +10,7 @@ import com.example.allinmarket.domain.settlement.repository.SettlementRepository
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,19 +65,18 @@ public class SellerSettlementService {
 
     @Transactional
     public void createSettlement(LocalDate periodStart, LocalDate periodEnd, SettlementType settlementType) {
-        List<Long> sellerIds = sellerRepository.findAllIds();
+        // seller 한번에 조회
+        List<Seller> sellers = sellerRepository.findAllActiveSellers();
 
-        for (Long sellerId : sellerIds) {
-            boolean exists = settlementRepository.existsBySellerIdAndPeriodStartAndPeriodEnd(
-                    sellerId,
-                    periodStart,
-                    periodEnd
-            );
+        Map<Long, Seller> sellerMap = sellers.stream()
+                .collect(Collectors.toMap(
+                        Seller::getId,
+                        Function.identity()
+                ));
 
-            if (exists) {
-                continue;
-            }
+        LocalDateTime completedAt = LocalDateTime.now();
 
+        for (Long sellerId : sellerMap.keySet()) {
             BigDecimal netSales = sellerDailyStatisticsRepository.sumNetSalesBySellerAndPeriod(
                     sellerId,
                     periodStart,
@@ -87,17 +91,30 @@ public class SellerSettlementService {
 
             BigDecimal settlementAmount = netSales.subtract(fee).setScale(2, RoundingMode.DOWN);
 
+            Seller seller = sellerMap.get(sellerId);
+
+            if (seller == null) {
+                continue;
+            }
+
             Settlement settlement = Settlement.of(
-                    sellerRepository.getReferenceById(sellerId),
+                    seller,
                     settlementAmount,
                     fee,
                     SettlementStatus.COMPLETED,
                     settlementType,
                     periodStart,
-                    periodEnd
+                    periodEnd,
+                    completedAt
             );
 
-            settlementRepository.save(settlement);
+            try {
+                settlementRepository.saveAndFlush(settlement);
+
+            } catch (DataIntegrityViolationException e) {
+                // 중복 생성 방지
+                continue;
+            }
         }
     }
 }

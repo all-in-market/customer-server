@@ -5,7 +5,6 @@ import com.example.allinmarket.domain.settlement.enums.SettlementStatus;
 import com.example.allinmarket.domain.settlement.enums.SettlementType;
 import com.example.allinmarket.seller.entity.Seller;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +16,15 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "settlements")
+@Table(
+        name = "settlements",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_settlement_period",
+                        columnNames = {"seller_id", "period_start", "period_end"}
+                )
+        }
+)
 public class Settlement extends ModifiableEntity {
 
     @Id
@@ -58,7 +65,8 @@ public class Settlement extends ModifiableEntity {
             SettlementStatus status,
             SettlementType type,
             LocalDate periodStart,
-            LocalDate periodEnd
+            LocalDate periodEnd,
+            LocalDateTime completedAt
     ) {
         Settlement settlement = new Settlement();
         settlement.seller = seller;
@@ -68,7 +76,7 @@ public class Settlement extends ModifiableEntity {
         settlement.type = type;
         settlement.periodStart = periodStart;
         settlement.periodEnd = periodEnd;
-        settlement.completedAt = LocalDateTime.now();
+        settlement.completedAt = completedAt;
         return settlement;
     }
 }

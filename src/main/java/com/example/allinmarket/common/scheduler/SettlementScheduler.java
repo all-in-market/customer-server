@@ -13,24 +13,24 @@ import java.time.LocalDate;
 public class SettlementScheduler {
     private final SellerSettlementService sellerSettlementService;
 
-    @Scheduled(cron = "0 20 0 15 * *") // 매월 15일 00:20 실행
+    @Scheduled(cron = "0 20 0 16 * *") // 매월 16일 00:20 실행
     public void midSettlement() {
         LocalDate now = LocalDate.now();
 
         LocalDate start = now.withDayOfMonth(1);
 
-        LocalDate end = now.withDayOfMonth(14);
+        LocalDate end = now.withDayOfMonth(15);
 
         sellerSettlementService.createSettlement(start, end, SettlementType.MID);
     }
 
-    @Scheduled(cron = "0 20 0 L * *") // 매월 말일 00:20 실행
+    @Scheduled(cron = "0 20 0 1 * *") // 매월 1일 00:20 실행
     public void endSettlement() {
-        LocalDate now = LocalDate.now();
+        LocalDate targetDate = LocalDate.now().minusMonths(1);
 
-        LocalDate start = now.withDayOfMonth(15);
+        LocalDate start = targetDate.withDayOfMonth(16);
 
-        LocalDate end = now.withDayOfMonth(now.lengthOfMonth());
+        LocalDate end = targetDate.withDayOfMonth(targetDate.lengthOfMonth());
 
         sellerSettlementService.createSettlement(start, end, SettlementType.END);
     }

@@ -2,7 +2,7 @@ resource "aws_ecs_service" "this" {
   name                              = "${local.name_prefix}-service"
   cluster                           = aws_ecs_cluster.this.id
   task_definition                   = aws_ecs_task_definition.this.arn
-  desired_count                     = local.ecs.desired_count
+  desired_count                     = var.ecs_desired_count
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 120
   force_new_deployment              = true
@@ -20,7 +20,7 @@ resource "aws_ecs_service" "this" {
   }
 
   depends_on = [
-    aws_lb_listener.http,
+    aws_lb_listener.https,
     aws_iam_role_policy_attachment.ecs_task_execution_default
   ]
 

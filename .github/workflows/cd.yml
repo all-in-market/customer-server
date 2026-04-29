@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     # 필요시 dev 추가
-    branches: [ main ]
+    branches: [ main, dev ]
 
 permissions:
   contents: read
@@ -92,17 +92,23 @@ jobs:
       # 8. desiredCount가 0일 경우 1로 변경
       - name: Ensure service is running
         run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            TARGET_COUNT=2
+          else
+            TARGET_COUNT=1
+          fi
+          
           CURRENT_COUNT=$(aws ecs describe-services \
             --cluster ${{ secrets.ECS_CLUSTER }} \
             --services ${{ secrets.ECS_SERVICE }} \
             --query "services[0].desiredCount" \
             --output text)
-
+          
           if [ "$CURRENT_COUNT" -eq 0 ]; then
             aws ecs update-service \
               --cluster ${{ secrets.ECS_CLUSTER }} \
               --service ${{ secrets.ECS_SERVICE }} \
-              --desired-count 1
+              --desired-count $TARGET_COUNT
           fi
 
       # 9. ECS Service 업데이트

@@ -147,10 +147,24 @@ variable "task_role_policy_arns" {
   default     = []
 }
 
-variable "certificate_arn" {
-  description = "Optional ACM certificate ARN for HTTPS listener. Leave null to create HTTP only."
+variable "domain_name" {
+  description = "Public domain name for the ALB, for example example.com. Required for dev/prod HTTPS."
   type        = string
-  default     = null
+
+  validation {
+    condition     = length(trimspace(var.domain_name)) > 0
+    error_message = "domain_name은 필수입니다. 예: example.com"
+  }
+}
+
+variable "route53_zone_name" {
+  description = "Public Route53 hosted zone name, for example example.com."
+  type        = string
+
+  validation {
+    condition     = length(trimspace(var.route53_zone_name)) > 0
+    error_message = "route53_zone_name은 필수입니다. 예: example.com"
+  }
 }
 
 variable "github_owner" {

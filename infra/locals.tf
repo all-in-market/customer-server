@@ -37,7 +37,6 @@ locals {
       DB_PORT    = "5432"
       DB_NAME    = var.db_name
       DB_USERNAME = var.db_username
-      DB_PASSWORD = var.db_password
       REDIS_HOST = aws_elasticache_replication_group.this.primary_endpoint_address
       REDIS_PORT = "6379"
     }

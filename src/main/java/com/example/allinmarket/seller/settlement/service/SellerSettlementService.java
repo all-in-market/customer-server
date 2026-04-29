@@ -11,6 +11,7 @@ import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisCallback;
@@ -169,7 +170,12 @@ public class SellerSettlementService {
     }
 
     private boolean isUniqueConstraintViolation(DataIntegrityViolationException e) {
-        return e.getCause() instanceof ConstraintViolationException cv &&
-                "uk_settlement_period".equals(cv.getConstraintName());
+        // 원인 예외(Root Cause)를 찾음
+        Throwable rootCause = NestedExceptionUtils.getMostSpecificCause(e);
+
+        if (rootCause instanceof ConstraintViolationException cv) {
+            return "uk_settlement_period".equals(cv.getConstraintName());
+        }
+        return false;
     }
 }

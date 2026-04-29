@@ -10,6 +10,7 @@ import com.example.allinmarket.domain.settlement.repository.SettlementRepository
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -113,7 +114,17 @@ public class SellerSettlementService {
 
             } catch (DataIntegrityViolationException e) {
                 // 중복 생성 방지
-                continue;
+                Throwable cause = e.getCause();
+
+                if (cause instanceof ConstraintViolationException exception) {
+                    String constraintName = exception.getConstraintName();
+
+                    if ("uk_settlement_period".equals(constraintName)) {
+                        continue;
+                    }
+                }
+
+                throw e;
             }
         }
     }

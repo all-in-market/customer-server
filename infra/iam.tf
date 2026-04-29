@@ -58,6 +58,16 @@ data "aws_iam_policy_document" "ecs_task_execution_ssm" {
     resources = [
       aws_kms_key.ssm.arn
     ]
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["ssm.${data.aws_region.current.name}.amazonaws.com"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "kms:EncryptionContext:PARAMETER_ARN"
+      values   = [aws_ssm_parameter.db_password.arn]
+    }
   }
 }
 

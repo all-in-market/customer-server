@@ -16,6 +16,6 @@ public interface SellerDailyStatisticsRepository extends JpaRepository<SellerDai
     @Query("SELECT s.seller.id FROM SellerDailyStatistics s WHERE s.statDate = :date")
     List<Long> findExistingSellerIds(@Param("date") LocalDate date);
 
-    @Query("SELECT COALESCE(SUM(s.netSales), 0) FROM SellerDailyStatistics s WHERE s.seller.id = :sellerId AND s.statDate BETWEEN :start AND :end")
-    BigDecimal sumNetSalesBySellerAndPeriod(@Param("sellerId") Long sellerId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+    @Query("SELECT s.seller.id, COALESCE(SUM(s.netSales), 0) FROM SellerDailyStatistics s WHERE s.statDate BETWEEN :start AND :end GROUP BY s.seller.id")
+    List<Object[]> sumNetSalesGroupBySeller(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }

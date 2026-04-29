@@ -17,6 +17,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import static com.example.allinmarket.seller.consts.SellerConsts.COMMISSION_RATE;
+import static com.example.allinmarket.domain.settlement.consts.SettlementConst.SETTLEMENT_CACHE_PREFIX;
+import static com.example.allinmarket.domain.settlement.consts.SettlementConst.VERSION_KEY_PREFIX;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -41,27 +43,33 @@ public class SellerSettlementService {
 
     // 캐시 무효화는 정산 데이터가 추가 될 떄 무효화 필요
     public PageResponse<SettlementDetailResponse> findAll(Long sellerId, Pageable pageable) {
-        if (pageable.getPageNumber() < 5) {
-            String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
-
-            Object cached = redisTemplate.opsForValue().get(key);
-            if (cached instanceof PageResponse<?> pageResponse) {
-                return (PageResponse<SettlementDetailResponse>) pageResponse;
-            }
-
-            PageResponse<SettlementDetailResponse> response = PageResponse.register(
-                    settlementRepository.findAllBySellerId(sellerId, pageable)
-                            .map(SettlementDetailResponse::from)
-            );
-
-            redisTemplate.opsForValue().set(key, response, Duration.ofMinutes(10));
-            return response;
+        if (pageable.getPageNumber() >= 5) {
+            return fetchFromDb(sellerId, pageable);
         }
 
-        return PageResponse.register(
-                settlementRepository.findAllBySellerId(sellerId, pageable)
-                        .map(SettlementDetailResponse::from)
-        );
+        int version = 0;
+
+        String versionKey = VERSION_KEY_PREFIX + sellerId;
+
+        Object versionObject = redisTemplate.opsForValue().get(versionKey);
+
+        if (versionObject != null) {
+            version = Integer.parseInt(versionObject.toString());
+        }
+
+        String key = SETTLEMENT_CACHE_PREFIX + sellerId + ":v" + version + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+
+        Object cached = redisTemplate.opsForValue().get(key);
+
+        if (cached instanceof PageResponse<?> pageResponse) {
+            return (PageResponse<SettlementDetailResponse>) pageResponse;
+        }
+
+        PageResponse<SettlementDetailResponse> response = fetchFromDb(sellerId, pageable);
+
+        redisTemplate.opsForValue().set(key, response, Duration.ofMinutes(10));
+
+        return response;
     }
 
     @Transactional
@@ -77,26 +85,25 @@ public class SellerSettlementService {
 
         LocalDateTime completedAt = LocalDateTime.now();
 
-        for (Long sellerId : sellerMap.keySet()) {
-            BigDecimal netSales = sellerDailyStatisticsRepository.sumNetSalesBySellerAndPeriod(
-                    sellerId,
-                    periodStart,
-                    periodEnd
-            );
+        Map<Long, BigDecimal> netSalesMap = sellerDailyStatisticsRepository.sumNetSalesGroupBySeller(
+                periodStart, periodEnd)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (BigDecimal) row[1]
+        ));
 
-            if (netSales == null) {
-                netSales = BigDecimal.ZERO;
-            }
+        for (Long sellerId : sellerMap.keySet()) {
+            BigDecimal netSales = netSalesMap.getOrDefault(
+                    sellerId,
+                    BigDecimal.ZERO
+            );
 
             BigDecimal fee = netSales.multiply(COMMISSION_RATE).setScale(2, RoundingMode.DOWN);
 
             BigDecimal settlementAmount = netSales.subtract(fee).setScale(2, RoundingMode.DOWN);
 
             Seller seller = sellerMap.get(sellerId);
-
-            if (seller == null) {
-                continue;
-            }
 
             Settlement settlement = Settlement.of(
                     seller,
@@ -110,22 +117,31 @@ public class SellerSettlementService {
             );
 
             try {
-                settlementRepository.saveAndFlush(settlement);
+                settlementRepository.save(settlement);
+
+                // 캐시 무효화
+                // 버전 번호를 1 증가 시킴
+                // Redis의 increment는 원자적(Atomic)이며 매우 빠름
+                redisTemplate.opsForValue().increment(VERSION_KEY_PREFIX + sellerId);
 
             } catch (DataIntegrityViolationException e) {
                 // 중복 생성 방지
-                Throwable cause = e.getCause();
-
-                if (cause instanceof ConstraintViolationException exception) {
-                    String constraintName = exception.getConstraintName();
-
-                    if ("uk_settlement_period".equals(constraintName)) {
-                        continue;
-                    }
-                }
+                if (isUniqueConstraintViolation(e)) continue;
 
                 throw e;
             }
         }
+    }
+
+    private PageResponse<SettlementDetailResponse> fetchFromDb(Long sellerId, Pageable pageable) {
+        return PageResponse.register(
+                settlementRepository.findAllBySellerId(sellerId, pageable)
+                        .map(SettlementDetailResponse::from)
+        );
+    }
+
+    private boolean isUniqueConstraintViolation(DataIntegrityViolationException e) {
+        return e.getCause() instanceof ConstraintViolationException cv &&
+                "uk_settlement_period".equals(cv.getConstraintName());
     }
 }

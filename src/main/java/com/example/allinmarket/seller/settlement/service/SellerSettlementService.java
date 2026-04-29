@@ -123,11 +123,6 @@ public class SellerSettlementService {
             try {
                 settlementRepository.save(settlement);
 
-                // 캐시 무효화
-                // 버전 번호를 1 증가 시킴
-                // Redis의 increment는 원자적(Atomic)이며 매우 빠름
-                redisTemplate.opsForValue().increment(VERSION_KEY_PREFIX + sellerId);
-
             } catch (DataIntegrityViolationException e) {
                 // 중복 생성 방지
                 if (isUniqueConstraintViolation(e)) continue;
@@ -136,6 +131,7 @@ public class SellerSettlementService {
             }
         }
 
+        // 트랜잭션 커밋 직후에만 실행되도록 등록
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {

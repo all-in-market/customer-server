@@ -22,8 +22,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
@@ -218,32 +220,50 @@ class SellerSettlementServiceTest {
 
     @Test
     void 정산_생성_시_DB저장과_캐시_버전_증가_테스트() {
-        Long sellerId = 1L;
-        Seller seller = mock(Seller.class);
-        given(seller.getId()).willReturn(sellerId);
+        // 트랜잭션 동기화가 이미 활성화 되어 있는지 체크 후 없으면 활성화
+        boolean synchronizationActive = TransactionSynchronizationManager.isSynchronizationActive();
 
-        given(sellerRepository.findAllActiveSellers()).willReturn(List.of(seller));
+        if (!synchronizationActive) {
+            TransactionSynchronizationManager.initSynchronization();
+        }
 
-        Object[] row = new Object[]{sellerId, BigDecimal.valueOf(50000)};
-        given(sellerDailyStatisticsRepository.sumNetSalesGroupBySeller(any(), any()))
-                .willReturn(Collections.singletonList(row));
+        try{
+            // given
+            Long sellerId = 1L;
+            Seller seller = mock(Seller.class);
+            given(seller.getId()).willReturn(sellerId);
 
-        // DB 저장은 단순 mock 처리
-        given(settlementRepository.save(any(Settlement.class)))
-                .willReturn(mock(Settlement.class));
+            given(sellerRepository.findAllActiveSellers()).willReturn(List.of(seller));
 
-        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+            Object[] row = new Object[]{sellerId, BigDecimal.valueOf(50000)};
+            given(sellerDailyStatisticsRepository.sumNetSalesGroupBySeller(any(), any()))
+                    .willReturn(Collections.singletonList(row));
 
-        // when
-        sellerSettlementService.createSettlement(
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 1, 15),
-                SettlementType.MID
-        );
+            // DB 저장은 단순 mock 처리
+            given(settlementRepository.save(any(Settlement.class)))
+                    .willReturn(mock(Settlement.class));
 
-        // then
-        verify(settlementRepository).save(any(Settlement.class)); // 호출 여부만 검증
-        verify(valueOperations).increment("settlement:version:" + sellerId); // 캐시 무효화 검증
+            // when
+            sellerSettlementService.createSettlement(
+                    LocalDate.of(2024, 1, 1),
+                    LocalDate.of(2024, 1, 15),
+                    SettlementType.MID
+            );
+
+            // 등록된 synchronization을 찾아 afterCommit()을 수동으로 트리거
+            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+            synchronizations.forEach(TransactionSynchronization::afterCommit);
+
+            // then
+            verify(settlementRepository).save(any(Settlement.class)); // 호출 여부만 검증
+            verify(redisTemplate).executePipelined(any(RedisCallback.class)); // Pipelined 연산이 실행되었는지 검증
+
+        } finally {
+            // 테스트에서 직접 시작했을 때만 테스트 종료 후 정리(다른 테스트 영향 X)
+            if (!synchronizationActive) {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
+        }
     }
 
     @Test

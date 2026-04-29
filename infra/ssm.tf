@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "ssm_kms_key" {
     condition {
       test     = "StringLike"
       variable = "kms:EncryptionContext:PARAMETER_ARN"
-      values   = [aws_ssm_parameter.db_password.arn]
+      values   = ["arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/db/password"]
     }
   }
 }

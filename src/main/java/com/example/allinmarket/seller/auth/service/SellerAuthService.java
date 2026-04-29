@@ -1,5 +1,7 @@
 package com.example.allinmarket.seller.auth.service;
 
+import com.example.allinmarket.common.auth.dto.LoginResponse;
+import com.example.allinmarket.common.auth.dto.LoginResult;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
@@ -9,8 +11,6 @@ import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboard
 import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
 import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
 import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
-import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
-import com.example.allinmarket.seller.auth.dto.response.SellerLoginResult;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import com.example.allinmarket.seller.repository.SellerRepository;
@@ -64,7 +64,7 @@ public class SellerAuthService {
         return SellerCreateResponse.from(seller);
     }
 
-    public SellerLoginResult login(SellerLoginRequest request) {
+    public LoginResult login(SellerLoginRequest request) {
         Seller seller = sellerRepository.findByEmail(request.email()).orElseGet(() -> {
             passwordEncoder.matches(request.password(), DUMMY_HASH);
             log.warn("로그인 실패: {}", ErrorEnum.SELLER_NOT_FOUND);
@@ -91,10 +91,10 @@ public class SellerAuthService {
 
         redisTemplate.opsForValue().set("refresh:" + refreshToken, seller.getId(), 7, TimeUnit.DAYS);
 
-        return new SellerLoginResult(new SellerLoginResponse(accessToken), refreshToken);
+        return new LoginResult(new LoginResponse(accessToken), refreshToken);
     }
 
-    public SellerLoginResult refresh(String refreshToken) {
+    public LoginResult refresh(String refreshToken) {
         Long userId = (Long) redisTemplate.opsForValue().get("refresh:" + refreshToken);
         if (userId == null) {
             throw new BaseException(ErrorEnum.TOKEN_EXPIRED);
@@ -105,7 +105,7 @@ public class SellerAuthService {
         redisTemplate.opsForValue().set("refresh:" + newRefreshToken, userId, 7, TimeUnit.DAYS);
 
         String newAccessToken = jwtProvider.generateToken(userId, UserRole.SELLER);
-        return new SellerLoginResult(new SellerLoginResponse(newAccessToken), newRefreshToken);
+        return new LoginResult(new LoginResponse(newAccessToken), newRefreshToken);
     }
 
     public void logout(String accessToken, String refreshToken) {

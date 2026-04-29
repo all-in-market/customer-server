@@ -76,7 +76,7 @@ public class BuyerProductControllerTest {
                 "설명"
         );
 
-        when(buyerProductService.findAllProducts(any(Pageable.class)))
+        when(buyerProductService.findAllProducts(any(Pageable.class), any()))
                 .thenReturn(new PageImpl<>(List.of(response)));
 
         // when & then
@@ -98,7 +98,7 @@ public class BuyerProductControllerTest {
     @WithMockUser
     void 구매자_상품_목록_조회_500에러_실패_테스트() {
         // given
-        when(buyerProductService.findAllProducts(any(Pageable.class)))
+        when(buyerProductService.findAllProducts(any(Pageable.class), any()))
                 .thenThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
 
         // when & then

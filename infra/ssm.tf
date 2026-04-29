@@ -1,5 +1,28 @@
+data "aws_iam_policy_document" "ssm_kms_key" {
+  statement {
+    sid = "EnableRootPermissions"
+    actions   = ["kms:*"]
+    resources = ["*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  statement {
+    sid = "AllowEcsExecutionRoleDecryptForSsm"
+    actions   = ["kms:Decrypt", "kms:DescribeKey"]
+    resources = ["*"]
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.ecs_task_execution.arn]
+    }
+  }
+}
+
 resource "aws_kms_key" "ssm" {
   description = "KMS key for SSM SecureString"
+  policy      = data.aws_iam_policy_document.ssm_kms_key.json
 
   deletion_window_in_days = 30
   enable_key_rotation     = true

@@ -51,7 +51,8 @@ data "aws_iam_policy_document" "ecs_task_execution_ssm" {
   # kms 키로 복호화할 권한 부여
   statement {
     actions = [
-      "kms:Decrypt"
+      "kms:Decrypt",
+      "kms:DescribeKey"
     ]
 
     resources = [

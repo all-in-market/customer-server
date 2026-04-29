@@ -3,9 +3,9 @@ package com.example.allinmarket.buyer.auth.controller;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerLoginRequest;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerSignupRequest;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
-import com.example.allinmarket.buyer.auth.dto.response.BuyerLoginResponse;
-import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
 import com.example.allinmarket.buyer.auth.service.BuyerAuthService;
+import com.example.allinmarket.common.auth.dto.LoginResponse;
+import com.example.allinmarket.common.auth.dto.LoginResult;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -32,7 +32,7 @@ public class BuyerAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<BuyerLoginResponse>> login(@Valid @RequestBody BuyerLoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody BuyerLoginRequest request) {
         LoginResult result = buyerAuthService.login(request);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true) // JS에서 document.cookie로 접근 불가 -> XSS 공격으로 토큰 탈취 방지
@@ -47,7 +47,7 @@ public class BuyerAuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<BuyerLoginResponse>> refresh(
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(
             @CookieValue("refreshToken") String refreshToken) {
         LoginResult result = buyerAuthService.refresh(refreshToken);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())

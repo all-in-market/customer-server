@@ -3,10 +3,10 @@ package com.example.allinmarket.buyer.auth.service;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerLoginRequest;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerSignupRequest;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
-import com.example.allinmarket.buyer.auth.dto.response.BuyerLoginResponse;
-import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
+import com.example.allinmarket.common.auth.dto.LoginResponse;
+import com.example.allinmarket.common.auth.dto.LoginResult;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
@@ -81,7 +81,7 @@ public class BuyerAuthService {
         // Refresh 토큰 유효기간 일주일로 설정
         redisTemplate.opsForValue().set("refresh:" + refreshToken, buyer.getId(), 7, TimeUnit.DAYS);
 
-        BuyerLoginResponse response = new BuyerLoginResponse(accessToken);
+        LoginResponse response = new LoginResponse(accessToken);
         return new LoginResult(response, refreshToken);
     }
 
@@ -96,7 +96,7 @@ public class BuyerAuthService {
         redisTemplate.opsForValue().set("refresh:" + newRefreshToken, userId, 7, TimeUnit.DAYS);
 
         String newAccessToken = jwtProvider.generateToken(userId, UserRole.BUYER);
-        return new LoginResult(new BuyerLoginResponse(newAccessToken), newRefreshToken);
+        return new LoginResult(new LoginResponse(newAccessToken), newRefreshToken);
     }
 
     public void logout(String accessToken, String refreshToken) {

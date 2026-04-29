@@ -57,6 +57,13 @@ kms_key_id
 
 ---
 
+## 5.5 NS 등록
+
+- 4단계에서 apply 후 출력된 route53_name_servers output 값을 가비아에 등록
+- Route 53에서 도메인을 등록한 경우 생략 가능
+
+
+---
 ## 6. 인프라 생성
 - infra 디렉토리에서 아래 명령어를 통해 메인 인프라 생성
 ```bash

@@ -10,6 +10,7 @@ resource "aws_lb" "this" {
   })
 }
 
+# Target Group 생성
 resource "aws_lb_target_group" "app" {
   name        = substr("${local.name_prefix}-tg", 0, 32)
   port        = var.container_port
@@ -38,20 +39,28 @@ resource "aws_lb_listener" "http" {
   port              = 80
   protocol          = "HTTP"
 
+  # HTTP 요청은 앱으로 전달하지 않고 HTTPS로만 접근할 수 있도록 강제
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app.arn
+    type             = "redirect"
+
+    redirect {
+      port = "443"
+      protocol = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 
 resource "aws_lb_listener" "https" {
-  count = var.certificate_arn == null ? 0 : 1
-
   load_balancer_arn = aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = var.certificate_arn
+
+  # https 통신에 사용할 암호화 규칙 세트
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+
+  # 리스너에 붙일 검증이 끝난 ACM 인증서
+  certificate_arn   = aws_acm_certificate_validation.app.certificate_arn
 
   default_action {
     type             = "forward"

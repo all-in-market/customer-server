@@ -30,7 +30,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-subnet-public${each.key + 1}-${each.value.az}"
+    Name = "${local.name_prefix}-subnet-public${tonumber(each.key) + 1}-${each.value.az}"
     Tier = "public"
   })
 }
@@ -48,7 +48,7 @@ resource "aws_subnet" "ecs_private" {
   availability_zone = each.value.az
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-subnet-private${each.key + 1}-${each.value.az}"
+    Name = "${local.name_prefix}-subnet-private${tonumber(each.key) + 1}-${each.value.az}"
     Tier = "private-app"
   })
 }
@@ -66,7 +66,7 @@ resource "aws_subnet" "data_private" {
   availability_zone = each.value.az
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-subnet-private${each.key + 3}-${each.value.az}"
+    Name = "${local.name_prefix}-subnet-private${tonumber(each.key) + 3}-${each.value.az}"
     Tier = "private-data"
   })
 }

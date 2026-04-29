@@ -11,11 +11,6 @@ locals {
   ecr_repository_name = coalesce(var.ecr_repository_name, var.project_name)
   container_image     = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
 
-  # 프로파일별 고가용성을 위한 정책 선택
-  ecs = {
-    desired_count = var.environment == "prod" ? 2 : 1
-  }
-
   rds = {
     multi_az = var.environment == "prod"
     deletion_protection = var.environment == "prod"

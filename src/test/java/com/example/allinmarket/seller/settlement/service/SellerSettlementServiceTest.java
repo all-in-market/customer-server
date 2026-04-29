@@ -65,9 +65,10 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize();
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 초기값
         given(valueOperations.get(key)).willReturn(null); // 캐시 미스
 
         Settlement settlement = createSettlementMock(1L, sellerId, BigDecimal.valueOf(50000));
@@ -95,7 +96,7 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize();
 
         SettlementDetailResponse cachedItem = new SettlementDetailResponse(
                 1L, sellerId, BigDecimal.valueOf(50000), BigDecimal.valueOf(1000),
@@ -107,6 +108,7 @@ class SellerSettlementServiceTest {
         );
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 초기값
         given(valueOperations.get(key)).willReturn(cachedResponse); // 캐시 히트
 
         // when
@@ -124,9 +126,10 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize();
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 스텁
         given(valueOperations.get(key)).willReturn(null);
 
         Page<Settlement> emptyPage = new PageImpl<>(List.of(), pageable, 0);
@@ -147,9 +150,10 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 2);
-        String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize();
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 스텁
         given(valueOperations.get(key)).willReturn(null);
 
         Settlement settlement1 = createSettlementMock(1L, sellerId, BigDecimal.valueOf(10000));

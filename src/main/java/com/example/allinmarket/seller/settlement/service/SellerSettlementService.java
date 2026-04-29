@@ -69,7 +69,12 @@ public class SellerSettlementService {
             }
         }
 
-        String key = SETTLEMENT_CACHE_PREFIX + sellerId + ":v" + version + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = SETTLEMENT_CACHE_PREFIX + sellerId
+                + ":v" + version
+                + ":" + pageable.getPageNumber()
+                + ":" + pageable.getPageSize()
+                + ":" + sort;
 
         Object cached = redisTemplate.opsForValue().get(key);
 

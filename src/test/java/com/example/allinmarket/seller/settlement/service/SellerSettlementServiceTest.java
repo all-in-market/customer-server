@@ -91,7 +91,8 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + sort;
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 초기값
@@ -122,7 +123,8 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + sort;
 
         SettlementDetailResponse cachedItem = new SettlementDetailResponse(
                 1L, sellerId, BigDecimal.valueOf(50000), BigDecimal.valueOf(1000),
@@ -152,7 +154,8 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + sort;
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 스텁
@@ -176,7 +179,8 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 2);
-        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + sort;
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
         given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 스텁

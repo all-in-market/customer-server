@@ -3,10 +3,6 @@ resource "aws_dynamodb_table" "terraform_lock" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
-  lifecycle {
-    prevent_destroy = true
-  }
-
   attribute {
     name = "LockID"
     type = "S"

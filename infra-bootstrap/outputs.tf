@@ -9,3 +9,7 @@ output "backend_dynamodb_table" {
 output "backend_kms_key_id" {
   value = aws_kms_key.terraform_state.arn
 }
+
+output "route53_name_servers" {
+  value = aws_route53_zone.public.name_servers
+}

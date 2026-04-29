@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.util.List;
@@ -24,7 +25,12 @@ public class BuyerProductService {
     private final ProductRepository productRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public Page<ProductDetailResponse> findAllProducts(Pageable pageable) {
+    public Page<ProductDetailResponse> findAllProducts(Pageable pageable, String keyword) {
+        if(StringUtils.hasText(keyword)) {
+            return productRepository.findByKeyword(keyword, pageable)
+                    .map(ProductDetailResponse::from);
+        }
+
         if (pageable.getPageNumber() < 10) {
             String key = "products:search:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + pageable.getSort();
 

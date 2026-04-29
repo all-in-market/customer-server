@@ -33,4 +33,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findVisibleProductById(Long productId);
 
     Page<Product> findAllBySellerIdAndDeletedAtIsNull(Long sellerId, Pageable pageable);
+
+
+    // LIKE로 인해 풀 테이블 스캔 발생 (PostgreSQL의 Full Text Search | Elasticsearch 도입을 고려.)
+    @Query("""
+        SELECT p FROM Product p 
+        WHERE (p.name LIKE %:keyword% OR p.description LIKE %:keyword%)
+        AND p.status != 'HIDDEN' 
+        AND p.deletedAt IS NULL
+        """)
+    Page<Product> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

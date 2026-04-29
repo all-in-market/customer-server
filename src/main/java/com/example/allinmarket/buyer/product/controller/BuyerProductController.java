@@ -11,10 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,8 +21,10 @@ public class BuyerProductController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ProductDetailResponse>>> findAllProduct(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<ProductDetailResponse> productPage = buyerProductService.findAllProducts(pageable);
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable,
+            @RequestParam(required = false) String keyword
+    ) {
+        Page<ProductDetailResponse> productPage = buyerProductService.findAllProducts(pageable, keyword);
 
         PageResponse<ProductDetailResponse> pageResponse = PageResponse.register(productPage);
 

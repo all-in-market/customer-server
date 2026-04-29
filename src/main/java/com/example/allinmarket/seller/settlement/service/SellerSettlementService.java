@@ -13,9 +13,13 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import static com.example.allinmarket.seller.consts.SellerConsts.COMMISSION_RATE;
 import static com.example.allinmarket.domain.settlement.consts.SettlementConst.SETTLEMENT_CACHE_PREFIX;
 import static com.example.allinmarket.domain.settlement.consts.SettlementConst.VERSION_KEY_PREFIX;
@@ -131,6 +135,20 @@ public class SellerSettlementService {
                 throw e;
             }
         }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                // 모든 판매자의 버전을 일괄 업데이트 (Pipelining 권장)
+                redisTemplate.executePipelined((RedisCallback<?>) connection -> {
+                    for (Long sellerId : sellerMap.keySet()) {
+                        String key = VERSION_KEY_PREFIX + sellerId;
+                        connection.incr(key.getBytes());
+                    }
+                    return null;
+                });
+            }
+        });
     }
 
     private PageResponse<SettlementDetailResponse> fetchFromDb(Long sellerId, Pageable pageable) {

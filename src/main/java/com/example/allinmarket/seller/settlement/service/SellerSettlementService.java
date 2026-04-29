@@ -52,14 +52,20 @@ public class SellerSettlementService {
             return fetchFromDb(sellerId, pageable);
         }
 
-        int version = 0;
+        long version = 0L;
 
         String versionKey = VERSION_KEY_PREFIX + sellerId;
 
         Object versionObject = redisTemplate.opsForValue().get(versionKey);
 
-        if (versionObject != null) {
-            version = Integer.parseInt(versionObject.toString());
+        if (versionObject instanceof Number n) {
+            version = n.longValue();
+        } else if (versionObject != null) {
+            try {
+                version = Long.parseLong(versionObject.toString());
+            } catch (NumberFormatException ignored) {
+                version = 0L;
+            }
         }
 
         String key = SETTLEMENT_CACHE_PREFIX + sellerId + ":v" + version + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();

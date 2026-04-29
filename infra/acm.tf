@@ -46,6 +46,8 @@ resource "aws_acm_certificate_validation" "app" {
 
 # Hosted zone으로 들어온 DNS 질의를 어디로 연결할지 정하는 A 레코드 생성
 resource "aws_route53_record" "app_alias" {
+  depends_on = [aws_lb_listener.https]
+
   zone_id = data.aws_route53_zone.public.zone_id
   name    = var.domain_name
   type    = "A"

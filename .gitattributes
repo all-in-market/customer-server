@@ -1,3 +1,5 @@
 /gradlew text eol=lf
+gradlew text eol=lf
+gradlew export-ignore=false
 *.bat text eol=crlf
 *.jar binary

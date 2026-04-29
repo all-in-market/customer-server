@@ -1,12 +1,12 @@
 package com.example.allinmarket.seller.auth.service;
 
+import com.example.allinmarket.common.auth.dto.LoginResult;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtProvider;
 import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboardRepository;
 import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
-import com.example.allinmarket.seller.auth.dto.response.SellerLoginResult;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import com.example.allinmarket.seller.repository.SellerRepository;
@@ -71,7 +71,7 @@ class SellerAuthServiceTest {
         given(jwtProvider.generateToken(1L, UserRole.SELLER)).willReturn("jwt.token.here");
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
 
-        SellerLoginResult result = sellerAuthService.login(request);
+        LoginResult result = sellerAuthService.login(request);
 
         assertThat(result.response().accessToken()).isEqualTo("jwt.token.here");
         assertThat(result.refreshToken()).isNotNull();
@@ -139,7 +139,7 @@ class SellerAuthServiceTest {
         given(valueOperations.get("refresh:old-refresh-token")).willReturn(1L);
         given(jwtProvider.generateToken(1L, UserRole.SELLER)).willReturn("new-accessToken");
 
-        SellerLoginResult result = sellerAuthService.refresh("old-refresh-token");
+        LoginResult result = sellerAuthService.refresh("old-refresh-token");
 
         assertThat(result.response().accessToken()).isEqualTo("new-accessToken");
         assertThat(result.refreshToken()).isNotNull();

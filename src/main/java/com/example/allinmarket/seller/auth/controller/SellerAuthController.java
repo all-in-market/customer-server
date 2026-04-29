@@ -1,12 +1,12 @@
 package com.example.allinmarket.seller.auth.controller;
 
+import com.example.allinmarket.common.auth.dto.LoginResponse;
+import com.example.allinmarket.common.auth.dto.LoginResult;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
 import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
 import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
-import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
-import com.example.allinmarket.seller.auth.dto.response.SellerLoginResult;
 import com.example.allinmarket.seller.auth.service.SellerAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +35,10 @@ public class SellerAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<SellerLoginResponse>> login(
+    public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody SellerLoginRequest request
     ) {
-        SellerLoginResult result = sellerAuthService.login(request);
+        LoginResult result = sellerAuthService.login(request);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true)
                 .secure(false)
@@ -52,10 +52,10 @@ public class SellerAuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<SellerLoginResponse>> refresh(
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(
             @CookieValue("refreshToken") String refreshToken
     ) {
-        SellerLoginResult result = sellerAuthService.refresh(refreshToken);
+        LoginResult result = sellerAuthService.refresh(refreshToken);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true)
                 .secure(false)

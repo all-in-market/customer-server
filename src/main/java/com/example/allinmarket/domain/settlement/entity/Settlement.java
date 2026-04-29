@@ -28,11 +28,9 @@ public class Settlement extends ModifiableEntity {
     @JoinColumn(name = "seller_id", nullable = false)
     private Seller seller;
 
-    @PositiveOrZero
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @PositiveOrZero
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal fee = BigDecimal.ZERO;
 
@@ -70,6 +68,7 @@ public class Settlement extends ModifiableEntity {
         settlement.type = type;
         settlement.periodStart = periodStart;
         settlement.periodEnd = periodEnd;
+        settlement.completedAt = LocalDateTime.now();
         return settlement;
     }
 }

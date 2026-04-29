@@ -54,7 +54,6 @@ public class SellerDailyStatistics extends CreatableEntity {
     @Column(name = "refund_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal refundAmount = BigDecimal.ZERO;
 
-    @PositiveOrZero
     @Column(name = "net_sales", nullable = false, precision = 12, scale = 2)
     private BigDecimal netSales = BigDecimal.ZERO;
 

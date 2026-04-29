@@ -23,6 +23,13 @@ resource "aws_ecs_task_definition" "this" {
 
       environment = local.container_environment
 
+      secrets = [
+        {
+          name      = "DB_PASSWORD"
+          valueFrom = aws_ssm_parameter.db_password.arn
+        }
+      ]
+
       logConfiguration = {
         logDriver = "awslogs"
         options = {

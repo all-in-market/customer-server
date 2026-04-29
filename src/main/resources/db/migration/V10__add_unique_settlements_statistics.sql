@@ -16,6 +16,3 @@ DELETE FROM seller_daily_statistics s1
 WHERE s1.seller_id = s2.seller_id
   AND s1.stat_date = s2.stat_date
   AND s1.id < s2.id;
-
-ALTER TABLE seller_daily_statistics
-    ADD CONSTRAINT uk_seller_statistics_stat_date UNIQUE (seller_id, stat_date);

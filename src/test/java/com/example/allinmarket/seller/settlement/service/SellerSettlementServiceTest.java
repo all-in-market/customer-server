@@ -1,27 +1,37 @@
 package com.example.allinmarket.seller.settlement.service;
 
 import com.example.allinmarket.common.response.PageResponse;
+import com.example.allinmarket.domain.sellerdailystatistics.repository.SellerDailyStatisticsRepository;
 import com.example.allinmarket.domain.settlement.dto.response.SettlementDetailResponse;
 import com.example.allinmarket.domain.settlement.entity.Settlement;
 import com.example.allinmarket.domain.settlement.enums.SettlementStatus;
 import com.example.allinmarket.domain.settlement.enums.SettlementType;
 import com.example.allinmarket.domain.settlement.repository.SettlementRepository;
 import com.example.allinmarket.seller.entity.Seller;
+import com.example.allinmarket.seller.repository.SellerRepository;
+import org.hibernate.exception.ConstraintViolationException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,6 +52,22 @@ class SellerSettlementServiceTest {
 
     @InjectMocks
     private SellerSettlementService sellerSettlementService;
+
+    @Mock
+    private SellerRepository sellerRepository;
+
+    @Mock
+    private SellerDailyStatisticsRepository sellerDailyStatisticsRepository;
+
+    @BeforeEach
+    void setUp() {
+        TransactionSynchronizationManager.initSynchronization();
+    }
+
+    @AfterEach
+    void tearDown() {
+        TransactionSynchronizationManager.clearSynchronization();
+    }
 
     private Settlement createSettlementMock(Long settlementId, Long sellerId, BigDecimal amount) {
         Seller seller = mock(Seller.class);
@@ -65,9 +91,11 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + sort;
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 초기값
         given(valueOperations.get(key)).willReturn(null); // 캐시 미스
 
         Settlement settlement = createSettlementMock(1L, sellerId, BigDecimal.valueOf(50000));
@@ -95,7 +123,8 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + sort;
 
         SettlementDetailResponse cachedItem = new SettlementDetailResponse(
                 1L, sellerId, BigDecimal.valueOf(50000), BigDecimal.valueOf(1000),
@@ -107,6 +136,7 @@ class SellerSettlementServiceTest {
         );
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 초기값
         given(valueOperations.get(key)).willReturn(cachedResponse); // 캐시 히트
 
         // when
@@ -124,9 +154,11 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 10);
-        String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + sort;
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 스텁
         given(valueOperations.get(key)).willReturn(null);
 
         Page<Settlement> emptyPage = new PageImpl<>(List.of(), pageable, 0);
@@ -147,9 +179,11 @@ class SellerSettlementServiceTest {
         // given
         Long sellerId = 1L;
         Pageable pageable = PageRequest.of(0, 2);
-        String key = "settlement:" + sellerId + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+        String sort = pageable.getSort().isSorted() ? pageable.getSort().toString() : "unsorted";
+        String key = "settlement:" + sellerId + ":v0:" + pageable.getPageNumber() + ":" + pageable.getPageSize() + ":" + sort;
 
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("settlement:version:" + sellerId)).willReturn("0"); // 버전 키 스텁
         given(valueOperations.get(key)).willReturn(null);
 
         Settlement settlement1 = createSettlementMock(1L, sellerId, BigDecimal.valueOf(10000));
@@ -186,5 +220,71 @@ class SellerSettlementServiceTest {
         // 캐시 범위 초과 시 Redis 접근 자체가 없어야 함
         verify(redisTemplate, never()).opsForValue();
         verify(settlementRepository).findAllBySellerId(sellerId, pageable);
+    }
+
+    @Test
+    void 정산_생성_시_DB저장과_캐시_버전_증가_테스트() {
+        // given
+        Long sellerId = 1L;
+        Seller seller = mock(Seller.class);
+        given(seller.getId()).willReturn(sellerId);
+
+        given(sellerRepository.findAllActiveSellers()).willReturn(List.of(seller));
+
+        Object[] row = new Object[]{sellerId, BigDecimal.valueOf(50000)};
+        given(sellerDailyStatisticsRepository.sumNetSalesGroupBySeller(any(), any()))
+                .willReturn(Collections.singletonList(row));
+
+        // DB 저장은 단순 mock 처리
+        given(settlementRepository.saveAndFlush(any(Settlement.class)))
+                .willReturn(mock(Settlement.class));
+
+        // when
+        sellerSettlementService.createSettlement(
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 1, 15),
+                SettlementType.MID
+        );
+
+        // 등록된 synchronization을 찾아 afterCommit()을 수동으로 트리거
+        List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+        synchronizations.forEach(TransactionSynchronization::afterCommit);
+
+        // then
+        verify(settlementRepository).saveAndFlush(any(Settlement.class)); // 호출 여부만 검증
+        verify(redisTemplate).executePipelined(any(RedisCallback.class)); // Pipelined 연산이 실행되었는지 검증
+    }
+
+    @Test
+    void 정산_중복_생성_시_예외_무시_및_캐시_버전_증가_안함() {
+        Long sellerId = 1L;
+        Seller seller = mock(Seller.class);
+        given(seller.getId()).willReturn(sellerId);
+
+        given(sellerRepository.findAllActiveSellers()).willReturn(List.of(seller));
+
+        Object[] row = new Object[]{sellerId, BigDecimal.valueOf(50000)};
+        given(sellerDailyStatisticsRepository.sumNetSalesGroupBySeller(any(), any()))
+                .willReturn(Collections.singletonList(row));
+
+        // Hibernate 예외를 모킹하여 'uk_settlement_period'를 반환하도록 설정
+        ConstraintViolationException mockCv = mock(ConstraintViolationException.class);
+        given(mockCv.getConstraintName()).willReturn("uk_settlement_period");
+
+        // Spring의 DataIntegrityViolationException의 원인으로 위 모킹 예외를 주입
+        DataIntegrityViolationException exception = new DataIntegrityViolationException("duplicate", mockCv);
+
+        doThrow(exception).when(settlementRepository).saveAndFlush(any(Settlement.class));
+
+        assertDoesNotThrow(() -> sellerSettlementService.createSettlement(
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 1, 15),
+                SettlementType.MID
+        ));
+
+        TransactionSynchronizationManager.getSynchronizations()
+                .forEach(TransactionSynchronization::afterCommit);
+
+        verify(redisTemplate, never()).executePipelined(any(RedisCallback.class));
     }
 }

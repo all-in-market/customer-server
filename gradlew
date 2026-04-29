@@ -247,5 +247,3 @@ eval "set -- $(
 
 exec "$JAVACMD" "$@"
 
-# fix permission
-# fix permission

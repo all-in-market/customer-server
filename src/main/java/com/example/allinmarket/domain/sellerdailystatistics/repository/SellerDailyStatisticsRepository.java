@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.time.LocalDate;
@@ -14,4 +15,7 @@ public interface SellerDailyStatisticsRepository extends JpaRepository<SellerDai
 
     @Query("SELECT s.seller.id FROM SellerDailyStatistics s WHERE s.statDate = :date")
     List<Long> findExistingSellerIds(@Param("date") LocalDate date);
+
+    @Query("SELECT s.seller.id, COALESCE(SUM(s.netSales), 0) FROM SellerDailyStatistics s WHERE s.statDate BETWEEN :start AND :end GROUP BY s.seller.id")
+    List<Object[]> sumNetSalesGroupBySeller(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }

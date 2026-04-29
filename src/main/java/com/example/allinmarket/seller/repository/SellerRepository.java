@@ -15,4 +15,7 @@ public interface SellerRepository extends JpaRepository<Seller, Long> {
 
     @Query("SELECT s.id FROM Seller s WHERE s.deletedAt IS NULL AND s.status = com.example.allinmarket.seller.enums.SellerStatus.APPROVED")
     List<Long> findAllIds();
+
+    @Query("SELECT s FROM Seller s WHERE s.deletedAt IS NULL AND s.status = com.example.allinmarket.seller.enums.SellerStatus.APPROVED")
+    List<Seller> findAllActiveSellers();
 }

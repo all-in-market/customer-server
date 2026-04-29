@@ -29,6 +29,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -97,6 +98,8 @@ public class SellerSettlementService {
                         row -> (BigDecimal) row[1]
         ));
 
+        List<Long> successSellerIds = new ArrayList<>();
+
         for (Long sellerId : sellerMap.keySet()) {
             BigDecimal netSales = netSalesMap.getOrDefault(
                     sellerId,
@@ -121,7 +124,10 @@ public class SellerSettlementService {
             );
 
             try {
-                settlementRepository.save(settlement);
+                settlementRepository.saveAndFlush(settlement);
+
+                // 저장 성공 시에만 리스트에 추가
+                successSellerIds.add(sellerId);
 
             } catch (DataIntegrityViolationException e) {
                 // 중복 생성 방지
@@ -130,21 +136,23 @@ public class SellerSettlementService {
                 throw e;
             }
         }
-
-        // 트랜잭션 커밋 직후에만 실행되도록 등록
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 모든 판매자의 버전을 일괄 업데이트 (Pipelining 권장)
-                redisTemplate.executePipelined((RedisCallback<?>) connection -> {
-                    for (Long sellerId : sellerMap.keySet()) {
-                        String key = VERSION_KEY_PREFIX + sellerId;
-                        connection.incr(key.getBytes());
-                    }
-                    return null;
-                });
-            }
-        });
+        // 성공한 판매자가 있을 때만 동기화 등록
+        if (!successSellerIds.isEmpty()) {
+            // 트랜잭션 커밋 직후에만 실행되도록 등록
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    // 성공한 판매자의 버전을 일괄 업데이트 (Pipelining 권장)
+                    redisTemplate.executePipelined((RedisCallback<?>) connection -> {
+                        for (Long sellerId : successSellerIds) {
+                            String key = VERSION_KEY_PREFIX + sellerId;
+                            connection.incr(key.getBytes());
+                        }
+                        return null;
+                    });
+                }
+            });
+        }
     }
 
     private PageResponse<SettlementDetailResponse> fetchFromDb(Long sellerId, Pageable pageable) {

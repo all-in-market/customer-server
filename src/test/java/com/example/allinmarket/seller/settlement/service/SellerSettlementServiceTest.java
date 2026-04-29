@@ -220,50 +220,35 @@ class SellerSettlementServiceTest {
 
     @Test
     void 정산_생성_시_DB저장과_캐시_버전_증가_테스트() {
-        // 트랜잭션 동기화가 이미 활성화 되어 있는지 체크 후 없으면 활성화
-        boolean synchronizationActive = TransactionSynchronizationManager.isSynchronizationActive();
+        // given
+        Long sellerId = 1L;
+        Seller seller = mock(Seller.class);
+        given(seller.getId()).willReturn(sellerId);
 
-        if (!synchronizationActive) {
-            TransactionSynchronizationManager.initSynchronization();
-        }
+        given(sellerRepository.findAllActiveSellers()).willReturn(List.of(seller));
 
-        try{
-            // given
-            Long sellerId = 1L;
-            Seller seller = mock(Seller.class);
-            given(seller.getId()).willReturn(sellerId);
+        Object[] row = new Object[]{sellerId, BigDecimal.valueOf(50000)};
+        given(sellerDailyStatisticsRepository.sumNetSalesGroupBySeller(any(), any()))
+                .willReturn(Collections.singletonList(row));
 
-            given(sellerRepository.findAllActiveSellers()).willReturn(List.of(seller));
+        // DB 저장은 단순 mock 처리
+        given(settlementRepository.saveAndFlush(any(Settlement.class)))
+                .willReturn(mock(Settlement.class));
 
-            Object[] row = new Object[]{sellerId, BigDecimal.valueOf(50000)};
-            given(sellerDailyStatisticsRepository.sumNetSalesGroupBySeller(any(), any()))
-                    .willReturn(Collections.singletonList(row));
+        // when
+        sellerSettlementService.createSettlement(
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 1, 15),
+                SettlementType.MID
+        );
 
-            // DB 저장은 단순 mock 처리
-            given(settlementRepository.save(any(Settlement.class)))
-                    .willReturn(mock(Settlement.class));
+        // 등록된 synchronization을 찾아 afterCommit()을 수동으로 트리거
+        List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+        synchronizations.forEach(TransactionSynchronization::afterCommit);
 
-            // when
-            sellerSettlementService.createSettlement(
-                    LocalDate.of(2024, 1, 1),
-                    LocalDate.of(2024, 1, 15),
-                    SettlementType.MID
-            );
-
-            // 등록된 synchronization을 찾아 afterCommit()을 수동으로 트리거
-            List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
-            synchronizations.forEach(TransactionSynchronization::afterCommit);
-
-            // then
-            verify(settlementRepository).save(any(Settlement.class)); // 호출 여부만 검증
-            verify(redisTemplate).executePipelined(any(RedisCallback.class)); // Pipelined 연산이 실행되었는지 검증
-
-        } finally {
-            // 테스트에서 직접 시작했을 때만 테스트 종료 후 정리(다른 테스트 영향 X)
-            if (!synchronizationActive) {
-                TransactionSynchronizationManager.clearSynchronization();
-            }
-        }
+        // then
+        verify(settlementRepository).saveAndFlush(any(Settlement.class)); // 호출 여부만 검증
+        verify(redisTemplate).executePipelined(any(RedisCallback.class)); // Pipelined 연산이 실행되었는지 검증
     }
 
     @Test
@@ -285,7 +270,7 @@ class SellerSettlementServiceTest {
         // Spring의 DataIntegrityViolationException의 원인으로 위 모킹 예외를 주입
         DataIntegrityViolationException exception = new DataIntegrityViolationException("duplicate", mockCv);
 
-        doThrow(exception).when(settlementRepository).save(any(Settlement.class));
+        doThrow(exception).when(settlementRepository).saveAndFlush(any(Settlement.class));
 
         assertDoesNotThrow(() -> sellerSettlementService.createSettlement(
                 LocalDate.of(2024, 1, 1),
@@ -293,6 +278,9 @@ class SellerSettlementServiceTest {
                 SettlementType.MID
         ));
 
-        verify(valueOperations, never()).increment(anyString());
+        TransactionSynchronizationManager.getSynchronizations()
+                .forEach(TransactionSynchronization::afterCommit);
+
+        verify(redisTemplate, never()).executePipelined(any(RedisCallback.class));
     }
 }

@@ -116,9 +116,10 @@ public class SellerAuthService {
 
     public void logout(String accessToken, String refreshToken) {
         long remaining = jwtProvider.getRemainingExpiration(accessToken);
-        redisTemplate.opsForValue()
-                .set("blacklist:" + accessToken, "logout", remaining, TimeUnit.MILLISECONDS);
-
+        if (remaining > 0) {
+            redisTemplate.opsForValue()
+                    .set("blacklist:" + accessToken, "logout", remaining, TimeUnit.MILLISECONDS);
+        }
         redisTemplate.delete("refresh:" + refreshToken);
     }
 }

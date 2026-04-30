@@ -66,14 +66,14 @@ public class BuyerAuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader("Authorization") String authHeader,
-            @CookieValue(value = "refreshToken") String refreshToken
+            @CookieValue(value = "refreshToken", required = false) String refreshToken
     ) {
         if (!authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail(ErrorEnum.UNAUTHORIZED));
         }
         String accessToken = authHeader.substring(7);
-        buyerAuthService.logout(accessToken, refreshToken);
+        buyerAuthService.logout(accessToken);
 
         ResponseCookie expired = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)

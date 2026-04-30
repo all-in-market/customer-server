@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -52,6 +53,9 @@ class SellerAuthServiceTest {
     @Mock
     private ValueOperations<String, Object> valueOperations;
 
+    @Mock
+    private SetOperations<String, Object> setOperations;
+
     @InjectMocks
     private SellerAuthService sellerAuthService;
 
@@ -70,6 +74,7 @@ class SellerAuthServiceTest {
         given(passwordEncoder.matches("password123", "encodedPassword")).willReturn(true);
         given(jwtProvider.generateToken(1L, UserRole.SELLER)).willReturn("jwt.token.here");
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
 
         LoginResult result = sellerAuthService.login(request);
 
@@ -139,6 +144,7 @@ class SellerAuthServiceTest {
         Seller seller = mock(Seller.class);
         given(seller.getDeletedAt()).willReturn(null);
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
         given(valueOperations.getAndDelete("refresh:old-refresh-token")).willReturn(1L);
         given(sellerRepository.findById(1L)).willReturn(Optional.of(seller));
         given(jwtProvider.generateToken(1L, UserRole.SELLER)).willReturn("new-accessToken");

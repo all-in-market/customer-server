@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -55,6 +56,9 @@ public class BuyerAuthServiceTest {
 
     @Mock
     private ValueOperations<String, Object> valueOperations;
+
+    @Mock
+    private SetOperations<String, Object> setOperations;
 
     @Test
     void 회원_가입_성공_테스트() {
@@ -130,6 +134,7 @@ public class BuyerAuthServiceTest {
         given(passwordEncoder.matches("12345678", "비밀번호암호화")).willReturn(true);
         given(jwtProvider.generateToken(buyer.getId(), buyer.getRole())).willReturn("test-accessToken");
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
 
         // when
         LoginResult result = buyerAuthService.login(request);
@@ -209,6 +214,7 @@ public class BuyerAuthServiceTest {
         // given
         Buyer buyer = Buyer.of("테스트@테스트.com", "암호화", "테스트", "010-1234-1234");
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(redisTemplate.opsForSet()).willReturn(setOperations);
         given(valueOperations.getAndDelete("refresh:old-refresh-token")).willReturn(1L);
         given(buyerRepository.findById(1L)).willReturn(Optional.of(buyer));
         given(jwtProvider.generateToken(1L, UserRole.BUYER)).willReturn("new-accessToken");

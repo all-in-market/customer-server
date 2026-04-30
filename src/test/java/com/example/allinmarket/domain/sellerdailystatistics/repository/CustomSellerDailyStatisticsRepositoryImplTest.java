@@ -36,8 +36,8 @@ class CustomSellerDailyStatisticsRepositoryImplTest {
 
     @BeforeEach
     void setUp() {
-        seller1 = Seller.of("s1@test.com", "pw", "판매자1", "010-1111-1111", "스토어1", "111-11-11111", "acc1");
-        seller2 = Seller.of("s2@test.com", "pw", "판매자2", "010-2222-2222", "스토어2", "222-22-22222", "acc2");
+        seller1 = Seller.of("s1@test.com", "pw", "판매자1", "010-1111-1111", "스토어1", "111-11-11111", "KOOKMIN", "acc1");
+        seller2 = Seller.of("s2@test.com", "pw", "판매자2", "010-2222-2222", "스토어2", "222-22-22222", "KOOKMIN", "acc2");
         em.persist(seller1);
         em.persist(seller2);
         em.flush();

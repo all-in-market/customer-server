@@ -85,7 +85,7 @@ public class DummyDataService {
 
         String sql = """
                 INSERT INTO sellers
-                (email, password, name, phone, store_name, biz_number, bank_account, status, role, created_at, updated_at)
+                (email, password, name, phone, store_name, biz_number, bank_code, bank_account, status, role, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now())
                 """;
 
@@ -98,11 +98,12 @@ public class DummyDataService {
             String phone = faker.phoneNumber().phoneNumber();
             String storeName = faker.funnyName().name() + "_" + i;
             String biz_number = "biz_" + i;
+            String bank_code = "KOOKMIN";
             String bank_account = "bank_" + i;
             String status = SellerStatus.APPROVED.name();
             String role = UserRole.SELLER.name();
 
-            batchSellers.add(new Object[]{email, password, name, phone, storeName, biz_number, bank_account, status, role});
+            batchSellers.add(new Object[]{email, password, name, phone, storeName, biz_number, bank_code, bank_account, status, role});
 
             if (batchSellers.size() == SELLER_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchSellers);

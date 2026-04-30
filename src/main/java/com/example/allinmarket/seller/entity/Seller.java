@@ -1,7 +1,10 @@
 package com.example.allinmarket.seller.entity;
 
 import com.example.allinmarket.common.entity.DeletableEntity;
+import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.UserRole;
+import com.example.allinmarket.common.exception.BaseException;
+import com.example.allinmarket.domain.banking.enums.BankCode;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -43,6 +46,10 @@ public class Seller extends DeletableEntity {
     private String bizNumber;
 
     @NotBlank
+    @Column(name = "bank_code", length = 30)
+    private String bankCode;
+
+    @NotBlank
     @Column(name = "bank_account", length = 50)
     private String bankAccount;
 
@@ -61,6 +68,7 @@ public class Seller extends DeletableEntity {
             String phone,
             String storeName,
             String bizNumber,
+            String bankCode,
             String bankAccount) {
         Seller seller = new Seller();
 
@@ -70,6 +78,7 @@ public class Seller extends DeletableEntity {
         seller.phone = phone;
         seller.storeName = storeName;
         seller.bizNumber = bizNumber;
+        seller.bankCode = bankCode;
         seller.bankAccount = bankAccount;
         seller.status = SellerStatus.PENDING;
         seller.role = UserRole.SELLER;
@@ -99,6 +108,13 @@ public class Seller extends DeletableEntity {
 
     public void updateBizNumber(String bizNumber) {
         this.bizNumber = bizNumber;
+    }
+
+    public void updateBankCode(String bankCode) {
+        if (!BankCode.valueOf(bankCode).name().equals(bankCode)) {
+            throw new BaseException(ErrorEnum.BANK_CODE_INVALID);
+        }
+        this.bankCode = bankCode;
     }
 
     public void updateBankAccount(String bankAccount) {

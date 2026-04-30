@@ -53,6 +53,7 @@ class DashboardServiceTest {
                 "010-1234-567" + id,
                 "테스트 스토어" + id,
                 "123-45-6789" + id,
+                "KOOKMIN",
                 "123-456789-12-345"
         );
         ReflectionTestUtils.setField(seller, "id", id);

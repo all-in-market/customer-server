@@ -65,6 +65,7 @@ public class SellerInitializer implements ApplicationRunner {
                 "010-1234-1234",
                 "all-in-market",
                 "biz67899",
+                "KOOKMIN",
                 "01-123456-123456"
         );
 

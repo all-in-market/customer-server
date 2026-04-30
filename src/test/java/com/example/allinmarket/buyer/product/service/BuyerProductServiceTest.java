@@ -63,11 +63,40 @@ public class BuyerProductServiceTest {
         Page<Product> productPage = new PageImpl<>(List.of(product), pageable, 1);
 
         given(productRepository.findAllVisibleProducts(pageable)).willReturn(productPage);
-
         given(redisTemplate.opsForValue()).willReturn(Mockito.mock(ValueOperations.class));
 
         // when
-        Page<ProductDetailResponse> responses = buyerProductService.findAllProducts(pageable);
+        Page<ProductDetailResponse> responses = buyerProductService.findAllProducts(pageable, null);
+
+        // then
+        assertEquals(1, responses.getTotalElements());
+        assertEquals("테스트", responses.getContent().get(0).name());
+    }
+
+    @Test
+    void 구매자_상품_목록_키워드_조회_성공_테스트() {
+        // given
+        Seller seller = mock(Seller.class);
+        Category category = mock(Category.class);
+
+        Product product = Product.of(
+                seller,
+                category,
+                "테스트",
+                BigDecimal.valueOf(10000),
+                50,
+                "설명"
+        );
+
+        ReflectionTestUtils.setField(product, "id", 1L);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Product> productPage = new PageImpl<>(List.of(product), pageable, 1);
+
+        given(productRepository.findByKeyword("테스트", pageable)).willReturn(productPage);
+
+        // when
+        Page<ProductDetailResponse> responses = buyerProductService.findAllProducts(pageable, "테스트");
 
         // then
         assertEquals(1, responses.getTotalElements());
@@ -76,13 +105,13 @@ public class BuyerProductServiceTest {
 
     @Test
     void 구매자_상품_목록_조회_실패_테스트() {
-        //given
-        given(productRepository.findAllVisibleProducts(any(Pageable.class))).willThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
-
+        // given
+        given(productRepository.findAllVisibleProducts(any(Pageable.class)))
+                .willThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
         given(redisTemplate.opsForValue()).willReturn(Mockito.mock(ValueOperations.class));
 
         // when & then
-        assertThrows(BaseException.class, () -> buyerProductService.findAllProducts(PageRequest.of(0, 10)));
+        assertThrows(BaseException.class, () -> buyerProductService.findAllProducts(PageRequest.of(0, 10), null));
     }
 
     @Test

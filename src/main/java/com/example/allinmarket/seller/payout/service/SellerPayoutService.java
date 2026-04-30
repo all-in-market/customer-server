@@ -88,6 +88,10 @@ public class SellerPayoutService {
                     if (isValidationError(e)) {
                         sellerPayoutFailHandler.handlePayoutFail(payout.getId(), true);
                         log.error("검증 실패 -> 즉시 실패 처리: payoutId = {}", payout.getId(), e);
+                    } else {
+                        // 기타 BaseException (상태 변경 오류 등)
+                        log.error("지급 처리 중 비즈니스 예외 발생: payoutId = {}, errorEnum = {}", payout.getId(), e.getErrorEnum(), e);
+                        sellerPayoutFailHandler.handlePayoutFail(payout.getId(), false);
                     }
 
                 } catch (Exception e) {

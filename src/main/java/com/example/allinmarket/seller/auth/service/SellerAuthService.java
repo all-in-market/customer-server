@@ -90,29 +90,46 @@ public class SellerAuthService {
         String refreshToken = UUID.randomUUID().toString();
 
         redisTemplate.opsForValue().set("refresh:" + refreshToken, seller.getId(), 7, TimeUnit.DAYS);
+        redisTemplate.opsForSet().add("user_refreshes:" + seller.getId(), refreshToken);
+        redisTemplate.expire("user_refreshes:" + seller.getId(), 7, TimeUnit.DAYS);
 
         return new LoginResult(new LoginResponse(accessToken), refreshToken);
     }
 
     public LoginResult refresh(String refreshToken) {
-        Long userId = (Long) redisTemplate.opsForValue().get("refresh:" + refreshToken);
+        Long userId = (Long) redisTemplate.opsForValue().getAndDelete("refresh:" + refreshToken);
         if (userId == null) {
             throw new BaseException(ErrorEnum.TOKEN_EXPIRED);
         }
 
-        redisTemplate.delete("refresh:" + refreshToken);
+        Seller seller = sellerRepository.findById(userId).orElseThrow(
+                () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
+        );
+        if (seller.getDeletedAt() != null) {
+            throw new BaseException(ErrorEnum.SELLER_ALREADY_DELETED);
+        }
+
         String newRefreshToken = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set("refresh:" + newRefreshToken, userId, 7, TimeUnit.DAYS);
+        redisTemplate.opsForSet().remove("user_refreshes:" + userId, refreshToken);
+        redisTemplate.opsForSet().add("user_refreshes:" + userId, newRefreshToken);
+        redisTemplate.expire("user_refreshes:" + userId, 7, TimeUnit.DAYS);
 
         String newAccessToken = jwtProvider.generateToken(userId, UserRole.SELLER);
         return new LoginResult(new LoginResponse(newAccessToken), newRefreshToken);
     }
 
-    public void logout(String accessToken, String refreshToken) {
+    public void logout(String accessToken) {
+        Long userId = jwtProvider.getUserId(accessToken);
+        var tokens = redisTemplate.opsForSet().members("user_refreshes:" + userId);
+        if (tokens != null && !tokens.isEmpty()) {
+            tokens.forEach(token -> redisTemplate.delete("refresh:" + token));
+            redisTemplate.delete("user_refreshes:" + userId);
+        }
         long remaining = jwtProvider.getRemainingExpiration(accessToken);
-        redisTemplate.opsForValue()
-                .set("blacklist:" + accessToken, "logout", remaining, TimeUnit.MILLISECONDS);
-
-        redisTemplate.delete("refresh:" + refreshToken);
+        if (remaining > 0) {
+            redisTemplate.opsForValue()
+                    .set("blacklist:" + accessToken, "logout", remaining, TimeUnit.MILLISECONDS);
+        }
     }
 }

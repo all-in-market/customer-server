@@ -100,7 +100,7 @@ public class Payout extends CreatableEntity {
 
     public void markProcessing() {
         if (!this.status.payoutCanTransitToTargetStatus(PayoutStatus.PROCESSING)) {
-            throw new BaseException(ErrorEnum.PAYOUT_PENDING_NOT_FOUND);
+            throw new BaseException(ErrorEnum.PAYOUT_STATUS_INVALID);
         }
         this.status = PayoutStatus.PROCESSING;
     }

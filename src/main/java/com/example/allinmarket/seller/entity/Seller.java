@@ -78,7 +78,7 @@ public class Seller extends DeletableEntity {
         seller.phone = phone;
         seller.storeName = storeName;
         seller.bizNumber = bizNumber;
-        seller.bankCode = bankCode;
+        seller.updateBankCode(bankCode);
         seller.bankAccount = bankAccount;
         seller.status = SellerStatus.PENDING;
         seller.role = UserRole.SELLER;
@@ -111,6 +111,10 @@ public class Seller extends DeletableEntity {
     }
 
     public void updateBankCode(String bankCode) {
+        if (bankCode == null || bankCode.isBlank()) {
+            throw new BaseException(ErrorEnum.BANK_CODE_INVALID);
+        }
+
         try {
             BankCode.valueOf(bankCode);
         } catch (IllegalArgumentException e) {

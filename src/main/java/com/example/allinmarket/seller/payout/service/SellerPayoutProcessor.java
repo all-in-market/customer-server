@@ -5,6 +5,7 @@ import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.banking.BankingGateway;
 import com.example.allinmarket.domain.banking.dto.BankingResponse;
 import com.example.allinmarket.domain.payout.entity.Payout;
+import com.example.allinmarket.domain.payout.repository.PayoutRepository;
 import com.example.allinmarket.domain.settlement.entity.Settlement;
 import com.example.allinmarket.domain.settlement.repository.SettlementRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class SellerPayoutProcessor {
     private final BankingGateway bankingGateway;
     private final SettlementRepository settlementRepository;
+    private final PayoutRepository payoutRepository;
 
     // 독립 트랜잭션으로 분리
     // 각 지급 건이 성공/실패하더라도 다른 지급 건이나 전체 리스트에 영향 X
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void processSinglePayout(Payout payout) {
+    public void processSinglePayout(Long payoutId) {
+        Payout payout = payoutRepository.findByIdForUpdate(payoutId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PAYOUT_NOT_FOUND)
+        );
+
         payout.markProcessing();
 
         // 뱅킹 API 호출
@@ -47,9 +53,7 @@ public class SellerPayoutProcessor {
             settlement.markPayoutDone();
 
         } else {
-
             payout.fail();
-
         }
     }
 

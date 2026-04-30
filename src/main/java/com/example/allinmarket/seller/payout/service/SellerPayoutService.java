@@ -31,12 +31,10 @@ public class SellerPayoutService {
 
     @Transactional
     public void createPayout() {
-        int page = 0;
+        Long lastId = 0L;
 
         while (true) {
-            Pageable pageable = PageRequest.of(page, 100);
-
-            List<Settlement> settlements = settlementRepository.findWithoutPayout(SettlementStatus.COMPLETED, pageable);
+            List<Settlement> settlements = settlementRepository.findWithoutPayout(SettlementStatus.COMPLETED, lastId, PageRequest.of(0, 100));
 
             if (settlements.isEmpty()) {
                 log.info("{}", ErrorEnum.SETTLEMENT_NOT_FOUND.getMessage());
@@ -44,6 +42,7 @@ public class SellerPayoutService {
             }
 
             for (Settlement settlement : settlements) {
+                lastId = settlement.getId();
 
                 try {
                     Payout payout = Payout.of(
@@ -75,19 +74,15 @@ public class SellerPayoutService {
                     log.error("지급 데이터 생성 실패: settlementId = {}, error = {}", settlement.getId(), e.getMessage(), e);
                 }
             }
-
-            page++;
         }
     }
 
     @Transactional
     public void processPayout() {
-        int page = 0;
+        Long lastId = 0L;
 
         while (true) {
-            Pageable pageable = PageRequest.of(page, 100);
-
-            List<Payout> payouts = payoutRepository.findForUpdate(PayoutStatus.PENDING, 5, pageable);
+            List<Payout> payouts = payoutRepository.findBatch(PayoutStatus.PENDING, 5, lastId, PageRequest.of(0, 100));
 
             if (payouts.isEmpty()) {
                 log.info("{}", ErrorEnum.PAYOUT_NOT_FOUND.getMessage());
@@ -96,33 +91,45 @@ public class SellerPayoutService {
 
             for (Payout payout : payouts) {
 
+                lastId = payout.getId();
+
                 try {
-                    sellerPayoutProcessor.processSinglePayout(payout);
+                    sellerPayoutProcessor.processSinglePayout(payout.getId());
 
                     log.info("지급 성공: payoutId = {}, amount = {}", payout.getId(), payout.getAmount());
 
                 } catch (BaseException e) {
                     // 검증 실패 시 payout 실패 처리
-                    payout.fail();
 
-                    log.error("검증 실패 -> 즉시 실패 처리: payoutId = {}", payout.getId(), e);
+                    if (isValidationError(e)) {
+                        Payout fresh = payoutRepository.findById(payout.getId()).orElseThrow();
+                        fresh.fail();
+                        log.error("검증 실패 -> 즉시 실패 처리: payoutId = {}", payout.getId(), e);
+                    }
 
                 } catch (Exception e) {
                     // 타임아웃 등 예외 발생 시 PROCESSING 유지 및 재시도
                     log.error("지급 처리 중 예외 발생: payoutId = {}, error = {}", payout.getId(), e.getMessage(), e);
-                    payout.increaseRetryCount();
 
-                    if (payout.getRetryCount() >= 5) {
-                        payout.fail();
+                    Payout fresh = payoutRepository.findById(payout.getId()).orElseThrow();
+
+                    fresh.increaseRetryCount();
+
+                    if (fresh.getRetryCount() >= 5) {
+                        fresh.fail();
                         log.error("최대 재시도 초과 -> 실패 처리: payoutId = {}", payout.getId(), e);
                     }
                 }
             }
 
             if (payouts.size() < 100) break;
-
-            page++;
         }
+    }
+
+    private boolean isValidationError(BaseException e) {
+        return e.getErrorEnum() == ErrorEnum.PAYOUT_MISMATCH
+                || e.getErrorEnum() == ErrorEnum.PAYOUT_AMOUNT_INVALID
+                || e.getErrorEnum() == ErrorEnum.PAYOUT_AMOUNT_MISMATCH;
     }
 
     private String generatePayoutKey(Long settlementId) {

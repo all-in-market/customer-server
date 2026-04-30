@@ -112,7 +112,7 @@ public enum ErrorEnum {
     PAYOUT_ALREADY_FAILED(409, "이미 실패 처리된 지급 내역입니다."),
     PAYOUT_FAILED(500, "정산 지급 처리 중 오류가 발생했습니다."),
     PAYOUT_NOT_FOUND(404, "정산 지급 내역이 없습니다."),
-    PAYOUT_PENDING_NOT_FOUND(404, "대기중인 정산 지급 내역이 없습니다."),
+    PAYOUT_STATUS_INVALID(404, "지급 상태 변경에 실패하였습니다."),
     PAYOUT_PROVIDER_ERROR(502, "지급 대행사(PG/은행) 응답 오류입니다."),
 
     // Settlement

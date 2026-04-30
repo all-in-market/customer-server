@@ -13,6 +13,6 @@ import java.util.List;
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
     Page<Settlement> findAllBySellerId(Long sellerId, Pageable pageable);
 
-    @Query("SELECT s FROM Settlement s WHERE s.status = :status AND NOT EXISTS (SELECT 1 FROM Payout p WHERE p.settlementId = s.id) ORDER BY s.id ASC ")
-    List<Settlement> findWithoutPayout(@Param("status") SettlementStatus status, Pageable pageable);
+    @Query("SELECT s FROM Settlement s WHERE s.status = :status AND NOT EXISTS (SELECT 1 FROM Payout p WHERE p.settlementId = s.id) AND s.id > :lastId ORDER BY s.id ASC ")
+    List<Settlement> findWithoutPayout(@Param("status") SettlementStatus status, @Param("lastId") Long lastId, Pageable pageable);
 }

@@ -2,6 +2,7 @@ package com.example.allinmarket.seller.auth.controller;
 
 import com.example.allinmarket.common.auth.dto.LoginResponse;
 import com.example.allinmarket.common.auth.dto.LoginResult;
+import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
 import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
@@ -73,6 +74,10 @@ public class SellerAuthController {
             @RequestHeader("Authorization") String authHeader,
             @CookieValue(value = "refreshToken") String refreshToken
     ) {
+        if (!authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail(ErrorEnum.UNAUTHORIZED));
+        }
         String accessToken = authHeader.substring(7);
         sellerAuthService.logout(accessToken, refreshToken);
 

@@ -41,7 +41,7 @@ public class SellerAuthController {
         LoginResult result = sellerAuthService.login(request);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/seller/auth")
                 .maxAge(Duration.ofDays(7))
                 .sameSite("Strict")
@@ -58,7 +58,7 @@ public class SellerAuthController {
         LoginResult result = sellerAuthService.refresh(refreshToken);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/seller/auth")
                 .maxAge(Duration.ofDays(7))
                 .sameSite("Strict")

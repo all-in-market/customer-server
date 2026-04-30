@@ -95,12 +95,18 @@ public class SellerAuthService {
     }
 
     public LoginResult refresh(String refreshToken) {
-        Long userId = (Long) redisTemplate.opsForValue().get("refresh:" + refreshToken);
+        Long userId = (Long) redisTemplate.opsForValue().getAndDelete("refresh:" + refreshToken);
         if (userId == null) {
             throw new BaseException(ErrorEnum.TOKEN_EXPIRED);
         }
 
-        redisTemplate.delete("refresh:" + refreshToken);
+        Seller seller = sellerRepository.findById(userId).orElseThrow(
+                () -> new BaseException(ErrorEnum.SELLER_NOT_FOUND)
+        );
+        if (seller.getDeletedAt() != null) {
+            throw new BaseException(ErrorEnum.SELLER_ALREADY_DELETED);
+        }
+
         String newRefreshToken = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set("refresh:" + newRefreshToken, userId, 7, TimeUnit.DAYS);
 

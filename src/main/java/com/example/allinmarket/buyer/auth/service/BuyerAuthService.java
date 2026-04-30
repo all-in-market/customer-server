@@ -86,12 +86,18 @@ public class BuyerAuthService {
     }
 
     public LoginResult refresh(String refreshToken) {
-        Long userId = (Long) redisTemplate.opsForValue().get("refresh:" + refreshToken);
+        Long userId = (Long) redisTemplate.opsForValue().getAndDelete("refresh:" + refreshToken);
         if (userId == null) {
             throw new BaseException(ErrorEnum.TOKEN_EXPIRED);
         }
 
-        redisTemplate.delete("refresh:" + refreshToken);
+        Buyer buyer = buyerRepository.findById(userId).orElseThrow(
+                () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
+        );
+        if (buyer.getDeletedAt() != null) {
+            throw new BaseException(ErrorEnum.BUYER_ALREADY_DELETED);
+        }
+
         String newRefreshToken = UUID.randomUUID().toString();
         redisTemplate.opsForValue().set("refresh:" + newRefreshToken, userId, 7, TimeUnit.DAYS);
 

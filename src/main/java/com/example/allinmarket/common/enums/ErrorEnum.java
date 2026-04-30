@@ -63,7 +63,7 @@ public enum ErrorEnum {
     ADDRESS_NOT_FOUND(404, "존재하지 않는 주소입니다."),
 
     // USER
-    LOGIN_FAILED(400, "사용자 정보가 일치하지 않습니다."),
+    LOGIN_FAILED(401, "사용자 정보가 일치하지 않습니다."),
 
     // BUYER
     BUYER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),

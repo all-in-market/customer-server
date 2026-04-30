@@ -1,18 +1,18 @@
 package com.example.allinmarket.seller.auth.controller;
 
+import com.example.allinmarket.common.auth.dto.LoginResponse;
+import com.example.allinmarket.common.auth.dto.LoginResult;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
+import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.JwtAuthenticationFilter;
 import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
 import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
 import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
-import com.example.allinmarket.seller.auth.dto.response.SellerLoginResponse;
-import com.example.allinmarket.seller.auth.dto.response.SellerLoginResult;
 import com.example.allinmarket.seller.auth.service.SellerAuthService;
 import com.example.allinmarket.seller.enums.SellerStatus;
-import com.example.allinmarket.common.enums.UserRole;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -28,9 +28,7 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @WebMvcTest(SellerAuthController.class)
 @AutoConfigureRestTestClient
@@ -180,8 +178,8 @@ public class SellerAuthControllerTest {
 
     @Test
     void 판매자_로그인_성공_테스트() {
-        SellerLoginResult loginResult = new SellerLoginResult(
-                new SellerLoginResponse("jwt.token.here"),
+        LoginResult loginResult = new LoginResult(
+                new LoginResponse("jwt.token.here"),
                 "test-refresh-token"
         );
 
@@ -287,8 +285,8 @@ public class SellerAuthControllerTest {
 
     @Test
     void 판매자_토큰_재발급_성공_테스트() {
-        SellerLoginResult loginResult = new SellerLoginResult(
-                new SellerLoginResponse("new-accessToken"),
+        LoginResult loginResult = new LoginResult(
+                new LoginResponse("new-accessToken"),
                 "new-refresh-token"
         );
 

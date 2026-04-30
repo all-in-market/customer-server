@@ -3,8 +3,8 @@ package com.example.allinmarket.buyer.auth.controller;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerLoginRequest;
 import com.example.allinmarket.buyer.auth.dto.request.BuyerSignupRequest;
 import com.example.allinmarket.buyer.auth.dto.response.BuyerAuthResponse;
-import com.example.allinmarket.buyer.auth.dto.response.BuyerLoginResponse;
-import com.example.allinmarket.buyer.auth.dto.response.LoginResult;
+import com.example.allinmarket.common.auth.dto.LoginResponse;
+import com.example.allinmarket.common.auth.dto.LoginResult;
 import com.example.allinmarket.buyer.auth.service.BuyerAuthService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
@@ -124,7 +124,7 @@ public class BuyerAuthControllerTest {
         );
 
         LoginResult loginResult = new LoginResult(
-                new BuyerLoginResponse("test-accessToken"),
+                new LoginResponse("test-accessToken"),
                 "test-refreshToken"
         );
 
@@ -169,7 +169,7 @@ public class BuyerAuthControllerTest {
     void 토큰_재발급_성공_테스트() {
         // given
         LoginResult loginResult = new LoginResult(
-                new BuyerLoginResponse("new-accessToken"),
+                new LoginResponse("new-accessToken"),
                 "new-refresh-token"
         );
 

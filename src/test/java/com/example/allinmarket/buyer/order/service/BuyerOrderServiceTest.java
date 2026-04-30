@@ -179,6 +179,7 @@ class BuyerOrderServiceTest {
                     "010-3333-4444",
                     "store",
                     "bizNum",
+                    "KOOKMIN",
                     "bankAccount"
             );
             ReflectionTestUtils.setField(seller, "id", 1L);

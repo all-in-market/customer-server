@@ -74,6 +74,7 @@ public enum ErrorEnum {
     // Seller
     SELLER_NOT_FOUND(404, "존재하지 않는 판매자입니다."),
     SELLER_ALREADY_DELETED(400, "이미 탈퇴한 판매자입니다."),
+    SELLER_ACCOUNT_NOT_FOUND(404, "판매자의 계좌 정보가 등록되지 않았습니다."),
 
     // Token
     TOKEN_EXPIRED(401, "만료된 토큰입니다."),
@@ -99,7 +100,28 @@ public enum ErrorEnum {
     // Outbox
     HISTORY_OUTBOX_NOT_FOUND(404, "존재하지 않는 Outbox 이벤트입니다."),
     PAYLOAD_SERIALIZATION_FAILED(409, "페이로드 직렬화에 실패했습니다."),
-    OUTBOX_EVENT_TYPE_NOT_FOUND(404, "알 수 없는 Outbox 이벤트 타입 입니다.");
+    OUTBOX_EVENT_TYPE_NOT_FOUND(404, "알 수 없는 Outbox 이벤트 타입 입니다."),
+
+    // Payout
+    PAYOUT_ALREADY_EXISTS(400, "이미 진행중인 정산 지급입니다."),
+    PAYOUT_AMOUNT_MISMATCH(400, "지급 금액이 정산 금액과 일치하지 않습니다."),
+    PAYOUT_MISMATCH(400, "지급 정보가 유효하지 않습니다."),
+    PAYOUT_AMOUNT_INVALID(400, "지급 금액이 올바르지 않습니다."),
+    PAYOUT_FORBIDDEN(403, "해당 지급에 대한 접근 권한이 없습니다."),
+    PAYOUT_ALREADY_SUCCESS(409, "이미 처리가 완료된 지급 내역입니다."),
+    PAYOUT_ALREADY_FAILED(409, "이미 실패 처리된 지급 내역입니다."),
+    PAYOUT_FAILED(500, "정산 지급 처리 중 오류가 발생했습니다."),
+    PAYOUT_NOT_FOUND(404, "정산 지급 내역이 없습니다."),
+    PAYOUT_STATUS_INVALID(404, "지급 상태 변경에 실패하였습니다."),
+    PAYOUT_PROVIDER_ERROR(502, "지급 대행사(PG/은행) 응답 오류입니다."),
+
+    // Settlement
+    SETTLEMENT_NOT_COMPLETED(400, "정산이 완료된 내역만 지급 준비가 가능합니다."),
+    SETTLEMENT_NOT_FOUND(400, "정산이 완료된 내역이 없습니다."),
+    SETTLEMENT_NOT_PAYOUT_READY(400, "정산 지급이 준비된 내역만 지급이 가능합니다."),
+
+    // Bank
+    BANK_CODE_INVALID(400, "은행 코드가 올바르지 않습니다.");
 
     private final int status;
     private final String message;

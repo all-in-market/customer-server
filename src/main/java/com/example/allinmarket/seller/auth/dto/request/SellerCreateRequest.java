@@ -24,6 +24,9 @@ public record SellerCreateRequest(
         @NotBlank @Size(max = 20, message = "사업자등록번호는 20자를 초과할 수 없습니다.")
         String bizNumber,
 
+        @NotBlank @Size(max = 30, message = "은행 코드는 30자를 초과할 수 없습니다.")
+        String bankCode,
+
         @NotBlank @Size(max = 50, message = "계좌번호는 50자를 초과할 수 없습니다.")
         String bankAccount
 ) {}

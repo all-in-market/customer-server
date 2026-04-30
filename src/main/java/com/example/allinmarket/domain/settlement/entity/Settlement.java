@@ -1,6 +1,8 @@
 package com.example.allinmarket.domain.settlement.entity;
 
 import com.example.allinmarket.common.entity.ModifiableEntity;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.settlement.enums.SettlementStatus;
 import com.example.allinmarket.domain.settlement.enums.SettlementType;
 import com.example.allinmarket.seller.entity.Seller;
@@ -78,5 +80,25 @@ public class Settlement extends ModifiableEntity {
         settlement.periodEnd = periodEnd;
         settlement.completedAt = completedAt;
         return settlement;
+    }
+
+    public void markPayoutReady() {
+        if (this.status != SettlementStatus.COMPLETED) {
+            throw new BaseException(ErrorEnum.SETTLEMENT_NOT_COMPLETED);
+        }
+
+        this.status = SettlementStatus.PAYOUT_READY;
+    }
+
+    public void markPayoutDone() {
+        if (this.status == SettlementStatus.PAYOUT_DONE) {
+            return;
+        }
+
+        if (this.status != SettlementStatus.PAYOUT_READY) {
+            throw new BaseException(ErrorEnum.SETTLEMENT_NOT_PAYOUT_READY);
+        }
+
+        this.status = SettlementStatus.PAYOUT_DONE;
     }
 }

@@ -54,6 +54,7 @@ public class SellerAuthService {
                 request.phone(),
                 request.storeName(),
                 request.bizNumber(),
+                request.bankCode(),
                 request.bankAccount()
         );
         Seller savedSeller = sellerRepository.save(seller);

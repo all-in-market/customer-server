@@ -86,6 +86,7 @@ public class SellerAuthControllerTest {
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
                             "bizNumber": "123-45-67890",
+                            "bankCode": "KOOKMIN",
                             "bankAccount": "123-456-7890"
                         }
                         """)
@@ -111,6 +112,7 @@ public class SellerAuthControllerTest {
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
                             "bizNumber": "123-45-67890",
+                            "bankCode": "KOOKMIN",
                             "bankAccount": "123-456-7890"
                         }
                         """)
@@ -135,6 +137,7 @@ public class SellerAuthControllerTest {
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
                             "bizNumber": "123-45-67890",
+                            "bankCode": "KOOKMIN",
                             "bankAccount": "123-456-7890"
                         }
                         """)
@@ -160,6 +163,7 @@ public class SellerAuthControllerTest {
                             "phone": "010-1234-5678",
                             "storeName": "홍길동상점",
                             "bizNumber": "123-45-67890",
+                            "bankCode": "KOOKMIN",
                             "bankAccount": "123-456-7890"
                         }
                         """)

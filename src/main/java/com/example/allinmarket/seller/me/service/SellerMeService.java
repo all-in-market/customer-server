@@ -64,6 +64,10 @@ public class SellerMeService {
             me.updateBizNumber(request.bizNumber());
         }
 
+        if (StringUtils.hasText(request.bankCode())) {
+            me.updateBankCode(request.bankCode());
+        }
+
         if (StringUtils.hasText(request.bankAccount())) {
             me.updateBankAccount(request.bankAccount());
         }

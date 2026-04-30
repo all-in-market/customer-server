@@ -111,9 +111,12 @@ public class Seller extends DeletableEntity {
     }
 
     public void updateBankCode(String bankCode) {
-        if (!BankCode.valueOf(bankCode).name().equals(bankCode)) {
+        try {
+            BankCode.valueOf(bankCode);
+        } catch (IllegalArgumentException e) {
             throw new BaseException(ErrorEnum.BANK_CODE_INVALID);
         }
+
         this.bankCode = bankCode;
     }
 

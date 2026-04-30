@@ -10,9 +10,17 @@ import java.util.UUID;
 @Component
 public class MockBankingGateway implements BankingGateway {
 
+    private String maskAccountNumber(String accountNumber) {
+        if (accountNumber == null || accountNumber.length() <= 4) {
+            return "****";
+        }
+
+        return "*".repeat(accountNumber.length() - 4) + accountNumber.substring(accountNumber.length() - 4);
+    }
+
     @Override
     public BankingResponse getBanking(String payoutKey, String bankCode, String accountNumber, BigDecimal amount) {
-        log.info("[Mock Banking] 이체 요청 시작 - Key: {}, Account: {}, Amount: {}", payoutKey, accountNumber, amount);
+        log.info("[Mock Banking] 이체 요청 시작 - Key: {}, Account: {}, Amount: {}", payoutKey, maskAccountNumber(accountNumber), amount);
 
         // 실제 API 연동 시에는 여기서 RestTemplate/WebClient를 사용
 

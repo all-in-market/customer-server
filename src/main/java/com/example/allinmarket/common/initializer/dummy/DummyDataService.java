@@ -86,7 +86,7 @@ public class DummyDataService {
         String sql = """
                 INSERT INTO sellers
                 (email, password, name, phone, store_name, biz_number, bank_code, bank_account, status, role, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now())
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now())
                 """;
 
         String password = passwordEncoder.encode("1234567890");

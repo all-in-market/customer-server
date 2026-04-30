@@ -72,7 +72,7 @@ public class SellerPayoutService {
 
                 } catch (Exception e) {
                     // 개별 실패가 전체 루프를 멈추지 않도록 예외 처리
-                    log.error("지급 데이터 생성 실패: settlementId = {}, error = {}", settlement.getId(), e.getMessage());
+                    log.error("지급 데이터 생성 실패: settlementId = {}, error = {}", settlement.getId(), e.getMessage(), e);
                 }
             }
 
@@ -105,16 +105,16 @@ public class SellerPayoutService {
                     // 검증 실패 시 payout 실패 처리
                     payout.fail();
 
-                    log.error("검증 실패 -> 즉시 실패 처리: payoutId = {}", payout.getId());
+                    log.error("검증 실패 -> 즉시 실패 처리: payoutId = {}", payout.getId(), e);
 
                 } catch (Exception e) {
-                    // 타임아웃 등 예외 발생 시 PENDING 유지 및 재시도
-                    log.error("지급 처리 중 예외 발생: payoutId = {}, error = {}", payout.getId(), e.getMessage());
+                    // 타임아웃 등 예외 발생 시 PROCESSING 유지 및 재시도
+                    log.error("지급 처리 중 예외 발생: payoutId = {}, error = {}", payout.getId(), e.getMessage(), e);
                     payout.increaseRetryCount();
 
                     if (payout.getRetryCount() >= 5) {
                         payout.fail();
-                        log.error("최대 재시도 초과 -> 실패 처리: payoutId = {}", payout.getId());
+                        log.error("최대 재시도 초과 -> 실패 처리: payoutId = {}", payout.getId(), e);
                     }
                 }
             }

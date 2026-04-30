@@ -13,7 +13,7 @@ public enum PayoutStatus {
 
         return switch (this) {
             case PENDING -> targetStatus == PROCESSING || targetStatus == FAILED;
-            case PROCESSING -> targetStatus == PENDING || targetStatus == SUCCESS || targetStatus == FAILED;
+            case PROCESSING -> targetStatus == SUCCESS || targetStatus == FAILED;
             case SUCCESS, FAILED -> false;
         };
     }

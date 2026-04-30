@@ -15,14 +15,22 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "payouts")
+@Table(
+        name = "payouts",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_payout_settlement_id",
+                        columnNames = "settlement_id"
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Payout extends CreatableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private Seller seller;
 

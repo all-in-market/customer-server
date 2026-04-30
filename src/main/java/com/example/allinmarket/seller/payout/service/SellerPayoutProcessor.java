@@ -34,11 +34,10 @@ public class SellerPayoutProcessor {
                 payout.getAmount()
         );
 
-        // 검증 로직
-        validateResponse(payout, response);
-
         // 상태 변경 (이 시점에 DB 커밋)
         if (response.isSuccess()) {
+            // 성공 응답에 대해 검증
+            validateResponse(payout, response);
 
             payout.success();
 

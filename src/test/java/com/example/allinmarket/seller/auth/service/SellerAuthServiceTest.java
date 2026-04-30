@@ -135,8 +135,12 @@ class SellerAuthServiceTest {
 
     @Test
     void 토큰_재발급_성공_테스트() {
+        // given
+        Seller seller = mock(Seller.class);
+        given(seller.getDeletedAt()).willReturn(null);
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
-        given(valueOperations.get("refresh:old-refresh-token")).willReturn(1L);
+        given(valueOperations.getAndDelete("refresh:old-refresh-token")).willReturn(1L);
+        given(sellerRepository.findById(1L)).willReturn(Optional.of(seller));
         given(jwtProvider.generateToken(1L, UserRole.SELLER)).willReturn("new-accessToken");
 
         LoginResult result = sellerAuthService.refresh("old-refresh-token");
@@ -144,14 +148,13 @@ class SellerAuthServiceTest {
         assertThat(result.response().accessToken()).isEqualTo("new-accessToken");
         assertThat(result.refreshToken()).isNotNull();
         assertThat(result.refreshToken()).isNotEqualTo("old-refresh-token");
-        verify(redisTemplate).delete("refresh:old-refresh-token");
         verify(valueOperations).set(anyString(), eq(1L), eq(7L), eq(TimeUnit.DAYS));
     }
 
     @Test
     void 토큰_재발급_실패_만료된_토큰_테스트() {
         given(redisTemplate.opsForValue()).willReturn(valueOperations);
-        given(valueOperations.get("refresh:expired-token")).willReturn(null);
+        given(valueOperations.getAndDelete("refresh:expired-token")).willReturn(null);
 
         assertThatThrownBy(() -> sellerAuthService.refresh("expired-token"))
                 .isInstanceOf(BaseException.class)

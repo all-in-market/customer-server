@@ -28,6 +28,7 @@ public class SellerPayoutService {
     private final PayoutRepository payoutRepository;
     private final SettlementRepository settlementRepository;
     private final SellerPayoutProcessor sellerPayoutProcessor;
+    private final SellerPayoutFailHandler sellerPayoutFailHandler;
 
     @Transactional
     public void createPayout() {
@@ -45,21 +46,7 @@ public class SellerPayoutService {
                 lastId = settlement.getId();
 
                 try {
-                    Payout payout = Payout.of(
-                            settlement.getSeller(),
-                            settlement.getId(),
-                            settlement.getAmount(),
-                            settlement.getFee(),
-                            PayoutStatus.PENDING,
-                            generatePayoutKey(settlement.getId())
-                    );
-
-                    payoutRepository.save(payout);
-
-                    // 정산 상태 지급 대기로 변경
-                    settlement.markPayoutReady();
-
-                    log.info("정산 지급 생성 성공 : payoutId = {}", payout.getId());
+                    sellerPayoutProcessor.createSinglePayout(settlement.getId());
 
                 } catch (DataIntegrityViolationException e) {
                     if (isDuplicate(e)) {
@@ -77,7 +64,7 @@ public class SellerPayoutService {
         }
     }
 
-    @Transactional
+    // 내부에서 독립 Transactional로 처리되어 외부는 루프 컨트롤만 하기 위해 Transactional 제거
     public void processPayout() {
         Long lastId = 0L;
 
@@ -96,29 +83,17 @@ public class SellerPayoutService {
                 try {
                     sellerPayoutProcessor.processSinglePayout(payout.getId());
 
-                    log.info("지급 성공: payoutId = {}, amount = {}", payout.getId(), payout.getAmount());
-
                 } catch (BaseException e) {
                     // 검증 실패 시 payout 실패 처리
-
                     if (isValidationError(e)) {
-                        Payout fresh = payoutRepository.findById(payout.getId()).orElseThrow();
-                        fresh.fail();
+                        sellerPayoutFailHandler.handlePayoutFail(payout.getId(), true);
                         log.error("검증 실패 -> 즉시 실패 처리: payoutId = {}", payout.getId(), e);
                     }
 
                 } catch (Exception e) {
                     // 타임아웃 등 예외 발생 시 PROCESSING 유지 및 재시도
                     log.error("지급 처리 중 예외 발생: payoutId = {}, error = {}", payout.getId(), e.getMessage(), e);
-
-                    Payout fresh = payoutRepository.findById(payout.getId()).orElseThrow();
-
-                    fresh.increaseRetryCount();
-
-                    if (fresh.getRetryCount() >= 5) {
-                        fresh.fail();
-                        log.error("최대 재시도 초과 -> 실패 처리: payoutId = {}", payout.getId(), e);
-                    }
+                    sellerPayoutFailHandler.handlePayoutFail(payout.getId(), false);
                 }
             }
 
@@ -130,10 +105,6 @@ public class SellerPayoutService {
         return e.getErrorEnum() == ErrorEnum.PAYOUT_MISMATCH
                 || e.getErrorEnum() == ErrorEnum.PAYOUT_AMOUNT_INVALID
                 || e.getErrorEnum() == ErrorEnum.PAYOUT_AMOUNT_MISMATCH;
-    }
-
-    private String generatePayoutKey(Long settlementId) {
-        return "PAYOUT_" + settlementId;
     }
 
     private boolean isDuplicate(DataIntegrityViolationException e) {

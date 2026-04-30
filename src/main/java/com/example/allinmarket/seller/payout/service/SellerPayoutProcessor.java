@@ -5,6 +5,7 @@ import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.banking.BankingGateway;
 import com.example.allinmarket.domain.banking.dto.BankingResponse;
 import com.example.allinmarket.domain.payout.entity.Payout;
+import com.example.allinmarket.domain.payout.enums.PayoutStatus;
 import com.example.allinmarket.domain.payout.repository.PayoutRepository;
 import com.example.allinmarket.domain.settlement.entity.Settlement;
 import com.example.allinmarket.domain.settlement.repository.SettlementRepository;
@@ -51,10 +52,33 @@ public class SellerPayoutProcessor {
                     .orElseThrow(() -> new BaseException(ErrorEnum.SETTLEMENT_NOT_FOUND));
 
             settlement.markPayoutDone();
+            log.info("지급 성공: payoutId = {}, amount = {}", payout.getId(), payout.getAmount());
 
         } else {
             payout.fail();
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createSinglePayout(Long settlementId) {
+        Settlement settlement = settlementRepository.findById(settlementId).orElseThrow(
+                () -> new BaseException(ErrorEnum.SETTLEMENT_NOT_FOUND)
+        );
+
+        Payout payout = Payout.of(
+                settlement.getSeller(),
+                settlement.getId(),
+                settlement.getAmount(),
+                settlement.getFee(),
+                PayoutStatus.PENDING,
+                generatePayoutKey(settlement.getId())
+        );
+        // 정산 상태 지급 대기로 변경
+        settlement.markPayoutReady();
+
+        payoutRepository.save(payout);
+
+        log.info("정산 지급 생성 성공 : payoutId = {}", payout.getId());
     }
 
     private void validateResponse(Payout payout, BankingResponse response) {
@@ -70,5 +94,9 @@ public class SellerPayoutProcessor {
         if (payout.getAmount().compareTo(response.getAmount()) != 0) {
             throw new BaseException(ErrorEnum.PAYOUT_AMOUNT_MISMATCH);
         }
+    }
+
+    private String generatePayoutKey(Long settlementId) {
+        return "PAYOUT_" + settlementId;
     }
 }

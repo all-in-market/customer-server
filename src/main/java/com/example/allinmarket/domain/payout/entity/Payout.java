@@ -37,10 +37,10 @@ public class Payout extends CreatableEntity {
     @Column(nullable = false, unique = true)
     private Long settlementId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal fee;
 
     @Enumerated(EnumType.STRING)

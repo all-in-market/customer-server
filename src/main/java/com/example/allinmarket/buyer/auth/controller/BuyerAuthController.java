@@ -37,7 +37,7 @@ public class BuyerAuthController {
         LoginResult result = buyerAuthService.login(request);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true) // JS에서 document.cookie로 접근 불가 -> XSS 공격으로 토큰 탈취 방지
-                .secure(false) // HTTPS 연결에서만 쿠키를 전송. 배포 환경에서는 true로 설정 필요
+                .secure(true) // HTTPS 연결에서만 쿠키를 전송. 배포 환경에서는 true로 설정 필요
                 .path("/auth") // 이 경로로 요청할 때만 쿠키가 자동 포함
                 .maxAge(Duration.ofDays(7)) // 브라우저가 쿠키를 보관하는 기간. Redis TTL과 맞춰두는 것이 일반적
                 .sameSite("Strict") // 다른 도메인에서 온 요청에는 쿠키를 포함하지 않음. CSRF 공격 방어.
@@ -53,7 +53,7 @@ public class BuyerAuthController {
         LoginResult result = buyerAuthService.refresh(refreshToken);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/auth")
                 .maxAge(Duration.ofDays(7))
                 .sameSite("Strict")

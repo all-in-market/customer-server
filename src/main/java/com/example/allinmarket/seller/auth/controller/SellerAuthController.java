@@ -71,7 +71,7 @@ public class SellerAuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader("Authorization") String authHeader,
-            @CookieValue(value = "refreshToken", required = false) String refreshToken
+            @CookieValue(value = "refreshToken") String refreshToken
     ) {
         String accessToken = authHeader.substring(7);
         sellerAuthService.logout(accessToken, refreshToken);

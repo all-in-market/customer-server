@@ -30,6 +30,10 @@ output "ecs_cluster_name" {
   value = aws_ecs_cluster.this.name
 }
 
+output "github_actions_aws_role_arn" {
+  value = aws_iam_role.github_actions.arn
+}
+
 # ==========================================
 # Customer
 # ==========================================
@@ -56,10 +60,6 @@ output "customer_target_group_arn" {
 
 output "customer_cloudwatch_log_group_name" {
   value = aws_cloudwatch_log_group.customer.name
-}
-
-output "customer_github_actions_aws_role_arn" {
-  value = aws_iam_role.github_actions.arn
 }
 
 

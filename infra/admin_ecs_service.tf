@@ -21,7 +21,7 @@ resource "aws_ecs_service" "admin" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.admin.arn
+    target_group_arn = aws_lb_target_group.admin[count.index].arn
     container_name   = var.admin_container_name
     container_port   = var.admin_container_port
   }

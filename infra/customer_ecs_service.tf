@@ -31,7 +31,8 @@ resource "aws_ecs_service" "customer" {
 
   depends_on = [
     aws_lb_listener.https,
-    aws_iam_role_policy_attachment.ecs_task_execution_default
+    aws_iam_role_policy_attachment.ecs_task_execution_default,
+    aws_iam_role_policy_attachment.ecs_task_execution_ssm
   ]
 
   tags = merge(local.common_tags, {

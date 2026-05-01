@@ -36,7 +36,7 @@ variable "customer_ecs_desired_count" {
 }
 
 variable "customer_ecr_repository_name" {
-  description = "ECR repository name. If null, project_name is used."
+  description = "ECR repository name. If null, project_name-customer is used."
   type        = string
   default     = null
 }

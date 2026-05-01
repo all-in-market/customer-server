@@ -56,6 +56,7 @@ variable "admin_health_check_path" {
 variable "admin_github_repo" {
   description = "GitHub repository name"
   type        = string
+  default     = null
 }
 
 variable "admin_github_branches" {

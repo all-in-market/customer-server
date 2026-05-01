@@ -7,6 +7,10 @@ resource "aws_ecs_service" "customer" {
   health_check_grace_period_seconds = 120
   force_new_deployment              = true
 
+  # prod 환경에서는 무중단 배포 가능하도록 설정
+  deployment_minimum_healthy_percent = var.environment == "prod" ? 100 : 0
+  deployment_maximum_percent         = var.environment == "prod" ? 200 : 100
+
   network_configuration {
     subnets          = [for subnet in aws_subnet.ecs_private : subnet.id]
     security_groups  = [aws_security_group.customer_ecs.id]
@@ -17,6 +21,12 @@ resource "aws_ecs_service" "customer" {
     target_group_arn = aws_lb_target_group.customer.arn
     container_name   = var.customer_container_name
     container_port   = var.customer_container_port
+  }
+
+  lifecycle {
+    ignore_changes = [
+      desired_count
+    ]
   }
 
   depends_on = [

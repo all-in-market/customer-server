@@ -11,6 +11,8 @@ resource "aws_ecs_service" "admin" {
   launch_type                       = "EC2"
   health_check_grace_period_seconds = 120
   force_new_deployment              = true
+  deployment_minimum_healthy_percent = var.environment == "prod" ? 100 : 0
+  deployment_maximum_percent         = var.environment == "prod" ? 200 : 100
 
   network_configuration {
     subnets          = local.admin_ec2_subnet_ids
@@ -22,6 +24,12 @@ resource "aws_ecs_service" "admin" {
     target_group_arn = aws_lb_target_group.admin.arn
     container_name   = var.admin_container_name
     container_port   = var.admin_container_port
+  }
+
+  lifecycle {
+    ignore_changes = [
+      desired_count
+    ]
   }
 
   depends_on = [

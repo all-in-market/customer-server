@@ -24,6 +24,8 @@ resource "aws_lb_target_group" "customer" {
 
 # admin ECS Task용 타겟그룹 생성
 resource "aws_lb_target_group" "admin" {
+  count = var.admin_enabled ? 1 : 0
+
   name        = substr("${local.name_prefix}-admin-tg", 0, 32)
   port        = var.admin_container_port
   protocol    = "HTTP"

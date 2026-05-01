@@ -9,6 +9,6 @@ resource "aws_kms_key" "terraform_state" {
 }
 
 resource "aws_kms_alias" "terraform_state" {
-  name          = "alias/${local.name_prefix}-terraform-state"
+  name          = "alias/${local.name_prefix}-state"
   target_key_id = aws_kms_key.terraform_state.key_id
 }

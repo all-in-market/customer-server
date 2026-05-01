@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+
+# user_data 실행 로그 남기는 설정
+exec > >(tee /var/log/admin-ecs-user-data.log | logger -t admin-ecs-user-data -s 2>/dev/console) 2>&1
+
+# 이 EC2를 어떤 ECS 클러스터에 붙일지 지정
+echo "ECS_CLUSTER=${ecs_cluster_name}" >> /etc/ecs/ecs.config
+
+# ECS Agent 실행
+systemctl enable --now ecs

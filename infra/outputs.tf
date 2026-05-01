@@ -83,10 +83,6 @@ output "admin_ecs_container_name" {
   value = var.admin_container_name
 }
 
-output "admin_target_group_arn" {
-  value = aws_lb_target_group.admin.arn
-}
-
 output "admin_instance_ids" {
   value = [for instance in aws_instance.admin : instance.id]
 }

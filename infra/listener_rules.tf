@@ -10,7 +10,7 @@ resource "aws_lb_listener_rule" "admin_path" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.admin.arn
+    target_group_arn = aws_lb_target_group.admin[count.index].arn
   }
 
   condition {

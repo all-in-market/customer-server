@@ -6,7 +6,7 @@ resource "aws_ecs_service" "admin" {
 
   name                              = "${local.name_prefix}-admin-service"
   cluster                           = aws_ecs_cluster.this.id
-  task_definition                   = aws_ecs_task_definition.admin.arn
+  task_definition                   = aws_ecs_task_definition.admin[count.index].arn
   desired_count                     = var.admin_ecs_desired_count
   launch_type                       = "EC2"
   health_check_grace_period_seconds = 120

@@ -1,3 +1,4 @@
+
 variable "aws_region" {
   description = "AWS region"
   type        = string
@@ -81,64 +82,10 @@ variable "redis_node_type" {
   default     = "cache.t4g.micro"
 }
 
-variable "ecr_repository_name" {
-  description = "ECR repository name. If null, project_name is used."
-  type        = string
-  default     = null
-}
-
-variable "image_tag" {
-  description = "Docker image tag used by ECS task definition"
-  type        = string
-  default     = "latest"
-}
-
-variable "container_name" {
-  description = "Container name inside ecs task definition"
-  type        = string
-  default     = "all-in-market"
-}
-
-variable "container_port" {
-  description = "Application container port"
-  type        = number
-  default     = 8080
-}
-
-variable "ecs_task_cpu" {
-  description = "Fargate task CPU"
-  type        = number
-  default     = 256
-}
-
-variable "ecs_task_memory" {
-  description = "Fargate task memory"
-  type        = number
-  default     = 512
-}
-
-variable "ecs_desired_count" {
-  description = "Desired ECS task count"
-  type        = number
-  default     = 1
-}
-
-variable "health_check_path" {
-  description = "ALB target group health check path"
-  type        = string
-  default     = "/actuator/health"
-}
-
 variable "log_retention_in_days" {
   description = "CloudWatch log retention days"
   type        = number
   default     = 30
-}
-
-variable "environment_variables" {
-  description = "Additional app environment variables besides DB/REDIS core values"
-  type        = map(string)
-  default     = {}
 }
 
 variable "task_role_policy_arns" {
@@ -170,17 +117,6 @@ variable "route53_zone_name" {
 variable "github_owner" {
   description = "GitHub organization or user name"
   type        = string
-}
-
-variable "github_repo" {
-  description = "GitHub repository name"
-  type        = string
-}
-
-variable "github_branches" {
-  description = "GitHub branch allowed to deploy"
-  type        = list(string)
-  default     = ["dev", "main"]
 }
 
 variable "environment" {

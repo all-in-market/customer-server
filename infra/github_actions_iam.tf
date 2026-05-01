@@ -16,14 +16,20 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # ${var.github_owner}/${var.github_repo} 레포의 허용된 브랜치들 ${var.github_branches} 브랜치를 대상으로 실행된 GitHub Actions만 접근 가능
+    # ${var.github_owner}/${var.xxx_github_repo} 레포지토리의 ${var.xxx_github_branches} 브랜치들을 대상으로 실행된 GitHub Actions만 접근 가능
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values = [
-        for b in var.github_branches :
-        "repo:${var.github_owner}/${var.github_repo}:ref:refs/heads/${b}"
-      ]
+      values = concat(
+        [
+          for branch in var.customer_github_branches :
+          "repo:${var.github_owner}/${var.customer_github_repo}:ref:refs/heads/${branch}"
+        ],
+        [
+          for branch in var.admin_github_branches :
+          "repo:${var.github_owner}/${var.admin_github_repo}:ref:refs/heads/${branch}"
+        ]
+      )
     }
   }
 }
@@ -65,7 +71,8 @@ data "aws_iam_policy_document" "github_actions_deploy" {
       "ecr:DescribeImages"
     ]
     resources = [
-      aws_ecr_repository.app.arn
+      aws_ecr_repository.customer.arn,
+      aws_ecr_repository.admin.arn
     ]
   }
 

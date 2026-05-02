@@ -10,7 +10,12 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "restock_subscriptions")
+@Table(name = "restock_subscriptions", uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_restock_subscriptions_buyer",
+                columnNames = {"user_id", "product_id"}
+        )
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RestockSubscription extends ModifiableEntity {
@@ -50,4 +55,5 @@ public class RestockSubscription extends ModifiableEntity {
         this.status = SubscriptionStatusEnum.EXPIRED;
     }
 
+    public void activate() {this.status = SubscriptionStatusEnum.ACTIVE; }
 }

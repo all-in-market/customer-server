@@ -69,7 +69,7 @@ variable "admin_github_branches" {
 variable "admin_instance_type" {
   description = "EC2 instance type for admin server"
   type        = string
-  default     = "t4g.small"
+  default     = "t3.small"
 }
 
 variable "admin_root_volume_size" {

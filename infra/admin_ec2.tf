@@ -1,7 +1,7 @@
-# ECS on EC2용 Amazon Linux 2023 ECS Optimized AMI 조회
+
 # 관리자 EC2는 앱을 직접 docker run 하지 않고 ECS Container Instance 역할만 수행
 data "aws_ssm_parameter" "admin_ecs_optimized_ami" {
-  name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id"
+  name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
 }
 
 # dev는 관리자 ECS용 EC2 1대, prod는 private subnet별 EC2 생성
@@ -21,6 +21,15 @@ resource "aws_instance" "admin" {
   user_data = templatefile("${path.module}/admin_ec2_user_data.sh.tftpl", {
     ecs_cluster_name = aws_ecs_cluster.this.name
   })
+
+  depends_on = [
+    aws_iam_role_policy_attachment.admin_ec2_ecs_container_instance,
+    aws_iam_role_policy_attachment.admin_ec2_ssm_managed,
+    aws_internet_gateway.this,
+    aws_route_table_association.public,
+    aws_route_table_association.private,
+    aws_nat_gateway.this
+  ]
 
   # EC2 기본 저장소 설정
   root_block_device {

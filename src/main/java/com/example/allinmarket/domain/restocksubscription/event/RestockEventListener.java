@@ -1,17 +1,28 @@
 package com.example.allinmarket.domain.restocksubscription.event;
 
+import com.example.allinmarket.domain.restocksubscription.dto.RestockEventRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 @RequiredArgsConstructor
 public class RestockEventListener {
 
+    private final RestTemplate restTemplate;
+
+    @Value("${notification-server.url}")
+    private String notificationServerUrl;
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRestockEvent(RestockEvent event) {
-        // TODO: 아래 sout 삭제
-        System.out.println("재입고 이벤트 발생: productId = " + event.getProductId());
+        restTemplate.postForEntity(
+                notificationServerUrl + "/internal/notifications/restock",
+                new RestockEventRequest(event.getProductId()),
+                Void.class
+        );
     }
 }

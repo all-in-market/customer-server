@@ -1,0 +1,12 @@
+CREATE TABLE restock_notifications
+(
+    id         BIGINT PRIMARY KEY,
+    user_id    BIGINT       NOT NULL,
+    product_id BIGINT       NOT NULL,
+    message    VARCHAR(255) NOT NULL,
+    is_read    BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_restock_notification_user_product UNIQUE (user_id, product_id)
+);

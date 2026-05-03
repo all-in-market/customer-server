@@ -124,7 +124,10 @@ public enum ErrorEnum {
     BANK_CODE_INVALID(400, "은행 코드가 올바르지 않습니다."),
 
     // Restock
-    RESTOCK_SUBSCRIPTION_NOT_FOUND(404, "재입고 알림 신청 내역이 존재하지 않습니다.");
+    RESTOCK_SUBSCRIPTION_NOT_FOUND(404, "재입고 알림 신청 내역이 존재하지 않습니다."),
+
+    // Notification
+    NOTIFICATION_NOT_FOUND(404, "알림이 존재하지 않습니다");
 
     private final int status;
     private final String message;

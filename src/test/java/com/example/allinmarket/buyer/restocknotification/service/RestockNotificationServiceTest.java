@@ -150,4 +150,37 @@ class RestockNotificationServiceTest {
             verify(restockNotificationRepository, never()).findByUserIdAndProductId(anyLong(), anyLong());
         }
     }
+
+    @Nested
+    @DisplayName("전체 알림 읽음 처리")
+    class ReadAllNotificationsTest {
+
+        @Test
+        @DisplayName("구매자의 모든 읽지 않은 알림을 읽음 처리한다")
+        void readAllNotifications_success() {
+            // given
+            given(buyerRepository.findByIdAndDeletedAtIsNull(BUYER_ID)).willReturn(Optional.of(mock(Buyer.class)));
+
+            // when
+            restockNotificationService.readAllNotifications(BUYER_ID);
+
+            // then
+            verify(restockNotificationRepository).markAllAsReadByUserId(BUYER_ID);
+        }
+
+        @Test
+        @DisplayName("구매자가 존재하지 않으면 예외를 던진다")
+        void readAllNotifications_buyerNotFound() {
+            // given
+            given(buyerRepository.findByIdAndDeletedAtIsNull(BUYER_ID)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> restockNotificationService.readAllNotifications(BUYER_ID))
+                    .isInstanceOf(BaseException.class)
+                    .extracting("errorEnum")
+                    .isEqualTo(ErrorEnum.BUYER_NOT_FOUND);
+
+            verify(restockNotificationRepository, never()).markAllAsReadByUserId(anyLong());
+        }
+    }
 }

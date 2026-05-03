@@ -43,4 +43,13 @@ public class RestockNotificationService {
 
         notification.read();
     }
+
+    @Transactional
+    public void readAllNotifications(Long buyerId) {
+        buyerRepository.findByIdAndDeletedAtIsNull(buyerId).orElseThrow(
+                () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
+        );
+
+        restockNotificationRepository.markAllAsReadByUserId(buyerId);
+    }
 }

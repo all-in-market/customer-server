@@ -18,6 +18,7 @@ public class RestockNotificationController {
 
     private final RestockNotificationService restockNotificationService;
 
+    // 안읽은 알림 전체 조회
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<PageResponse<RestockNotificationDetailResponse>>> getNotifications(Pageable pageable) {
         Long buyerId = SecurityUtils.getCurrentUserId();
@@ -28,6 +29,18 @@ public class RestockNotificationController {
         );
     }
 
+    // 전체 읽음 처리
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> readAllNotifications() {
+        Long buyerId = SecurityUtils.getCurrentUserId();
+        restockNotificationService.readAllNotifications(buyerId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(SuccessEnum.UPDATE_SUCCESS, null)
+        );
+    }
+
+    // 개별 읽음 처리
     @PutMapping("/{productId}")
     public ResponseEntity<ApiResponse<Void>> readNotification(@PathVariable Long productId) {
         Long buyerId = SecurityUtils.getCurrentUserId();

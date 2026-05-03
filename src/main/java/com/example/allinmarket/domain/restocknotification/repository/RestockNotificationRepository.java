@@ -4,12 +4,17 @@ import com.example.allinmarket.domain.restocknotification.entity.RestockNotifica
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
 public interface RestockNotificationRepository extends JpaRepository<RestockNotification, Long> {
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE RestockNotification r SET r.isRead = true WHERE r.userId = :userId AND r.isRead = false")
+    void markAllAsReadByUserId(@Param("userId") Long userId);
 
     @Query("SELECT r FROM RestockNotification r WHERE r.userId = :userId AND r.isRead = false")
     Page<RestockNotification> findByUserId(@Param("userId") Long userId, Pageable pageable);

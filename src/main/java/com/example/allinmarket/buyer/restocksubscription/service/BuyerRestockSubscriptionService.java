@@ -72,4 +72,16 @@ public class BuyerRestockSubscriptionService {
         );
     }
 
+    public RestockSubscriptionDetailResponse getSingleSubscription(Long buyerId, Long productId) {
+        buyerRepository.findByIdAndDeletedAtIsNull(buyerId).orElseThrow(
+                () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
+        );
+
+        RestockSubscription subscription = restockSubscriptionRepository.findByUserIdAndProductId(buyerId, productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.RESTOCK_SUBSCRIPTION_NOT_FOUND)
+        );
+
+        return RestockSubscriptionDetailResponse.from(subscription);
+    }
+
 }

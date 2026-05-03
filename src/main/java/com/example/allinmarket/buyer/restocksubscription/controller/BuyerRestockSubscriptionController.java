@@ -34,10 +34,21 @@ public class BuyerRestockSubscriptionController {
     }
 
     // 내 재입고 알림 목록 조회
-    @GetMapping
+    @GetMapping("/me")
     public ResponseEntity<ApiResponse<PageResponse<RestockSubscriptionDetailResponse>>> getSubscriptions(Pageable pageable) {
         Long buyerId = SecurityUtils.getCurrentUserId();
         PageResponse<RestockSubscriptionDetailResponse> result = buyerRestockSubscriptionService.getSubscriptions(buyerId, pageable);
+        return ResponseEntity.ok(
+                ApiResponse.success(SuccessEnum.READ_SUCCESS, result)
+        );
+    }
+
+    // 내 재입고 알림 단건 조회
+    @GetMapping("/me/{productId}")
+    public ResponseEntity<ApiResponse<RestockSubscriptionDetailResponse>> getSingleSubscription(
+            @PathVariable Long productId) {
+        Long buyerId = SecurityUtils.getCurrentUserId();
+        RestockSubscriptionDetailResponse result = buyerRestockSubscriptionService.getSingleSubscription(buyerId, productId);
         return ResponseEntity.ok(
                 ApiResponse.success(SuccessEnum.READ_SUCCESS, result)
         );

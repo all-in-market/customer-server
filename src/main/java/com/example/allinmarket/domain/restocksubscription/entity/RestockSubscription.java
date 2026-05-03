@@ -47,10 +47,6 @@ public class RestockSubscription extends ModifiableEntity {
         this.lastNotifiedAt = LocalDateTime.now();
     }
 
-    public void cancel() {
-        this.status = SubscriptionStatusEnum.CANCELLED;
-    }
-
     public void expire() {
         this.status = SubscriptionStatusEnum.EXPIRED;
     }

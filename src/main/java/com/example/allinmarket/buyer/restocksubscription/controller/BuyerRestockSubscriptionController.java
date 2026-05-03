@@ -3,15 +3,18 @@ package com.example.allinmarket.buyer.restocksubscription.controller;
 import com.example.allinmarket.buyer.restocksubscription.service.BuyerRestockSubscriptionService;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.response.ApiResponse;
+import com.example.allinmarket.common.response.PageResponse;
 import com.example.allinmarket.common.security.SecurityUtils;
 import com.example.allinmarket.domain.restocksubscription.dto.RestockSubscriptionDetailResponse;
 import com.example.allinmarket.domain.restocksubscription.dto.RestockSubscriptionRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/restock-subscriptions")
@@ -30,9 +33,15 @@ public class BuyerRestockSubscriptionController {
                 .body(ApiResponse.success(SuccessEnum.CREATE_SUCCESS, result));
     }
 
-    // TODO: 내 재입고 알림 목록 조회
-    // TODO: 내 재입고 알림 단건 조회
-
+    // 내 재입고 알림 목록 조회
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<RestockSubscriptionDetailResponse>>> getSubscriptions(Pageable pageable) {
+        Long buyerId = SecurityUtils.getCurrentUserId();
+        PageResponse<RestockSubscriptionDetailResponse> result = buyerRestockSubscriptionService.getSubscriptions(buyerId, pageable);
+        return ResponseEntity.ok(
+                ApiResponse.success(SuccessEnum.READ_SUCCESS, result)
+        );
+    }
     // 재입고 알림 구독 취소
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse<Void>> unsubscribe(@PathVariable Long productId) {

@@ -7,7 +7,6 @@ import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.entity.Product;
-import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import com.example.allinmarket.domain.restocksubscription.event.RestockEvent;
 import com.example.allinmarket.seller.entity.Seller;

@@ -30,6 +30,7 @@ data "aws_iam_policy_document" "ssm_kms_key" {
   }
 }
 
+# ssm parameter store 용 kms키 생성
 resource "aws_kms_key" "ssm" {
   description = "KMS key for SSM SecureString"
   policy      = data.aws_iam_policy_document.ssm_kms_key.json
@@ -42,11 +43,13 @@ resource "aws_kms_key" "ssm" {
   })
 }
 
+# 위에서 생성한 키에 붙일 별칭
 resource "aws_kms_alias" "ssm" {
   name          = "alias/${local.name_prefix}-ssm"
   target_key_id = aws_kms_key.ssm.key_id
 }
 
+# ssm parameter store에 DB_PASSWORD 저장
 resource "aws_ssm_parameter" "db_password" {
   name  = "/${var.project_name}/${var.environment}/db/password"
   type  = "SecureString"

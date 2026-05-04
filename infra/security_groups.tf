@@ -31,15 +31,15 @@ resource "aws_security_group" "alb" {
   })
 }
 
-resource "aws_security_group" "ecs" {
-  name        = "${local.name_prefix}-ecs-sg"
-  description = "Allow app traffic only from ALB"
+resource "aws_security_group" "customer_ecs" {
+  name        = "${local.name_prefix}-customer-ecs-sg"
+  description = "Allow Customer app traffic only from ALB"
   vpc_id      = aws_vpc.this.id
 
   ingress {
     description     = "App port from ALB"
-    from_port       = var.container_port
-    to_port         = var.container_port
+    from_port       = var.customer_container_port
+    to_port         = var.customer_container_port
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
@@ -52,13 +52,55 @@ resource "aws_security_group" "ecs" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecs-sg"
+    Name = "${local.name_prefix}-customer-ecs-sg"
+  })
+}
+
+resource "aws_security_group" "admin_task" {
+  name        = "${local.name_prefix}-admin-task-sg"
+  description = "Allow admin app traffic only from ALB"
+  vpc_id      = aws_vpc.this.id
+
+  ingress {
+    description     = "Admin app port from ALB"
+    from_port       = var.admin_container_port
+    to_port         = var.admin_container_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-admin-task-sg"
+  })
+}
+
+resource "aws_security_group" "admin_ec2" {
+  name        = "${local.name_prefix}-admin-ec2-sg"
+  description = "EC2 host SG (no inbound, outbound only)"
+  vpc_id      = aws_vpc.this.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-admin-ec2-sg"
   })
 }
 
 resource "aws_security_group" "rds" {
   name        = "${local.name_prefix}-rds-sg"
-  description = "Allow PostgreSQL only from ECS"
+  description = "Allow PostgreSQL only from ECS and Admin EC2"
   vpc_id      = aws_vpc.this.id
 
   ingress {
@@ -66,7 +108,15 @@ resource "aws_security_group" "rds" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
+    security_groups = [aws_security_group.customer_ecs.id]
+  }
+
+  ingress {
+    description     = "PostgreSQL from Admin Task"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.admin_task.id]
   }
 
   egress {
@@ -83,7 +133,7 @@ resource "aws_security_group" "rds" {
 
 resource "aws_security_group" "redis" {
   name        = "${local.name_prefix}-redis-sg"
-  description = "Allow Redis only from ECS"
+  description = "Allow Redis only from ECS and Admin EC2"
   vpc_id      = aws_vpc.this.id
 
   ingress {
@@ -91,7 +141,15 @@ resource "aws_security_group" "redis" {
     from_port       = 6379
     to_port         = 6379
     protocol        = "tcp"
-    security_groups = [aws_security_group.ecs.id]
+    security_groups = [aws_security_group.customer_ecs.id]
+  }
+
+  ingress {
+    description     = "Redis from Admin Task"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.admin_task.id]
   }
 
   egress {

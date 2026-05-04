@@ -29,3 +29,13 @@ resource "aws_cloudwatch_log_group" "alarm" {
     Name = local.alarm_log_group_name
   })
 }
+
+# Chat 서버용 로그 관리 그룹 생성
+resource "aws_cloudwatch_log_group" "chat" {
+  name              = local.chat_log_group_name
+  retention_in_days = var.log_retention_in_days
+
+  tags = merge(local.common_tags, {
+    Name = local.chat_log_group_name
+  })
+}

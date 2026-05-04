@@ -103,3 +103,38 @@ resource "aws_ecr_lifecycle_policy" "alarm" {
     ]
   })
 }
+
+# Chat 서버용 ECR 생성
+resource "aws_ecr_repository" "chat" {
+  name                 = local.chat_ecr_repository_name
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = merge(local.common_tags, {
+    Name = local.chat_ecr_repository_name
+  })
+}
+
+resource "aws_ecr_lifecycle_policy" "chat" {
+  repository = aws_ecr_repository.chat.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep last 10 chat images"
+        selection = {
+          tagStatus   = "any"
+          countType   = "imageCountMoreThan"
+          countNumber = 10
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}

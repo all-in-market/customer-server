@@ -11,16 +11,22 @@ variable "admin_container_name" {
   default     = "all-in-market-admin"
 }
 
-variable "admin_image_tag" {
-  description = "Docker image tag used by admin ECS task"
-  type        = string
-  default     = "latest"
-}
-
 variable "admin_container_port" {
   description = "Admin server container/listening port"
   type        = number
   default     = 8081
+}
+
+variable "admin_ecr_repository_name" {
+  description = "ECR repository name for admin server image. If null, project_name-admin is used."
+  type        = string
+  default     = null
+}
+
+variable "admin_image_tag" {
+  description = "Docker image tag used by admin ECS task"
+  type        = string
+  default     = "latest"
 }
 
 variable "admin_ecs_task_cpu" {
@@ -39,12 +45,6 @@ variable "admin_ecs_desired_count" {
   description = "Desired task count for the admin ECS service"
   type        = number
   default     = 0
-}
-
-variable "admin_ecr_repository_name" {
-  description = "ECR repository name for admin server image. If null, project_name-admin is used."
-  type        = string
-  default     = null
 }
 
 variable "admin_health_check_path" {

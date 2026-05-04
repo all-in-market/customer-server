@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "ssm_kms_key" {
     condition {
       test     = "StringLike"
       variable = "kms:EncryptionContext:PARAMETER_ARN"
-      values   = ["arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/db/password"]
+      values   = ["arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/*"]
     }
   }
 }
@@ -58,5 +58,29 @@ resource "aws_ssm_parameter" "db_password" {
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-db-password"
+  })
+}
+
+# ssm parameter store에 deepseek_api_key 저장
+resource "aws_ssm_parameter" "deepseek_api_key" {
+  name   = "/${var.project_name}/${var.environment}/chat/deepseek-api-key"
+  type   = "SecureString"
+  value  = var.deepseek_api_key
+  key_id = aws_kms_key.ssm.arn
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-deepseek-api-key"
+  })
+}
+
+# ssm parameter store에 openai_api_key 저장
+resource "aws_ssm_parameter" "openai_api_key" {
+  name   = "/${var.project_name}/${var.environment}/chat/openai-api-key"
+  type   = "SecureString"
+  value  = var.openai_api_key
+  key_id = aws_kms_key.ssm.arn
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-openai-api-key"
   })
 }

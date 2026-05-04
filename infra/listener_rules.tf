@@ -36,3 +36,20 @@ resource "aws_lb_listener_rule" "alarm_path" {
     }
   }
 }
+
+# 채팅 서버용 리스너 Rule 생성
+resource "aws_lb_listener_rule" "chat_path" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = var.chat_listener_rule_priority
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.chat.arn
+  }
+
+  condition {
+    path_pattern {
+      values = var.chat_path_patterns
+    }
+  }
+}

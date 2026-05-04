@@ -68,3 +68,38 @@ resource "aws_ecr_lifecycle_policy" "admin" {
     ]
   })
 }
+
+# Alarm 서버용 ECR 생성
+resource "aws_ecr_repository" "alarm" {
+  name                 = local.alarm_ecr_repository_name
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = merge(local.common_tags, {
+    Name = local.alarm_ecr_repository_name
+  })
+}
+
+resource "aws_ecr_lifecycle_policy" "alarm" {
+  repository = aws_ecr_repository.alarm.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep last 10 alarm images"
+        selection = {
+          tagStatus   = "any"
+          countType   = "imageCountMoreThan"
+          countNumber = 10
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}

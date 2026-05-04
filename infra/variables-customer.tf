@@ -5,16 +5,22 @@ variable "customer_container_name" {
   default     = "all-in-market-customer"
 }
 
-variable "customer_image_tag" {
-  description = "Docker image tag used by ECS task definition"
-  type        = string
-  default     = "latest"
-}
-
 variable "customer_container_port" {
   description = "Application container port"
   type        = number
   default     = 8080
+}
+
+variable "customer_ecr_repository_name" {
+  description = "ECR repository name. If null, project_name-customer is used."
+  type        = string
+  default     = null
+}
+
+variable "customer_image_tag" {
+  description = "Docker image tag used by ECS task definition"
+  type        = string
+  default     = "latest"
 }
 
 variable "customer_ecs_task_cpu" {
@@ -33,12 +39,6 @@ variable "customer_ecs_desired_count" {
   description = "Desired ECS task count"
   type        = number
   default     = 0
-}
-
-variable "customer_ecr_repository_name" {
-  description = "ECR repository name. If null, project_name-customer is used."
-  type        = string
-  default     = null
 }
 
 variable "customer_health_check_path" {

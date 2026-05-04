@@ -19,3 +19,20 @@ resource "aws_lb_listener_rule" "admin_path" {
     }
   }
 }
+
+# 알림 서버용 리스너 Rule 생성
+resource "aws_lb_listener_rule" "alarm_path" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = var.alarm_listener_rule_priority
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.alarm.arn
+  }
+
+  condition {
+    path_pattern {
+      values = var.alarm_path_patterns
+    }
+  }
+}

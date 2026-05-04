@@ -90,3 +90,23 @@ output "admin_instance_ids" {
 output "admin_private_ips" {
   value = [for instance in aws_instance.admin : instance.private_ip]
 }
+
+# ==========================================
+# Alarm
+# ==========================================
+
+output "alarm_ecr_repository_url" {
+  value = aws_ecr_repository.alarm.repository_url
+}
+
+output "alarm_ecr_repository_name" {
+  value = aws_ecr_repository.alarm.name
+}
+
+output "alarm_ecs_service_name" {
+  value = aws_ecs_service.alarm.name
+}
+
+output "alarm_ecs_container_name" {
+  value = var.alarm_container_name
+}

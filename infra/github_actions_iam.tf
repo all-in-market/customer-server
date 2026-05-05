@@ -32,6 +32,10 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
         [
           for branch in var.alarm_github_branches :
           "repo:${var.github_owner}/${var.alarm_github_repo}:ref:refs/heads/${branch}"
+        ],
+        [
+          for branch in var.chat_github_branches :
+          "repo:${var.github_owner}/${var.chat_github_repo}:ref:refs/heads/${branch}"
         ]
       )
     }
@@ -77,7 +81,8 @@ data "aws_iam_policy_document" "github_actions_deploy" {
     resources = [
       aws_ecr_repository.customer.arn,
       aws_ecr_repository.admin.arn,
-      aws_ecr_repository.alarm.arn
+      aws_ecr_repository.alarm.arn,
+      aws_ecr_repository.chat.arn
     ]
   }
 

@@ -81,6 +81,31 @@ resource "aws_security_group" "alarm_ecs" {
   })
 }
 
+resource "aws_security_group" "chat_ecs" {
+  name        = "${local.name_prefix}-chat-ecs-sg"
+  description = "Allow Chat app traffic only from ALB"
+  vpc_id      = aws_vpc.this.id
+
+  ingress {
+    description     = "Chat app port from ALB"
+    from_port       = var.chat_container_port
+    to_port         = var.chat_container_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-chat-ecs-sg"
+  })
+}
+
 resource "aws_security_group" "admin_task" {
   name        = "${local.name_prefix}-admin-task-sg"
   description = "Allow admin app traffic only from ALB"
@@ -145,6 +170,14 @@ resource "aws_security_group" "rds" {
   }
 
   ingress {
+    description     = "PostgreSQL from Chat ECS"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.chat_ecs.id]
+  }
+
+  ingress {
     description     = "PostgreSQL from Admin Task"
     from_port       = 5432
     to_port         = 5432
@@ -183,6 +216,14 @@ resource "aws_security_group" "redis" {
     to_port         = 6379
     protocol        = "tcp"
     security_groups = [aws_security_group.alarm_ecs.id]
+  }
+
+  ingress {
+    description     = "Redis from Chat ECS"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.chat_ecs.id]
   }
 
   ingress {

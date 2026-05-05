@@ -61,7 +61,7 @@ public class BuyerRestockSubscriptionService {
         restockSubscriptionRepository.delete(restock);
     }
 
-    public PageResponse<RestockSubscriptionDetailResponse> getSubscriptions(Long buyerId, @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
+    public PageResponse<RestockSubscriptionDetailResponse> getSubscriptions(Long buyerId, Pageable pageable) {
         buyerRepository.findByIdAndDeletedAtIsNull(buyerId).orElseThrow(
                 () -> new BaseException(ErrorEnum.BUYER_NOT_FOUND)
         );

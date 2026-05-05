@@ -6,23 +6,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 @Component
 @RequiredArgsConstructor
 public class RestockEventListener {
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     @Value("${notification-server.url}")
     private String notificationServerUrl;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRestockEvent(RestockEvent event) {
-        restTemplate.postForEntity(
-                notificationServerUrl + "/internal/notifications/restock",
-                new RestockEventRequest(event.getProductId()),
-                Void.class
-        );
+        restClient.post()
+                .uri(notificationServerUrl + "/internal/notifications/restock")
+                .body(new RestockEventRequest(event.getProductId()))
+                .retrieve()
+                .toBodilessEntity();
     }
 }

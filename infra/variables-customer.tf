@@ -64,3 +64,8 @@ variable "customer_environment_variables" {
   default     = {}
 }
 
+variable "server_secret_key" {
+  type      = string
+  sensitive = true
+}
+

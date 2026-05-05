@@ -28,7 +28,8 @@ data "aws_iam_policy_document" "ssm_kms_key" {
       values = [
         "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/db/password",
         "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/chat/openai-api-key",
-        "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/chat/deepseek-api-key"
+        "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/chat/deepseek-api-key",
+        "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/${var.environment}/auth/server_secret_key"
       ]
     }
   }
@@ -86,5 +87,17 @@ resource "aws_ssm_parameter" "openai_api_key" {
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-openai-api-key"
+  })
+}
+
+# ssm parameter store에 server_secret_key 저장
+resource "aws_ssm_parameter" "server_secret_key" {
+  name   = "/${var.project_name}/${var.environment}/auth/server_secret_key"
+  type   = "SecureString"
+  value  = var.server_secret_key
+  key_id = aws_kms_key.ssm.arn
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-server_secret_key"
   })
 }

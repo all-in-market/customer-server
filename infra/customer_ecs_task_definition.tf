@@ -27,6 +27,10 @@ resource "aws_ecs_task_definition" "customer" {
         {
           name      = "DB_PASSWORD"
           valueFrom = aws_ssm_parameter.db_password.arn
+        },
+        {
+          name      = "server_secret_key"
+          valueFrom = aws_ssm_parameter.server_secret_key.arn
         }
       ]
 

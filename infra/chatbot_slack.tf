@@ -41,6 +41,7 @@ resource "aws_chatbot_slack_channel_configuration" "alerts" {
     aws_sns_topic.alerts[0].arn
   ]
 
+  # chatbot에서 발생하는 error를 로그로 남김
   logging_level = "ERROR"
 
   guardrail_policy_arns = [

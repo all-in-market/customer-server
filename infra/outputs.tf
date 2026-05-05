@@ -139,7 +139,8 @@ output "sns_alert_topic_arn" {
 
 output "alert_email" {
   description = "Email address subscribed to SNS alerts"
-  value       = var.alert_email
+  sensitive   = true
+  value       = var.monitoring_enabled ? var.alert_email : null
 }
 
 output "cloudwatch_dashboard_name" {

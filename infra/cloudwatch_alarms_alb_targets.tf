@@ -4,9 +4,9 @@
 resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
   count = var.monitoring_enabled ? 1 : 0
 
-  alarm_name          = "${local.name_prefix}-${var.environment}-alb-5xx"
-  alarm_description   = "ALB 5XX errors are too high"
-  namespace           = "AWS/ApplicationELB"
+  alarm_name        = "${local.name_prefix}-${var.environment}-alb-5xx"
+  alarm_description = "ALB 5XX errors are too high"
+  namespace         = "AWS/ApplicationELB"
 
   # "300"초 단위의 구간 "1"번에서
   # "HTTPCode_ELB_5XX_Count" 값의 "합계"가
@@ -19,7 +19,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
   comparison_operator = "GreaterThanOrEqualToThreshold"
 
   # 데이터가 없을 시 : 정상으로 간주
-  treat_missing_data  = "notBreaching"
+  treat_missing_data = "notBreaching"
 
   # 해당 리소스의 metric만 보겠다는 필터링 조건
   dimensions = {
@@ -38,9 +38,9 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
 resource "aws_cloudwatch_metric_alarm" "target_5xx" {
   for_each = var.monitoring_enabled ? local.target_groups : {}
 
-  alarm_name          = "${local.name_prefix}-${var.environment}-${each.key}-target-5xx"
-  alarm_description   = "${each.key} target 5XX errors are too high"
-  namespace           = "AWS/ApplicationELB"
+  alarm_name        = "${local.name_prefix}-${var.environment}-${each.key}-target-5xx"
+  alarm_description = "${each.key} target 5XX errors are too high"
+  namespace         = "AWS/ApplicationELB"
 
   metric_name         = "HTTPCode_Target_5XX_Count"
   statistic           = "Sum"
@@ -49,7 +49,7 @@ resource "aws_cloudwatch_metric_alarm" "target_5xx" {
   threshold           = 5
   comparison_operator = "GreaterThanOrEqualToThreshold"
 
-  treat_missing_data  = "notBreaching"
+  treat_missing_data = "notBreaching"
 
   dimensions = {
     LoadBalancer = aws_lb.this.arn_suffix
@@ -66,9 +66,9 @@ resource "aws_cloudwatch_metric_alarm" "target_5xx" {
 resource "aws_cloudwatch_metric_alarm" "target_response_time" {
   for_each = var.monitoring_enabled ? local.target_groups : {}
 
-  alarm_name          = "${local.name_prefix}-${var.environment}-${each.key}-high-latency"
-  alarm_description   = "${each.key} target response time is too high"
-  namespace           = "AWS/ApplicationELB"
+  alarm_name        = "${local.name_prefix}-${var.environment}-${each.key}-high-latency"
+  alarm_description = "${each.key} target response time is too high"
+  namespace         = "AWS/ApplicationELB"
 
   # 5분 평균 p95 값이 2s 초과 상태가 2번 연속 발생하면 알림
   metric_name         = "TargetResponseTime"
@@ -78,7 +78,7 @@ resource "aws_cloudwatch_metric_alarm" "target_response_time" {
   threshold           = 2
   comparison_operator = "GreaterThanThreshold"
 
-  treat_missing_data  = "notBreaching"
+  treat_missing_data = "notBreaching"
 
   dimensions = {
     LoadBalancer = aws_lb.this.arn_suffix
@@ -95,9 +95,9 @@ resource "aws_cloudwatch_metric_alarm" "target_response_time" {
 resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
   for_each = var.monitoring_enabled ? local.target_groups : {}
 
-  alarm_name          = "${local.name_prefix}-${var.environment}-${each.key}-unhealthy-target"
-  alarm_description   = "${each.key} has unhealthy targets"
-  namespace           = "AWS/ApplicationELB"
+  alarm_name        = "${local.name_prefix}-${var.environment}-${each.key}-unhealthy-target"
+  alarm_description = "${each.key} has unhealthy targets"
+  namespace         = "AWS/ApplicationELB"
 
   metric_name         = "UnHealthyHostCount"
   statistic           = "Average"
@@ -106,7 +106,7 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
   threshold           = 1
   comparison_operator = "GreaterThanOrEqualToThreshold"
 
-  treat_missing_data  = "notBreaching"
+  treat_missing_data = "notBreaching"
 
   dimensions = {
     LoadBalancer = aws_lb.this.arn_suffix

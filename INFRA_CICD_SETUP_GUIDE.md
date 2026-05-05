@@ -57,14 +57,32 @@ kms_key_id
 
 ---
 
-## 5.5 NS 등록
+## 6. NS 등록
 
 - 4단계에서 apply 후 출력된 route53_name_servers output 값을 가비아에 등록
 - Route 53에서 도메인을 등록한 경우 생략 가능
 
 
+
 ---
-## 6. 인프라 생성
+
+## 7. Slack 알림 연동
+
+- Amazon Q Developer in chat applications 콘솔에서 "클라이언트 구성" 클릭
+- AWS와 연동할 Slack의 workspace 선택
+- OAuth 인증을 통해 AWS가 해당 Slack workspace에 접근할 권한 승인
+- AWS 콘솔에서 생성된 chat client의 WorkSpace ID 값을 terraform.tfvars 파일의 slack_team_id 값에 저장
+- 연동시킨 slack workspace의 채널 중 알림을 받을 채널을 선택하여 들어간 후 주소창 확인
+- 주소창의 WorkSpace ID 값 뒤에 나오는 채널 id 값을 terraform.tfvars 파일의 slack_channel_id 값에 저장
+```
+예시: https://app.slack.com/client/T0B171BDCP9/C0B1LDTFZ4N?ssb_vid=.80639255a1f4295e6f7b049bd41c9315
+
+채널 id 값 -> C0B1LDTFZ4N
+```
+
+
+---
+## 8. 인프라 생성
 - infra 디렉토리에서 아래 명령어를 통해 메인 인프라 생성
 ```bash
 cd infra
@@ -74,7 +92,7 @@ terraform apply
 
 ---
 
-## 7. GitHub Secrets 설정
+## 9. GitHub Secrets 설정
 - 6단계에서 apply 후 출력된 output을 확인하여 GitHub Repository에서 아래와 같이 GitHub Secrets으로 등록
 
 ```
@@ -88,13 +106,13 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 8. main / dev 브랜치에 merge
+## 10. main / dev 브랜치에 merge
 
 - main / dev 브랜치에 merge 시 CI /CD 절차 진행
 
 ---
 
-## 9. CI
+## 11. CI
 
 - main / dev 에 PR, push 시 CI 실행
 1. GitHub Actions 실행
@@ -104,7 +122,7 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 10. CD
+## 12. CD
 
 - main / dev에  push 시 실행
 
@@ -120,7 +138,7 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 11.  배포 확인 
+## 13.  배포 확인 
 
 - 주소창에 http://alb_dns_name/actuator/health 확인
 - AWS 콘솔에서 ECS 서비스 상태 확인

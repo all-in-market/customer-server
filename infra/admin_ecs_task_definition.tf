@@ -1,7 +1,7 @@
 # 관리자 서버 컨테이너 실행 정의
 # 기존 EC2 user_data의 docker run 역할을 ECS Task Definition이 대체
 resource "aws_ecs_task_definition" "admin" {
-  count                    = var.admin_enabled ? 1 : 0
+  count = var.admin_enabled ? 1 : 0
 
   family                   = "${local.name_prefix}-admin"
   network_mode             = "awsvpc"

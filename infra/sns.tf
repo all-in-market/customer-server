@@ -2,7 +2,8 @@
 resource "aws_sns_topic" "alerts" {
   count = var.monitoring_enabled ? 1 : 0
 
-  name = "${local.name_prefix}-${var.environment}-alerts"
+  name              = "${local.name_prefix}-${var.environment}-alerts"
+  kms_master_key_id = "alias/aws/sns"
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-${var.environment}-alerts"

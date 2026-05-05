@@ -1,6 +1,6 @@
 data "aws_iam_policy_document" "ssm_kms_key" {
   statement {
-    sid = "EnableRootPermissions"
+    sid       = "EnableRootPermissions"
     actions   = ["kms:*"]
     resources = ["*"]
     principals {
@@ -10,7 +10,7 @@ data "aws_iam_policy_document" "ssm_kms_key" {
   }
 
   statement {
-    sid = "AllowEcsExecutionRoleDecryptForSsm"
+    sid       = "AllowEcsExecutionRoleDecryptForSsm"
     actions   = ["kms:Decrypt", "kms:DescribeKey"]
     resources = ["*"]
     principals {
@@ -55,9 +55,9 @@ resource "aws_kms_alias" "ssm" {
 
 # ssm parameter store에 DB_PASSWORD 저장
 resource "aws_ssm_parameter" "db_password" {
-  name  = "/${var.project_name}/${var.environment}/db/password"
-  type  = "SecureString"
-  value = var.db_password
+  name   = "/${var.project_name}/${var.environment}/db/password"
+  type   = "SecureString"
+  value  = var.db_password
   key_id = aws_kms_key.ssm.arn
 
   tags = merge(local.common_tags, {

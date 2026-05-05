@@ -49,7 +49,7 @@ variable "alarm_listener_rule_priority" {
 }
 
 variable "alarm_github_repo" {
-  type    = string
+  type = string
 }
 
 variable "alarm_github_branches" {

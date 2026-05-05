@@ -9,7 +9,7 @@ locals {
       alarm    = aws_ecs_service.alarm.name
       chat     = aws_ecs_service.chat.name
     },
-      var.admin_enabled ? {
+    var.admin_enabled ? {
       admin = aws_ecs_service.admin[0].name
     } : {}
   )
@@ -20,7 +20,7 @@ locals {
       alarm    = aws_lb_target_group.alarm.arn_suffix
       chat     = aws_lb_target_group.chat.arn_suffix
     },
-      var.admin_enabled ? {
+    var.admin_enabled ? {
       admin = aws_lb_target_group.admin[0].arn_suffix
     } : {}
   )
@@ -31,7 +31,7 @@ locals {
       alarm    = aws_cloudwatch_log_group.alarm.name
       chat     = aws_cloudwatch_log_group.chat.name
     },
-      var.admin_enabled ? {
+    var.admin_enabled ? {
       admin = aws_cloudwatch_log_group.admin.name
     } : {}
   )

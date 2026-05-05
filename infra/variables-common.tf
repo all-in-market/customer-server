@@ -72,7 +72,7 @@ variable "db_instance_class" {
 
 variable "db_max_connections" {
   type    = number
-  default = 45  # t3.micro + postgres 기준
+  default = 45 # t3.micro + postgres 기준
 }
 
 variable "db_allocated_storage" {

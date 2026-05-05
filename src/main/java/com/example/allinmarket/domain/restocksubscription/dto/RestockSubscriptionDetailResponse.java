@@ -12,6 +12,6 @@ public record RestockSubscriptionDetailResponse(
         return new RestockSubscriptionDetailResponse(
                 subscription.getProductId(),
                 subscription.getStatus(),
-                null);
+                "재입고 알림이 신청되었습니다.");
     }
 }

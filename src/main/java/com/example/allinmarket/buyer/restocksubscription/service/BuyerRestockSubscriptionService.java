@@ -11,9 +11,8 @@ import com.example.allinmarket.domain.restocksubscription.entity.RestockSubscrip
 import com.example.allinmarket.domain.restocksubscription.enums.SubscriptionStatusEnum;
 import com.example.allinmarket.domain.restocksubscription.repository.RestockSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,12 +39,19 @@ public class BuyerRestockSubscriptionService {
         RestockSubscription subscription = restockSubscriptionRepository
                 .findByUserIdAndProductId(buyerId, request.productId())
                 .map(existing -> { existing.activate(); return existing; })
-                .orElseGet(() -> restockSubscriptionRepository.save(RestockSubscription.of(buyerId, request.productId())));
+                .orElseGet(() -> {
+                    try {
+                        return restockSubscriptionRepository.save(RestockSubscription.of(buyerId, request.productId()));
+                    } catch (DataIntegrityViolationException e) {
+                        RestockSubscription raced = restockSubscriptionRepository
+                                .findByUserIdAndProductId(buyerId, request.productId())
+                                .orElseThrow(() -> e);
+                        raced.activate();
+                        return raced;
+                    }
+                });
+        return RestockSubscriptionDetailResponse.from(subscription);
 
-        return new RestockSubscriptionDetailResponse(
-                subscription.getProductId(),
-                subscription.getStatus(),
-                "재입고 알림이 신청되었습니다.");
     }
 
     @Transactional

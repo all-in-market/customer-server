@@ -71,7 +71,7 @@ variable "db_instance_class" {
 }
 
 variable "db_max_connections" {
-  type    = number
+  type = number
 
   validation {
     condition     = var.db_max_connections > 0 && floor(var.db_max_connections) == var.db_max_connections

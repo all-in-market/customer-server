@@ -12,10 +12,6 @@ resource "aws_cloudwatch_log_metric_filter" "error_logs" {
     name      = "${each.key}-ErrorLogCount"
     namespace = "${local.name_prefix}/${var.environment}/ApplicationLogs"
     value     = "1"
-
-    dimensions = {
-      Service = each.key
-    }
   }
 }
 

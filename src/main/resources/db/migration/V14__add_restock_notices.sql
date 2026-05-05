@@ -8,5 +8,5 @@ CREATE TABLE restock_notifications
     created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT uk_restock_notification_user_product UNIQUE (user_id, product_id)
+    CREATE INDEX idx_restock_notifications_user_created_at ON restock_notifications (user_id, created_at DESC)
 );

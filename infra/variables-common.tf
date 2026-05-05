@@ -70,6 +70,11 @@ variable "db_instance_class" {
   default     = "db.t3.micro"
 }
 
+variable "db_max_connections" {
+  type    = number
+  default = 45  # t3.micro + postgres 기준
+}
+
 variable "db_allocated_storage" {
   description = "RDS allocated storage in GB"
   type        = number

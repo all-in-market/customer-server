@@ -1,9 +1,11 @@
 package com.example.allinmarket.domain.restocksubscription.event;
 
+import com.example.allinmarket.common.security.HmacSigner;
 import com.example.allinmarket.domain.restocksubscription.dto.RestockEventRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,10 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import tools.jackson.databind.ObjectMapper;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -18,9 +24,16 @@ import org.springframework.web.client.RestClientException;
 public class RestockEventListener {
 
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
 
     @Value("${notification-server.url}")
     private String notificationServerUrl;
+
+    @Value("${notification.auth.client-id}")
+    private String clientId;
+
+    @Value("${notification.auth.secret}")
+    private String secret;
 
     @Retryable(
             retryFor = RestClientException.class,
@@ -29,14 +42,32 @@ public class RestockEventListener {
     )
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRestockEvent(RestockEvent event) {
-        try{
+        try {
+            RestockEventRequest request = new RestockEventRequest(event.getProductId());
+
+            String body = objectMapper.writeValueAsString(request);
+
+            String timestamp = String.valueOf(Instant.now().getEpochSecond());
+            String requestId = UUID.randomUUID().toString();
+
+            String signature = HmacSigner.sign(
+                    secret,
+                    timestamp + requestId + body
+            );
+
+
             restClient.post()
                     .uri(notificationServerUrl + "/internal/notifications/restock")
-                    .body(new RestockEventRequest(event.getProductId()))
+                    .header("X-Client-Id", clientId)
+                    .header("X-Timestamp", timestamp)
+                    .header("X-Request-Id", requestId)
+                    .header("X-Signature", signature)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
                     .retrieve()
                     .toBodilessEntity();
-        } catch (RestClientException e) {
-            log.warn("재입고 알림 전송 실패. productId={}", event.getProductId(), e);
+        } catch (Exception e) {
+            log.error("재입고 알림 전송 실패. productId={}", event.getProductId(), e);
         }
 
     }

@@ -29,7 +29,7 @@ resource "aws_ecs_task_definition" "alarm" {
           valueFrom = aws_ssm_parameter.db_password.arn
         },
         {
-          name      = "server_secret_key"
+          name      = "SERVER_SECRET_KEY"
           valueFrom = aws_ssm_parameter.server_secret_key.arn
         }
       ]

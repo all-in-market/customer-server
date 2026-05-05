@@ -25,8 +25,7 @@ resource "aws_ecs_service" "customer" {
 
   lifecycle {
     ignore_changes = [
-      desired_count,
-      task_definition
+      desired_count
     ]
   }
 

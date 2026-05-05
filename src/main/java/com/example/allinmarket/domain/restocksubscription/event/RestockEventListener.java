@@ -2,6 +2,8 @@ package com.example.allinmarket.domain.restocksubscription.event;
 
 import com.example.allinmarket.common.security.HmacSigner;
 import com.example.allinmarket.domain.restocksubscription.dto.RestockEventRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +15,6 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -66,9 +67,11 @@ public class RestockEventListener {
                     .body(body)
                     .retrieve()
                     .toBodilessEntity();
-        } catch (Exception e) {
+        } catch (RestClientException e) {
             log.error("재입고 알림 전송 실패. productId={}", event.getProductId(), e);
+            throw e;
+        } catch (JsonProcessingException e) {
+            log.error("재입고 이벤트 직렬화 실패. productId = {}", event.getProductId(), e);
         }
-
     }
 }

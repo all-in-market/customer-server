@@ -37,7 +37,7 @@ resource "aws_security_group" "customer_ecs" {
   vpc_id      = aws_vpc.this.id
 
   ingress {
-    description     = "App port from ALB"
+    description     = "Customer app port from ALB"
     from_port       = var.customer_container_port
     to_port         = var.customer_container_port
     protocol        = "tcp"
@@ -53,6 +53,56 @@ resource "aws_security_group" "customer_ecs" {
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-customer-ecs-sg"
+  })
+}
+
+resource "aws_security_group" "alarm_ecs" {
+  name        = "${local.name_prefix}-alarm-ecs-sg"
+  description = "Allow Alarm app traffic only from ALB"
+  vpc_id      = aws_vpc.this.id
+
+  ingress {
+    description     = "Alarm app port from ALB"
+    from_port       = var.alarm_container_port
+    to_port         = var.alarm_container_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-alarm-ecs-sg"
+  })
+}
+
+resource "aws_security_group" "chat_ecs" {
+  name        = "${local.name_prefix}-chat-ecs-sg"
+  description = "Allow Chat app traffic only from ALB"
+  vpc_id      = aws_vpc.this.id
+
+  ingress {
+    description     = "Chat app port from ALB"
+    from_port       = var.chat_container_port
+    to_port         = var.chat_container_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-chat-ecs-sg"
   })
 }
 
@@ -104,11 +154,27 @@ resource "aws_security_group" "rds" {
   vpc_id      = aws_vpc.this.id
 
   ingress {
-    description     = "PostgreSQL from ECS"
+    description     = "PostgreSQL from Customer ECS"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
     security_groups = [aws_security_group.customer_ecs.id]
+  }
+
+  ingress {
+    description     = "PostgreSQL from Alarm ECS"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alarm_ecs.id]
+  }
+
+  ingress {
+    description     = "PostgreSQL from Chat ECS"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.chat_ecs.id]
   }
 
   ingress {
@@ -137,11 +203,27 @@ resource "aws_security_group" "redis" {
   vpc_id      = aws_vpc.this.id
 
   ingress {
-    description     = "Redis from ECS"
+    description     = "Redis from Customer ECS"
     from_port       = 6379
     to_port         = 6379
     protocol        = "tcp"
     security_groups = [aws_security_group.customer_ecs.id]
+  }
+
+  ingress {
+    description     = "Redis from Alarm ECS"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alarm_ecs.id]
+  }
+
+  ingress {
+    description     = "Redis from Chat ECS"
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.chat_ecs.id]
   }
 
   ingress {

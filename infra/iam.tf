@@ -44,7 +44,9 @@ data "aws_iam_policy_document" "ecs_task_execution_ssm" {
     ]
 
     resources = [
-      aws_ssm_parameter.db_password.arn
+      aws_ssm_parameter.db_password.arn,
+      aws_ssm_parameter.openai_api_key.arn,
+      aws_ssm_parameter.deepseek_api_key.arn
     ]
   }
 
@@ -66,7 +68,11 @@ data "aws_iam_policy_document" "ecs_task_execution_ssm" {
     condition {
       test     = "StringLike"
       variable = "kms:EncryptionContext:PARAMETER_ARN"
-      values   = [aws_ssm_parameter.db_password.arn]
+      values   = [
+        aws_ssm_parameter.db_password.arn,
+        aws_ssm_parameter.openai_api_key.arn,
+        aws_ssm_parameter.deepseek_api_key.arn
+      ]
     }
   }
 }

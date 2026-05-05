@@ -4,6 +4,7 @@ public enum RefundStatus {
 
     NONE,
     PENDING,
+    PROCESSING,
     SUCCESS,
     FAILED,
     DENIED;
@@ -15,8 +16,9 @@ public enum RefundStatus {
 
         return switch (this) {
             case NONE -> targetStatus == PENDING;
-            case PENDING ->  targetStatus == SUCCESS || targetStatus == FAILED || targetStatus == DENIED;
-            case FAILED -> targetStatus == PENDING;
+            case PENDING ->  targetStatus == PROCESSING || targetStatus == DENIED;
+            case PROCESSING -> targetStatus == SUCCESS || targetStatus == FAILED;
+            case FAILED -> targetStatus == PENDING || targetStatus == PROCESSING;
             case SUCCESS, DENIED -> false;
         };
     }

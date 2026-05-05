@@ -203,7 +203,7 @@ class RefundTest {
                     ReasonEnum.CHANGE_OF_MIND,
                     "기존 설명"
             );
-            existingRefund.fail();
+            setField(existingRefund, "status", RefundStatus.FAILED);
 
             RefundCreateRequest request =
                     new RefundCreateRequest(ReasonEnum.DAMAGED, "파손");
@@ -346,7 +346,7 @@ class RefundTest {
                     ReasonEnum.CHANGE_OF_MIND,
                     "기존 설명"
             );
-            existingRefund.fail();
+            setField(existingRefund, "status", RefundStatus.FAILED);
 
             given(refundRepository.findByPayment(payment))
                     .willReturn(Optional.of(existingRefund));

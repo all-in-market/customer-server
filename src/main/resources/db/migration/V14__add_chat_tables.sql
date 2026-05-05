@@ -48,7 +48,11 @@ CREATE TABLE realtime_chat_messages (
                                         message VARCHAR(3000) NOT NULL,
                                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                         -- 방 삭제 시 해당 메시지들도 모두 삭제 (데이터 무결성)
-                                        CONSTRAINT fk_chat_message_room_id FOREIGN KEY (room_id) REFERENCES realtime_chat_rooms(id) ON DELETE CASCADE
+                                        CONSTRAINT fk_chat_message_room_id FOREIGN KEY (room_id) REFERENCES realtime_chat_rooms(id) ON DELETE CASCADE,
+                                        -- 채팅방 참여자가 아닌 사용자 검증
+                                        CONSTRAINT fk_chat_message_sender_participant FOREIGN KEY (room_id, sender_id) REFERENCES realtime_chat_participants(realtime_chat_room_id, user_id),
+                                        --
+                                        CONSTRAINT uk_chat_message_room_id_id UNIQUE (room_id, id)
 );
 
 -- 인덱스 : 특정 방의 메시지 이력을 최신순/커서 기반으로 조회할 때 필수
@@ -66,9 +70,11 @@ CREATE TABLE realtime_chat_read_status (
     -- 방 삭제 시 읽음 상태 기록 삭제
                                            CONSTRAINT fk_chat_read_status_room_id FOREIGN KEY (room_id) REFERENCES realtime_chat_rooms(id) ON DELETE CASCADE,
     -- 메시지 참조 (단, 메시지 삭제 시 처리는 비즈니스 로직에 따라 다를 수 있음)
-                                           CONSTRAINT fk_chat_read_status_last_read_message_id FOREIGN KEY (last_read_message_id) REFERENCES realtime_chat_messages(id),
+                                           CONSTRAINT fk_chat_read_status_last_read_message_id FOREIGN KEY (room_id, last_read_message_id) REFERENCES realtime_chat_messages(room_id, id),
     -- 유니크 제약 조건 : 방 + 유저당 하나의 읽음 상태만 존재
-                                           CONSTRAINT uk_realtime_chat_read_status_room_user UNIQUE (room_id, user_id)
+                                           CONSTRAINT uk_realtime_chat_read_status_room_user UNIQUE (room_id, user_id),
+    -- 채팅방 참여자가 아닌 사용자 검증
+                                           CONSTRAINT fk_chat_read_status_participant FOREIGN KEY (room_id, user_id) REFERENCES realtime_chat_participants(realtime_chat_room_id, user_id)
 );
 
 -- 인덱스 : 특정 유저의 읽음 상태 조회 성능 향상

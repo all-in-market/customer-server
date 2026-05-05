@@ -93,7 +93,7 @@ terraform apply
 ---
 
 ## 9. GitHub Secrets 설정
-- 6단계에서 apply 후 출력된 output을 확인하여 GitHub Repository에서 아래와 같이 GitHub Secrets으로 등록
+- 8단계에서 apply 후 출력된 output을 확인하여 GitHub Repository에서 아래와 같이 GitHub Secrets으로 등록
 
 ```
 AWS_ROLE_ARN = terraform output 에서의 github_actions_role_arn 값

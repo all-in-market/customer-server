@@ -142,7 +142,7 @@ resource "aws_cloudwatch_dashboard" "main" {
               "TargetGroup",
               target_group_arn_suffix,
               {
-                stat  = "Average",
+                stat  = "Maximum",
                 label = "${service_name} unhealthy"
               }
             ]

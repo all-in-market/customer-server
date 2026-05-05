@@ -376,8 +376,6 @@ resource "aws_cloudwatch_dashboard" "main" {
             for service_name, log_group_name in local.log_groups : [
               "${local.name_prefix}/${var.environment}/ApplicationLogs",
               "${service_name}-ErrorLogCount",
-              "Service",
-              service_name,
               {
                 stat  = "Sum",
                 label = "${service_name} ERROR"

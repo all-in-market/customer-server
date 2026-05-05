@@ -29,10 +29,6 @@ resource "aws_cloudwatch_metric_alarm" "error_logs_high" {
   comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "notBreaching"
 
-  dimensions = {
-    Service = each.key
-  }
-
   alarm_actions = local.alert_actions
   ok_actions    = local.alert_actions
 

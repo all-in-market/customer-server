@@ -24,8 +24,7 @@ resource "aws_ecs_service" "alarm" {
 
   lifecycle {
     ignore_changes = [
-      desired_count,
-      task_definition
+      desired_count
     ]
   }
 

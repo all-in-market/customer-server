@@ -7,14 +7,15 @@ import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.entity.Product;
-import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
+import com.example.allinmarket.domain.restocksubscription.event.RestockEvent;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -42,6 +43,7 @@ public class SellerProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ProductDetailResponse create(Long sellerId, SellerProductCreateRequest request) {
@@ -167,7 +169,12 @@ public class SellerProductService {
 
         validationForbidden(sellerId, product);
 
+        boolean wasOutOfStock = product.getStock() == 0;
         product.updateStock(request.stock());
+
+        if(wasOutOfStock && product.getStock() > 0) {
+            eventPublisher.publishEvent(new RestockEvent(productId));
+        }
 
         evictSellerSearchProductCacheAfterCommit(sellerId);
 

@@ -5,7 +5,12 @@ set -euo pipefail
 exec > >(tee /var/log/admin-ecs-user-data.log | logger -t admin-ecs-user-data -s 2>/dev/console) 2>&1
 
 # 이 EC2를 어떤 ECS 클러스터에 붙일지 지정
+mkdir -p /etc/ecs
 echo "ECS_CLUSTER=${ecs_cluster_name}" >> /etc/ecs/ecs.config
 
+
 # ECS Agent 실행
-systemctl enable --now ecs
+systemctl enable ecs
+
+nohup bash -c 'sleep 10; systemctl start ecs' \
+  > /var/log/ecs-start-later.log 2>&1 &

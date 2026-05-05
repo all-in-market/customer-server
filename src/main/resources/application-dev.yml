@@ -3,3 +3,6 @@ spring:
     redis:
       ssl:
         enabled: true
+
+notification-server:
+  url: https://hyu1335.cloud

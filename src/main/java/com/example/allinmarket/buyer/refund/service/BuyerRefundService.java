@@ -165,7 +165,7 @@ public class BuyerRefundService {
     /**
      * 해당 결제에 대해 이미 환불이 존재하는지 확인
      * 존재할 경우에 해당 환불이 failed 상태이면 이를 pending으로 변경 후 바로 응답 반환
-     * 그 외 상태(PENDING, SUCCESS, DENIED)는 중복 환불로 간주하여 예외 발생
+     * 그 외 상태(PENDING, PROCESSING, SUCCESS, DENIED)는 중복 환불로 간주하여 예외 발생
      */
     private Refund handleExistingRefund(Payment payment) {
         Optional<Refund> refundOptional = refundRepository.findByPayment(payment);
@@ -177,7 +177,7 @@ public class BuyerRefundService {
         Refund existingRefund = refundOptional.get();
 
         switch (existingRefund.getStatus()) {
-            case PENDING, SUCCESS, DENIED -> throw new BaseException(ErrorEnum.REFUND_ALREADY_EXISTS);
+            case PENDING, PROCESSING, SUCCESS, DENIED -> throw new BaseException(ErrorEnum.REFUND_ALREADY_EXISTS);
             case FAILED -> {
                 existingRefund.pending();
                 return existingRefund;

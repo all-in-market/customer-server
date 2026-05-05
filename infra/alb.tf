@@ -5,6 +5,9 @@ resource "aws_lb" "this" {
   security_groups    = [aws_security_group.alb.id]
   subnets            = [for subnet in aws_subnet.public : subnet.id]
 
+  # 웹소켓 안정적인 연결을 위해 연결 시간 증가
+  idle_timeout = 300
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-alb"
   })

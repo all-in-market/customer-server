@@ -1,26 +1,25 @@
-resource "aws_ecs_service" "customer" {
-  name                              = "${local.name_prefix}-customer-service"
+resource "aws_ecs_service" "alarm" {
+  name                              = "${local.name_prefix}-alarm-service"
   cluster                           = aws_ecs_cluster.this.id
-  task_definition                   = aws_ecs_task_definition.customer.arn
-  desired_count                     = var.customer_ecs_desired_count
+  task_definition                   = aws_ecs_task_definition.alarm.arn
+  desired_count                     = var.alarm_ecs_desired_count
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 120
   force_new_deployment              = true
 
-  # prod 환경에서는 무중단 배포 가능하도록 설정
   deployment_minimum_healthy_percent = var.environment == "prod" ? 100 : 0
   deployment_maximum_percent         = var.environment == "prod" ? 200 : 100
 
   network_configuration {
     subnets          = [for subnet in aws_subnet.ecs_private : subnet.id]
-    security_groups  = [aws_security_group.customer_ecs.id]
+    security_groups  = [aws_security_group.alarm_ecs.id]
     assign_public_ip = false
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.customer.arn
-    container_name   = var.customer_container_name
-    container_port   = var.customer_container_port
+    target_group_arn = aws_lb_target_group.alarm.arn
+    container_name   = var.alarm_container_name
+    container_port   = var.alarm_container_port
   }
 
   lifecycle {
@@ -37,6 +36,6 @@ resource "aws_ecs_service" "customer" {
   ]
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-customer-service"
+    Name = "${local.name_prefix}-alarm-service"
   })
 }

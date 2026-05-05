@@ -30,3 +30,8 @@ app:
 
 notification-server:
   url: http://localhost:8083
+
+notification:
+  auth:
+    client-id: mock-customer-server
+    secret: Z9OSOWEIkhqMOG3veTR3xgkXOzbogWFGF0MnJTXOk66 # 테스트 전용 고정값

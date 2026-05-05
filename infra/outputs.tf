@@ -128,3 +128,27 @@ output "chat_ecs_service_name" {
 output "chat_ecs_container_name" {
   value = var.chat_container_name
 }
+
+# ==========================================
+# Monitoring
+# ==========================================
+output "sns_alert_topic_arn" {
+  description = "SNS topic ARN for CloudWatch alarms"
+  value       = var.monitoring_enabled ? aws_sns_topic.alerts[0].arn : null
+}
+
+output "alert_email" {
+  description = "Email address subscribed to SNS alerts"
+  sensitive   = true
+  value       = var.monitoring_enabled ? var.alert_email : null
+}
+
+output "cloudwatch_dashboard_name" {
+  description = "CloudWatch dashboard name"
+  value       = var.monitoring_enabled ? aws_cloudwatch_dashboard.main[0].dashboard_name : null
+}
+
+output "slack_alert_enabled" {
+  description = "Whether Slack alert integration is enabled"
+  value       = var.slack_alert_enabled
+}

@@ -1,6 +1,6 @@
 # 인증서 생성 요청 (pending 상태)
 resource "aws_acm_certificate" "app" {
-  domain_name       = var.domain_name
+  domain_name = var.domain_name
 
   # ACM 검증용 DNS 레코드 생성됨
   validation_method = "DNS"

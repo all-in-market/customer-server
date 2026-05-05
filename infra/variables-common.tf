@@ -70,6 +70,15 @@ variable "db_instance_class" {
   default     = "db.t3.micro"
 }
 
+variable "db_max_connections" {
+  type = number
+
+  validation {
+    condition     = var.db_max_connections > 0 && floor(var.db_max_connections) == var.db_max_connections
+    error_message = "db_max_connections는 1 이상의 정수여야 합니다."
+  }
+}
+
 variable "db_allocated_storage" {
   description = "RDS allocated storage in GB"
   type        = number

@@ -20,11 +20,11 @@ resource "aws_lb_listener" "http" {
 
   # HTTP 요청은 앱으로 전달하지 않고 HTTPS로만 접근할 수 있도록 강제
   default_action {
-    type             = "redirect"
+    type = "redirect"
 
     redirect {
-      port = "443"
-      protocol = "HTTPS"
+      port        = "443"
+      protocol    = "HTTPS"
       status_code = "HTTP_301"
     }
   }
@@ -36,10 +36,10 @@ resource "aws_lb_listener" "https" {
   protocol          = "HTTPS"
 
   # https 통신에 사용할 암호화 규칙 세트
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  ssl_policy = "ELBSecurityPolicy-TLS13-1-2-2021-06"
 
   # 리스너에 붙일 검증이 끝난 ACM 인증서
-  certificate_arn   = aws_acm_certificate_validation.app.certificate_arn
+  certificate_arn = aws_acm_certificate_validation.app.certificate_arn
 
   default_action {
     type             = "forward"

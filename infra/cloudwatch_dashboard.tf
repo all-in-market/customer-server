@@ -412,7 +412,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "SEARCH('{${local.application_metrics_namespace},service} MetricName=\"http.server.requests.count\" service=\"customer\"', 'Sum', 60)"
+                expression = "SUM(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"http.server.requests.count\" service=\"customer\"', 'Sum', 60))"
                 label      = "customer requests"
                 id         = "e1"
               }
@@ -437,8 +437,8 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "SEARCH('{${local.application_metrics_namespace},service,status} MetricName=\"http.server.requests.count\" service=\"customer\" status=\"500\"', 'Sum', 60)"
-                label      = "customer 500"
+                expression = "SUM(SEARCH('{${local.application_metrics_namespace},service,outcome} MetricName=\"http.server.requests.count\" service=\"customer\" outcome=\"SERVER_ERROR\"', 'Sum', 60))"
+                label      = "customer 5xx"
                 id         = "e1"
               }
             ]
@@ -462,7 +462,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "SEARCH('{${local.application_metrics_namespace},service,area} MetricName=\"jvm.memory.used\" service=\"customer\" area=\"heap\"', 'Average', 60)"
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service,area} MetricName=\"jvm.memory.used\" service=\"customer\" area=\"heap\"', 'Average', 60))"
                 label      = "heap used"
                 id         = "e1"
               }
@@ -487,7 +487,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "SEARCH('{${local.application_metrics_namespace},service} MetricName=\"hikaricp.connections.active\" service=\"customer\"', 'Average', 60)"
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"hikaricp.connections.active\" service=\"customer\"', 'Average', 60))"
                 label      = "active connections"
                 id         = "e1"
               }
@@ -512,7 +512,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.busy\" service=\"customer\"', 'Average', 60)"
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.busy\" service=\"customer\"', 'Average', 60))"
                 label      = "busy threads"
                 id         = "e1"
               }
@@ -537,14 +537,14 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.current\" service=\"customer\"', 'Average', 60)"
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.current\" service=\"customer\"', 'Average', 60))"
                 label      = "current threads"
                 id         = "e1"
               }
             ],
             [
               {
-                expression = "SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.config.max\" service=\"customer\"', 'Maximum', 60)"
+                expression = "MAX(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.config.max\" service=\"customer\"', 'Maximum', 60))"
                 label      = "max threads"
                 id         = "e2"
               }

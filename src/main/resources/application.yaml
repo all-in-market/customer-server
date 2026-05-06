@@ -51,11 +51,11 @@ management:
       service: ${APP_SERVICE_NAME:customer}
 
     # http.server.requests 메트릭에 대해
-    # p50 / p95 / p99 latency 계산 + histogram 생성
+    # p95 latency 계산 + histogram 생성
     # histogram: 응답시간 데이터를 구간별로 묶어줌 (0~100ms 구간, 100~500ms 구간 ...)
     distribution:
       percentiles:
-        http.server.requests: 0.5,0.95,0.99
+        http.server.requests: 0.95
       percentiles-histogram:
         http.server.requests: true
 

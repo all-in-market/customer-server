@@ -86,6 +86,8 @@ locals {
 
       REDIS_HOST = aws_elasticache_replication_group.this.primary_endpoint_address
       REDIS_PORT = "6379"
+
+      APP_SERVICE_NAME = "admin"
     }
   )
 
@@ -105,6 +107,8 @@ locals {
 
       REDIS_HOST = aws_elasticache_replication_group.this.primary_endpoint_address
       REDIS_PORT = "6379"
+
+      APP_SERVICE_NAME = "alarm"
     }
   )
 
@@ -124,6 +128,8 @@ locals {
 
       REDIS_HOST = aws_elasticache_replication_group.this.primary_endpoint_address
       REDIS_PORT = "6379"
+
+      APP_SERVICE_NAME = "chat"
     }
   )
 

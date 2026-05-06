@@ -8,9 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+@Profile("local")
 @Slf4j
 @Component
 @RequiredArgsConstructor

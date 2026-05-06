@@ -33,6 +33,11 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  cloud:
+    aws:
+      cloudwatch:
+        enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
+
 management:
   endpoints:
     web:
@@ -61,12 +66,16 @@ management:
         http.server.requests: true
 
   # Micrometer 메트릭을 CloudWatch Metrics로 어떻게 보낼지 설정
-    export:
-      cloudwatch:
+  cloudwatch:
+    metrics:
+      export:
         enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
         namespace: ${CLOUDWATCH_METRICS_NAMESPACE:all-in-market/dev/ApplicationMetrics}
         step: 60s
         batch-size: 20
+
+
+
 
 jwt:
   secret: ${JWT_SECRET}

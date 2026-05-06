@@ -70,7 +70,6 @@ dependencies {
 
     // monitoring (Cloudwatch)
     implementation 'io.micrometer:micrometer-registry-cloudwatch2'
-    implementation 'software.amazon.awssdk:cloudwatch'
 
     // monitoring (Prometheus)
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'

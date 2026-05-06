@@ -4,6 +4,7 @@ import io.micrometer.cloudwatch2.CloudWatchConfig;
 import io.micrometer.cloudwatch2.CloudWatchMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,9 @@ import java.time.Duration;
 
 @Configuration
 public class CloudWatchMetricsConfig {
+
+    @Value("${management.cloudwatch.metrics.namespace:all-in-market/ApplicationMetrics}")
+    private String cloudWatchNamespace;
 
     @Bean
     @ConditionalOnProperty(
@@ -39,10 +43,7 @@ public class CloudWatchMetricsConfig {
 
             @Override
             public String namespace() {
-                return System.getenv().getOrDefault(
-                        "CLOUDWATCH_METRICS_NAMESPACE",
-                        "all-in-market/dev/ApplicationMetrics"
-                );
+                return cloudWatchNamespace;
             }
 
             @Override

@@ -35,6 +35,8 @@ spring:
 
   cloud:
     aws:
+      region:
+        static: ap-northeast-2
       cloudwatch:
         enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
 
@@ -69,10 +71,9 @@ management:
   cloudwatch:
     metrics:
       export:
-        enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
+        enabled: ${CLOUDWATCH_METRICS_ENABLED:true}
         namespace: ${CLOUDWATCH_METRICS_NAMESPACE:all-in-market/dev/ApplicationMetrics}
         step: 60s
-        batch-size: 20
 
 
 

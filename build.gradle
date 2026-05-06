@@ -70,6 +70,8 @@ dependencies {
 
     // monitoring (Cloudwatch)
     implementation 'io.micrometer:micrometer-registry-cloudwatch2'
+    implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:4.0.0')
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-metrics'
 
     // monitoring (Prometheus)
     implementation 'io.micrometer:micrometer-registry-prometheus'

@@ -100,11 +100,7 @@ data "aws_iam_policy_document" "ecs_task_cloudwatch_metrics" {
 
     resources = ["*"]
 
-    condition {
-      test     = "StringEquals"
-      variable = "cloudwatch:namespace"
-      values   = [local.application_metrics_namespace]
-    }
+
   }
 }
 

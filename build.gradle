@@ -72,7 +72,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-cloudwatch2'
 
     // monitoring (Prometheus)
-    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

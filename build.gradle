@@ -68,8 +68,8 @@ dependencies {
     // actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // monitoring (Cloudwatch), 메트릭 수집은 실행 시점에 필요하기 때문에 runtimeOnly로 설정
-    runtimeOnly 'io.micrometer:micrometer-registry-cloudwatch2'
+    // monitoring (Cloudwatch)
+    implementation 'io.micrometer:micrometer-registry-cloudwatch2'
 
     // monitoring (Prometheus)
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'

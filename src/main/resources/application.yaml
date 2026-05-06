@@ -37,7 +37,36 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info,metrics,prometheus
+
+  endpoint:
+    health:
+      show-details: never
+
+  # 생성되는 metrics에 어디서 발생한 metrics인지 tag 부착
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${SPRING_PROFILES_ACTIVE:local}
+      service: ${APP_SERVICE_NAME:customer}
+
+    # http.server.requests 메트릭에 대해
+    # p95 latency 계산 + histogram 생성
+    # histogram: 응답시간 데이터를 구간별로 묶어줌 (0~100ms 구간, 100~500ms 구간 ...)
+    distribution:
+      percentiles:
+        http.server.requests: 0.95
+      percentiles-histogram:
+        http.server.requests: true
+
+  # Micrometer 메트릭을 CloudWatch Metrics로 어떻게 보낼지 설정
+  cloudwatch:
+    metrics:
+      export:
+        enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
+        namespace: ${CLOUDWATCH_METRICS_NAMESPACE:all-in-market/dev/ApplicationMetrics}
+        step: 60s
+        batch-size: 20
 
 jwt:
   secret: ${JWT_SECRET}

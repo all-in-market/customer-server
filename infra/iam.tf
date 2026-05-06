@@ -90,3 +90,32 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_ssm" {
   role       = aws_iam_role.ecs_task_execution.name
   policy_arn = aws_iam_policy.ecs_task_execution_ssm.arn
 }
+
+# cloudwatch에 메트릭 데이터를 넣을 권한
+data "aws_iam_policy_document" "ecs_task_cloudwatch_metrics" {
+  statement {
+    actions = [
+      "cloudwatch:PutMetricData"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "cloudwatch:namespace"
+      values   = [local.application_metrics_namespace]
+    }
+  }
+}
+
+resource "aws_iam_policy" "ecs_task_cloudwatch_metrics" {
+  name   = "${local.name_prefix}-${var.environment}-ecs-task-cloudwatch-metrics"
+  policy = data.aws_iam_policy_document.ecs_task_cloudwatch_metrics.json
+
+  tags = local.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_cloudwatch_metrics" {
+  role       = aws_iam_role.ecs_task.name
+  policy_arn = aws_iam_policy.ecs_task_cloudwatch_metrics.arn
+}

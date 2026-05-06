@@ -62,6 +62,11 @@ locals {
       DB_USERNAME = var.db_username
       REDIS_HOST  = aws_elasticache_replication_group.this.primary_endpoint_address
       REDIS_PORT  = "6379"
+
+      APP_SERVICE_NAME = "customer"
+
+      CLOUDWATCH_METRICS_ENABLED   = "true"
+      CLOUDWATCH_METRICS_NAMESPACE = local.application_metrics_namespace
     }
   )
 
@@ -81,6 +86,8 @@ locals {
 
       REDIS_HOST = aws_elasticache_replication_group.this.primary_endpoint_address
       REDIS_PORT = "6379"
+
+      APP_SERVICE_NAME = "admin"
     }
   )
 
@@ -100,6 +107,8 @@ locals {
 
       REDIS_HOST = aws_elasticache_replication_group.this.primary_endpoint_address
       REDIS_PORT = "6379"
+
+      APP_SERVICE_NAME = "alarm"
     }
   )
 
@@ -119,6 +128,8 @@ locals {
 
       REDIS_HOST = aws_elasticache_replication_group.this.primary_endpoint_address
       REDIS_PORT = "6379"
+
+      APP_SERVICE_NAME = "chat"
     }
   )
 

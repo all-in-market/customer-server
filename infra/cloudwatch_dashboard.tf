@@ -383,6 +383,174 @@ resource "aws_cloudwatch_dashboard" "main" {
             ]
           ]
         }
+      },
+      {
+        type   = "text"
+        x      = 0
+        y      = 38
+        width  = 24
+        height = 2
+
+        properties = {
+          markdown = "## Application Metrics - Micrometer / Actuator"
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 40
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Customer HTTP Requests"
+          region  = var.aws_region
+          view    = "timeSeries"
+          stacked = false
+          period  = 60
+
+          metrics = [
+            [
+              {
+                expression = "SUM(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"http.server.requests.count\" service=\"customer\"', 'Sum', 60))"
+                label      = "customer requests"
+                id         = "e1"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 40
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Customer HTTP 5xx"
+          region  = var.aws_region
+          view    = "timeSeries"
+          stacked = false
+          period  = 60
+
+          metrics = [
+            [
+              {
+                expression = "SUM(SEARCH('{${local.application_metrics_namespace},service,outcome} MetricName=\"http.server.requests.count\" service=\"customer\" outcome=\"SERVER_ERROR\"', 'Sum', 60))"
+                label      = "customer 5xx"
+                id         = "e1"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 46
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Customer JVM Heap Used"
+          region  = var.aws_region
+          view    = "timeSeries"
+          stacked = false
+          period  = 60
+
+          metrics = [
+            [
+              {
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service,area} MetricName=\"jvm.memory.used\" service=\"customer\" area=\"heap\"', 'Average', 60))"
+                label      = "heap used"
+                id         = "e1"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 46
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Customer HikariCP Active Connections"
+          region  = var.aws_region
+          view    = "timeSeries"
+          stacked = false
+          period  = 60
+
+          metrics = [
+            [
+              {
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"hikaricp.connections.active\" service=\"customer\"', 'Average', 60))"
+                label      = "active connections"
+                id         = "e1"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 52
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Customer Tomcat Busy Threads"
+          region  = var.aws_region
+          view    = "timeSeries"
+          stacked = false
+          period  = 60
+
+          metrics = [
+            [
+              {
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.busy\" service=\"customer\"', 'Average', 60))"
+                label      = "busy threads"
+                id         = "e1"
+              }
+            ]
+          ]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 52
+        width  = 12
+        height = 6
+
+        properties = {
+          title   = "Customer Tomcat Threads"
+          region  = var.aws_region
+          view    = "timeSeries"
+          stacked = false
+          period  = 60
+
+          metrics = [
+            [
+              {
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.current\" service=\"customer\"', 'Average', 60))"
+                label      = "current threads"
+                id         = "e1"
+              }
+            ],
+            [
+              {
+                expression = "MAX(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.config.max\" service=\"customer\"', 'Maximum', 60))"
+                label      = "max threads"
+                id         = "e2"
+              }
+            ]
+          ]
+        }
       }
     ]
   })

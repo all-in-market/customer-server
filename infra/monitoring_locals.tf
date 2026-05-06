@@ -3,6 +3,8 @@ locals {
 
   db_connection_threshold = floor(var.db_max_connections * 0.8)
 
+  application_metrics_namespace = "${local.name_prefix}/${var.environment}/ApplicationMetrics"
+
   ecs_services = merge(
     {
       customer = aws_ecs_service.customer.name

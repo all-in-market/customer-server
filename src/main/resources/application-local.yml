@@ -11,6 +11,7 @@ dummy:
   buyer-cart-count: 300000
   product-count: 1000000
   address-count: 300000
+  order-count: 300000
 
 notification-server:
   url: http://localhost:8083

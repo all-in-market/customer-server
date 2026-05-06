@@ -2,6 +2,9 @@ package com.example.allinmarket.common.initializer.dummy;
 
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
+import com.example.allinmarket.domain.order.enums.OrderStatus;
+import com.example.allinmarket.domain.payment.enums.MethodEnum;
+import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.seller.enums.SellerStatus;
 import com.example.allinmarket.seller.repository.SellerRepository;
@@ -14,10 +17,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -32,6 +35,8 @@ public class DummyDataService {
     private static final int BUYER_BATCH_SIZE = 1000;
     private static final int CART_BATCH_SIZE = 1000;
     private static final int ADDRESS_BATCH_SIZE = 1000;
+    private static final int CartItem_BATCH_SIZE = 1000;
+    private static final int Order_BATCH_SIZE = 1000;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
     private final SellerRepository sellerRepository;
@@ -342,5 +347,204 @@ public class DummyDataService {
         long finished = System.currentTimeMillis() - start;
 
         log.info("address batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 카트 아이템 더미 데이터 생성
+     */
+    public void createDummyCartItem(int totalCartItemCount) {
+        long start = System.currentTimeMillis();
+
+        List<Object[]> batchCartItem = new ArrayList<>(CartItem_BATCH_SIZE);
+        List<Long> buyerIdList = jdbcTemplate.queryForList("SELECT id FROM buyers", Long.class);
+        List<Long> productIdList = jdbcTemplate.queryForList("SELECT id FROM products", Long.class);
+
+
+        String sql = """
+                INSERT INTO cart_items
+                (cart_id, product_id, quantity, created_at, updated_at)
+                VALUES (?, ?, ?, now(), now())
+                """;
+
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+
+        for (int i = 0; i < totalCartItemCount; i++) {
+
+            Long cartId = buyerIdList.get(i);
+            Long productId = productIdList.get(random.nextInt(productIdList.size()));
+            int quantity = random.nextInt(1,5);
+
+            batchCartItem.add(new Object[]{cartId, productId, quantity});
+
+            if (batchCartItem.size() == CartItem_BATCH_SIZE) {
+                jdbcTemplate.batchUpdate(sql, batchCartItem);
+                batchCartItem.clear();
+
+                long elapsed = System.currentTimeMillis() - start;
+
+                log.info("create {} cart_items in {} s", i + 1, elapsed / 1000.0);
+            }
+        }
+
+        if (!batchCartItem.isEmpty()) {
+            jdbcTemplate.batchUpdate(sql, batchCartItem);
+        }
+
+        long finished = System.currentTimeMillis() - start;
+
+        log.info("cart_items batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 주문(결제 이전) 더미 데이터 생성
+     */
+    public void createDummyOrderBeforePayment(int totalOrderCount) {
+        long start = System.currentTimeMillis();
+
+        List<Object[]> batchOrder = new ArrayList<>(Order_BATCH_SIZE);
+        List<Long> buyerIdList = jdbcTemplate.queryForList("SELECT id FROM buyers", Long.class);
+
+
+        String sql = """
+                INSERT INTO orders
+                (buyer_id, total_amount, status, tracking_number, recipient, phone, address, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, now(), now())
+                """;
+
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+
+        for (int i = 0; i < totalOrderCount; i++) {
+
+            Long buyerId = buyerIdList.get(i);
+            BigDecimal totalAmount = BigDecimal.valueOf(random.nextInt(100000));
+            String status = OrderStatus.CREATED.getStatus();
+            String trackingNumber = UUID.randomUUID().toString();
+            String recipient = faker.name().fullName() + "_" + i;
+            String phone = faker.phoneNumber().phoneNumber();
+            String address = faker.address().fullAddress();
+
+            batchOrder.add(new Object[]{buyerId, totalAmount, status, trackingNumber, recipient, phone, address});
+
+            if (batchOrder.size() == Order_BATCH_SIZE) {
+                jdbcTemplate.batchUpdate(sql, batchOrder);
+                batchOrder.clear();
+
+                long elapsed = System.currentTimeMillis() - start;
+
+                log.info("create {} beforePaymentOrders in {} s", i + 1, elapsed / 1000.0);
+            }
+        }
+
+        if (!batchOrder.isEmpty()) {
+            jdbcTemplate.batchUpdate(sql, batchOrder);
+        }
+
+        long finished = System.currentTimeMillis() - start;
+
+        log.info("beforePaymentOrders batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 주문(결제 완료) 더미 데이터 생성
+     */
+    public void createDummyOrderAfterPayment(int totalOrderCount) {
+        long start = System.currentTimeMillis();
+
+        List<Object[]> batchOrder = new ArrayList<>(Order_BATCH_SIZE);
+        List<Long> buyerIdList = jdbcTemplate.queryForList("SELECT id FROM buyers", Long.class);
+
+        String sql = """
+                INSERT INTO orders
+                (buyer_id, total_amount, status, tracking_number, recipient, phone, address, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+
+        for (int i = 0; i < totalOrderCount; i++) {
+
+            Long buyerId = buyerIdList.get(i);
+            BigDecimal totalAmount = BigDecimal.valueOf(random.nextInt(100000));
+            String status = OrderStatus.PAID.getStatus();
+            String trackingNumber = UUID.randomUUID().toString();
+            String recipient = faker.name().fullName() + "_" + i;
+            String phone = faker.phoneNumber().phoneNumber();
+            String address = faker.address().fullAddress();
+            LocalDateTime minus7days = LocalDateTime.now().minusDays(random.nextInt(1,7));
+
+            batchOrder.add(new Object[]{buyerId, totalAmount, status, trackingNumber, recipient, phone, address, minus7days, minus7days});
+
+            if (batchOrder.size() == Order_BATCH_SIZE) {
+                jdbcTemplate.batchUpdate(sql, batchOrder);
+                batchOrder.clear();
+
+                long elapsed = System.currentTimeMillis() - start;
+
+                log.info("create {} afterPaymentOrders in {} s", i + 1, elapsed / 1000.0);
+            }
+        }
+
+        if (!batchOrder.isEmpty()) {
+            jdbcTemplate.batchUpdate(sql, batchOrder);
+        }
+
+        long finished = System.currentTimeMillis() - start;
+
+        log.info("afterPaymentOrders batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 결제 완료 더미 데이터 생성
+     */
+    public void createDummyPayment() {
+        long start = System.currentTimeMillis();
+        int count = 0;
+
+        List<Object[]> batchPayment = new ArrayList<>(Order_BATCH_SIZE);
+
+        List<Map<String, Object>> orderList = jdbcTemplate.queryForList("SELECT id, total_amount, created_at FROM orders WHERE status = 'PAID'"
+        );
+
+
+        String sql = """
+                INSERT INTO payments
+                (order_id, merchant_uid, amount, method, status, paid_at, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+
+        for (Map<String, Object> row : orderList) {
+
+            Long orderId = ((Number) row.get("id")).longValue();
+            String merchantUid = UUID.randomUUID().toString();
+            BigDecimal amount = (BigDecimal) row.get("total_amount");
+            String method = MethodEnum.MOCK.name();
+            String status = PaymentStatus.SUCCESS.name();
+            LocalDateTime orderDate = ((Timestamp) row.get("created_at")).toLocalDateTime();
+            LocalDateTime paidAt = orderDate.plusMinutes(random.nextInt(1, 6));
+
+            batchPayment.add(new Object[]{orderId, merchantUid, amount, method, status, paidAt, paidAt, paidAt});
+
+            if (batchPayment.size() == Order_BATCH_SIZE) {
+                jdbcTemplate.batchUpdate(sql, batchPayment);
+                batchPayment.clear();
+
+                long elapsed = System.currentTimeMillis() - start;
+
+                count = count + Order_BATCH_SIZE;
+
+                log.info("create {} payments in {} s", count, elapsed / 1000.0);
+
+            }
+        }
+
+        if (!batchPayment.isEmpty()) {
+            jdbcTemplate.batchUpdate(sql, batchPayment);
+        }
+
+        long finished = System.currentTimeMillis() - start;
+
+        log.info("payments batchUpdate finished in {} s", finished / 1000.0);
     }
 }

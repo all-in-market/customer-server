@@ -17,4 +17,5 @@ public class DummyProperties {
     private int productCount;
     private int buyerCartCount;
     private int addressCount;
+    private int orderCount;
 }

@@ -1,13 +1,11 @@
 package com.example.allinmarket.common.initializer.dummy;
 
 import com.example.allinmarket.common.enums.UserRole;
-import com.example.allinmarket.domain.category.repository.CategoryRepository;
 import com.example.allinmarket.domain.order.enums.OrderStatus;
 import com.example.allinmarket.domain.payment.enums.MethodEnum;
 import com.example.allinmarket.domain.payment.enums.PaymentStatus;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
 import com.example.allinmarket.seller.enums.SellerStatus;
-import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.datafaker.Faker;
@@ -35,12 +33,12 @@ public class DummyDataService {
     private static final int BUYER_BATCH_SIZE = 1000;
     private static final int CART_BATCH_SIZE = 1000;
     private static final int ADDRESS_BATCH_SIZE = 1000;
-    private static final int CartItem_BATCH_SIZE = 1000;
-    private static final int Order_BATCH_SIZE = 1000;
+    private static final int CART_ITEM_BATCH_SIZE = 1000;
+    private static final int ORDER_BATCH_SIZE = 1000;
+    private static final int ORDER_ITEM_BATCH_SIZE = 1000;
+    private static final int DAILY_STATISTICS_BATCH_SIZE = 1000;
     private final JdbcTemplate jdbcTemplate;
     private final PasswordEncoder passwordEncoder;
-    private final SellerRepository sellerRepository;
-    private final CategoryRepository categoryRepository;
     private final Faker faker = new Faker(new Locale("ko"));
 
     /**
@@ -355,7 +353,7 @@ public class DummyDataService {
     public void createDummyCartItem(int totalCartItemCount) {
         long start = System.currentTimeMillis();
 
-        List<Object[]> batchCartItem = new ArrayList<>(CartItem_BATCH_SIZE);
+        List<Object[]> batchCartItem = new ArrayList<>(CART_ITEM_BATCH_SIZE);
         List<Long> buyerIdList = jdbcTemplate.queryForList("SELECT id FROM buyers", Long.class);
         List<Long> productIdList = jdbcTemplate.queryForList("SELECT id FROM products", Long.class);
 
@@ -376,7 +374,7 @@ public class DummyDataService {
 
             batchCartItem.add(new Object[]{cartId, productId, quantity});
 
-            if (batchCartItem.size() == CartItem_BATCH_SIZE) {
+            if (batchCartItem.size() == CART_ITEM_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchCartItem);
                 batchCartItem.clear();
 
@@ -401,7 +399,7 @@ public class DummyDataService {
     public void createDummyOrderBeforePayment(int totalOrderCount) {
         long start = System.currentTimeMillis();
 
-        List<Object[]> batchOrder = new ArrayList<>(Order_BATCH_SIZE);
+        List<Object[]> batchOrder = new ArrayList<>(ORDER_BATCH_SIZE);
         List<Long> buyerIdList = jdbcTemplate.queryForList("SELECT id FROM buyers", Long.class);
 
 
@@ -425,7 +423,7 @@ public class DummyDataService {
 
             batchOrder.add(new Object[]{buyerId, totalAmount, status, trackingNumber, recipient, phone, address});
 
-            if (batchOrder.size() == Order_BATCH_SIZE) {
+            if (batchOrder.size() == ORDER_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchOrder);
                 batchOrder.clear();
 
@@ -447,50 +445,137 @@ public class DummyDataService {
     /**
      * 주문(결제 완료) 더미 데이터 생성
      */
-    public void createDummyOrderAfterPayment(int totalOrderCount) {
+    public void createDummyOrderWithItems(int totalOrderCount) {
+
         long start = System.currentTimeMillis();
-
-        List<Object[]> batchOrder = new ArrayList<>(Order_BATCH_SIZE);
-        List<Long> buyerIdList = jdbcTemplate.queryForList("SELECT id FROM buyers", Long.class);
-
-        String sql = """
-                INSERT INTO orders
-                (buyer_id, total_amount, status, tracking_number, recipient, phone, address, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """;
-
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
-        for (int i = 0; i < totalOrderCount; i++) {
+        List<Long> buyerIds = jdbcTemplate.queryForList("SELECT id FROM buyers", Long.class);
+        List<Map<String, Object>> products =
+                jdbcTemplate.queryForList("SELECT id, seller_id, name FROM products");
 
-            Long buyerId = buyerIdList.get(i);
-            BigDecimal totalAmount = BigDecimal.valueOf(random.nextInt(100000));
-            String status = OrderStatus.PAID.getStatus();
-            String trackingNumber = UUID.randomUUID().toString();
-            String recipient = faker.name().fullName() + "_" + i;
-            String phone = faker.phoneNumber().phoneNumber();
-            String address = faker.address().fullAddress();
-            LocalDateTime minus7days = LocalDateTime.now().minusDays(random.nextInt(1,7));
+        String itemSql = """
+        INSERT INTO order_items
+        (order_id, product_id, seller_id, product_name, unit_price, quantity, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """;
 
-            batchOrder.add(new Object[]{buyerId, totalAmount, status, trackingNumber, recipient, phone, address, minus7days, minus7days});
+        int createdOrderCount = 0;
 
-            if (batchOrder.size() == Order_BATCH_SIZE) {
-                jdbcTemplate.batchUpdate(sql, batchOrder);
-                batchOrder.clear();
+        for (int i = 0; i < totalOrderCount; i += ORDER_BATCH_SIZE) {
 
-                long elapsed = System.currentTimeMillis() - start;
+            int currentBatchSize = Math.min(ORDER_BATCH_SIZE, totalOrderCount - i);
 
-                log.info("create {} afterPaymentOrders in {} s", i + 1, elapsed / 1000.0);
+            List<Object[]> orderBatch = new ArrayList<>(currentBatchSize);
+            List<List<Object[]>> itemBufferPerOrder = new ArrayList<>(currentBatchSize);
+
+            for (int j = 0; j < currentBatchSize; j++) {
+
+                Long buyerId = buyerIds.get(random.nextInt(buyerIds.size()));
+                LocalDateTime createdAt = LocalDateTime.now().minusDays(random.nextInt(1, 7));
+
+                int itemCount = random.nextInt(1, 4);
+
+                BigDecimal totalAmount = BigDecimal.ZERO;
+                List<Object[]> itemBuffer = new ArrayList<>();
+
+                for (int k = 0; k < itemCount; k++) {
+
+                    Map<String, Object> product = products.get(random.nextInt(products.size()));
+
+                    Long productId = ((Number) product.get("id")).longValue();
+                    Long sellerId = ((Number) product.get("seller_id")).longValue();
+                    String name = product.get("name").toString();
+
+                    BigDecimal price = BigDecimal.valueOf(random.nextInt(1000, 10000));
+                    int quantity = random.nextInt(1, 5);
+
+                    totalAmount = totalAmount.add(price.multiply(BigDecimal.valueOf(quantity)));
+
+                    itemBuffer.add(new Object[]{
+                            productId, sellerId, name,
+                            price, quantity,
+                            createdAt, createdAt
+                    });
+                }
+
+                orderBatch.add(new Object[]{
+                        buyerId,
+                        totalAmount,
+                        OrderStatus.PAID.getStatus(),
+                        UUID.randomUUID().toString(),
+                        faker.name().fullName(),
+                        faker.phoneNumber().phoneNumber(),
+                        faker.address().fullAddress(),
+                        createdAt,
+                        createdAt
+                });
+
+                itemBufferPerOrder.add(itemBuffer);
             }
-        }
 
-        if (!batchOrder.isEmpty()) {
-            jdbcTemplate.batchUpdate(sql, batchOrder);
+            StringBuilder sqlBuilder = new StringBuilder("""
+            INSERT INTO orders
+            (buyer_id, total_amount, status, tracking_number, recipient, phone, address, created_at, updated_at)
+            VALUES
+        """);
+
+            List<Object> params = new ArrayList<>();
+
+            for (int j = 0; j < orderBatch.size(); j++) {
+
+                sqlBuilder.append("(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+                if (j < orderBatch.size() - 1) {
+                    sqlBuilder.append(", ");
+                }
+
+                Object[] order = orderBatch.get(j);
+                Collections.addAll(params, order);
+            }
+
+            sqlBuilder.append(" RETURNING id");
+
+            List<Long> orderIds = jdbcTemplate.query(
+                    sqlBuilder.toString(),
+                    params.toArray(),
+                    (rs, rowNum) -> rs.getLong(1)
+            );
+
+            List<Object[]> itemBatch = new ArrayList<>(ORDER_ITEM_BATCH_SIZE);
+
+            for (int idx = 0; idx < orderIds.size(); idx++) {
+
+                Long orderId = orderIds.get(idx);
+                List<Object[]> items = itemBufferPerOrder.get(idx);
+
+                for (Object[] item : items) {
+
+                    itemBatch.add(new Object[]{
+                            orderId,
+                            item[0], item[1], item[2],
+                            item[3], item[4], item[5], item[6]
+                    });
+
+                    if (itemBatch.size() == ORDER_ITEM_BATCH_SIZE) {
+                        jdbcTemplate.batchUpdate(itemSql, itemBatch);
+                        itemBatch.clear();
+                    }
+                }
+            }
+
+            if (!itemBatch.isEmpty()) {
+                jdbcTemplate.batchUpdate(itemSql, itemBatch);
+            }
+
+            createdOrderCount += currentBatchSize;
+
+            long elapsed = System.currentTimeMillis() - start;
+            log.info("create {} orders in {} s", createdOrderCount, elapsed / 1000.0);
         }
 
         long finished = System.currentTimeMillis() - start;
-
-        log.info("afterPaymentOrders batchUpdate finished in {} s", finished / 1000.0);
+        log.info("orders batchUpdate finished in {} s", finished / 1000.0);
     }
 
     /**
@@ -500,11 +585,10 @@ public class DummyDataService {
         long start = System.currentTimeMillis();
         int count = 0;
 
-        List<Object[]> batchPayment = new ArrayList<>(Order_BATCH_SIZE);
+        List<Object[]> batchPayment = new ArrayList<>(ORDER_BATCH_SIZE);
 
         List<Map<String, Object>> orderList = jdbcTemplate.queryForList("SELECT id, total_amount, created_at FROM orders WHERE status = 'PAID'"
         );
-
 
         String sql = """
                 INSERT INTO payments
@@ -526,13 +610,13 @@ public class DummyDataService {
 
             batchPayment.add(new Object[]{orderId, merchantUid, amount, method, status, paidAt, paidAt, paidAt});
 
-            if (batchPayment.size() == Order_BATCH_SIZE) {
+            if (batchPayment.size() == ORDER_BATCH_SIZE) {
                 jdbcTemplate.batchUpdate(sql, batchPayment);
                 batchPayment.clear();
 
                 long elapsed = System.currentTimeMillis() - start;
 
-                count = count + Order_BATCH_SIZE;
+                count = count + ORDER_BATCH_SIZE;
 
                 log.info("create {} payments in {} s", count, elapsed / 1000.0);
 
@@ -546,5 +630,79 @@ public class DummyDataService {
         long finished = System.currentTimeMillis() - start;
 
         log.info("payments batchUpdate finished in {} s", finished / 1000.0);
+    }
+
+    /**
+     * 일일 통계 더미 데이터 생성
+     */
+    public void createDummyDailyStatistics() {
+        int count = 0;
+
+        long start = System.currentTimeMillis();
+
+        List<Object[]> batchDailyStatistics = new ArrayList<>(DAILY_STATISTICS_BATCH_SIZE);
+
+        String sql = """
+            SELECT oi.seller_id,
+                   DATE(o.created_at) AS stat_date,
+                   COUNT(DISTINCT o.id) AS total_orders,
+                   SUM(oi.quantity) AS total_items,
+                   SUM(oi.unit_price * oi.quantity) AS total_sales,
+                   SUM(CASE WHEN r.status = 'SUCCESS' THEN 1 ELSE 0 END) AS total_refunds,
+                   SUM(CASE WHEN r.status = 'SUCCESS' THEN oi.unit_price * oi.quantity ELSE 0 END) AS refund_amount
+            FROM orders o
+            JOIN order_items oi ON oi.order_id = o.id
+            JOIN payments p ON p.order_id = o.id
+            LEFT JOIN refunds r ON r.payment_id = p.id
+            WHERE o.created_at >= NOW() - INTERVAL '7 days'
+            GROUP BY oi.seller_id, DATE(o.created_at);
+            """;
+
+        List<Map<String, Object>> stats = jdbcTemplate.queryForList(sql);
+
+        if (stats.isEmpty()) {
+            log.warn("statistics 데이터 없음");
+            return;
+        }
+
+        String insertSql = """
+            INSERT INTO seller_daily_statistics
+            (seller_id, stat_date, total_orders, total_items, total_sales, total_refunds, refund_amount, net_sales, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, now())
+            """;
+
+        for (Map<String, Object> row : stats) {
+
+            Long sellerId = ((Number) row.get("seller_id")).longValue();
+            LocalDate statDate = ((Date) row.get("stat_date")).toLocalDate();
+            int totalOrders = ((Number) row.get("total_orders")).intValue();
+            int totalItems = row.get("total_items") != null ? ((Number) row.get("total_items")).intValue() : 0;
+            BigDecimal totalSales = row.get("total_sales") != null ? (BigDecimal) row.get("total_sales") : BigDecimal.ZERO;
+            int totalRefunds = row.get("total_refunds") != null ? ((Number) row.get("total_refunds")).intValue() : 0;
+            BigDecimal refundAmount = row.get("refund_amount") != null ? (BigDecimal) row.get("refund_amount") : BigDecimal.ZERO;
+            BigDecimal netSales = totalSales.subtract(refundAmount);
+
+            batchDailyStatistics.add(new Object[]{
+                    sellerId, statDate, totalOrders, totalItems, totalSales, totalRefunds, refundAmount, netSales
+            });
+
+            if (batchDailyStatistics.size() == DAILY_STATISTICS_BATCH_SIZE) {
+                jdbcTemplate.batchUpdate(insertSql, batchDailyStatistics);
+                batchDailyStatistics.clear();
+
+                long elapsed = System.currentTimeMillis() - start;
+
+                count = count + DAILY_STATISTICS_BATCH_SIZE;
+
+                log.info("create {} dailyStatistics in {} s", batchDailyStatistics.size(), elapsed / 1000.0);
+            }
+        }
+
+        if (!batchDailyStatistics.isEmpty()) {
+            jdbcTemplate.batchUpdate(insertSql, batchDailyStatistics);
+        }
+
+        long finished = System.currentTimeMillis() - start;
+        log.info("dailyStatistics batchUpdate finished in {} s", finished / 1000.0);
     }
 }

@@ -44,6 +44,7 @@ management:
       show-details: never
 
   # 생성되는 metrics에 어디서 발생한 metrics인지 tag 부착
+  # 아래 3개 dimension은 모든 Metric에 공통적으로 붙여짐
   metrics:
     tags:
       application: ${spring.application.name}
@@ -60,9 +61,8 @@ management:
         http.server.requests: true
 
   # Micrometer 메트릭을 CloudWatch Metrics로 어떻게 보낼지 설정
-  cloudwatch:
-    metrics:
-      export:
+    export:
+      cloudwatch:
         enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
         namespace: ${CLOUDWATCH_METRICS_NAMESPACE:all-in-market/dev/ApplicationMetrics}
         step: 60s

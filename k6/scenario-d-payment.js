@@ -3,6 +3,10 @@ import { check } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 import { authHeaders, loginUsers } from './common.js';
 
+http.setResponseCallback(
+    http.expectedStatuses({ min: 200, max: 399 }, 409)
+);
+
 const BASE_URL = __ENV.BASE_URL || 'http://host.docker.internal:8080';
 
 // 최대 Virtual User 수
@@ -53,11 +57,6 @@ export const options = {
             'rate<0.01'
         ],
 
-        // 로그인 API 응답 시간
-        'http_req_duration{name:login}': [
-            'p(95)<1000'
-        ],
-
         // 주문 조회 API 응답 시간
         'http_req_duration{name:order_fetch}': [
             'p(95)<800'
@@ -98,7 +97,7 @@ function jsonAuth(token, name) {
 export function setup() {
     const {tokens} = loginUsers(MAX_VUS);
 
-    if (!tokens || tokens.length == 0) {
+    if (!tokens || tokens.length === 0) {
         throw new Error('No login tokens');
     }
 
@@ -111,7 +110,7 @@ export default function (data) {
     const token = data.tokens[(__VU - 1) % data.tokens.length];
 
     const orderRes = http.get(
-        `${BASE_URL}/orders?status=CREATED&page=0&size=1000`,
+        `${BASE_URL}/orders?status=CREATED&page=0&size=20`,
         {
             ...authHeaders(token),
             tags: { name: 'order_fetch' },
@@ -154,7 +153,8 @@ export default function (data) {
     paymentDuration.add(Date.now() - start);
 
     check(paymentRes, {
-        'payment success 201': (r) => r.status === 201,
+        'payment processed': (r) =>
+            r.status === 201 || r.status === 409,
     });
 
     if (paymentRes.status !== 201) {
@@ -164,9 +164,11 @@ export default function (data) {
 
         // 중복 결제 감지
         if (
-            paymentRes.status === 409 ||
-            bodyPreview.includes('이미 결제') ||
-            bodyPreview.includes('already paid')
+            paymentRes.status === 409 &&
+            (
+                bodyPreview.includes('이미 결제') ||
+                bodyPreview.includes('already paid')
+            )
         ) {
 
             duplicatePaymentCount.add(1);

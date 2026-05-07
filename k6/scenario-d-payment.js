@@ -3,9 +3,7 @@ import { check } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 import { authHeaders, loginUsers } from './common.js';
 
-http.setResponseCallback(
-    http.expectedStatuses({ min: 200, max: 399 }, 409)
-);
+const paymentResponseCallback = http.expectedStatuses(201, 409);
 
 const BASE_URL = __ENV.BASE_URL || 'http://host.docker.internal:8080';
 
@@ -146,7 +144,10 @@ export default function (data) {
             orderId,
             method: 'MOCK',
         }),
-        jsonAuth(token, 'payment_create')
+        {
+            ...jsonAuth(token, 'payment_create'),
+            responseCallback: paymentResponseCallback,
+        }
     );
 
     // 결제 API 응답 시간 기록

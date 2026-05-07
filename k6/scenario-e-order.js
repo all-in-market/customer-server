@@ -193,7 +193,7 @@ export default function (data) {
         jsonAuth(token, 'order_create')
     );
 
-    // 응담 시간 기록
+    // 응답 시간 기록
     orderDuration.add(Date.now() - start);
 
     // 성공 여부 기록

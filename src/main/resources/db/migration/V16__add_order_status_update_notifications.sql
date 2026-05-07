@@ -5,7 +5,7 @@ create table order_status_update_notifications
     order_id bigint not null,
     status varchar(255) not null,
     message varchar(255) not null,
-    is_read boolean,
+    is_read boolean not null default false,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     updated_at timestamp not null default CURRENT_TIMESTAMP
 );

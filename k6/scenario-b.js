@@ -77,7 +77,7 @@ export function setup() {
     // 1. 상품 ID 수집 (인증 불필요)
     const productRes = http.get(`${BASE_URL}/products?page=0&size=20`,
         {
-            tags: {name: 'product_detail'},
+            tags: {name: 'product_list'},
         }
     );
 
@@ -98,7 +98,7 @@ export function setup() {
     const productIds = products.map(p => p.id);
 
     // 2. 로그인 후 배송지 ID 수집
-    const { tokens } = loginUsers(MAX_VUS);
+    const { tokens } = loginUsers(50);
 
     const users = tokens.map(token => {
         const addrRes = http.get(`${BASE_URL}/addresses`, authHeaders(token));

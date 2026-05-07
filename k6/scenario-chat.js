@@ -4,8 +4,32 @@ import { Trend } from 'k6/metrics';
 import { loginUsers } from './common.js';
 
 const CHAT_URL = __ENV.CHAT_URL || 'http://host.docker.internal:8082';
-const MAX_VUS  = parseInt(__ENV.MAX_VUS || '50');
-const RUN_TAG  = __ENV.RUN_TAG || 'default';
+
+// 환경 변수 안전한 파싱
+function parseEnvInt(envVar, defaultValue, minValue) {
+    const value = __ENV[envVar];
+    if (!value) return defaultValue;
+
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) {
+        throw new Error(`${envVar}="${value}" 는 유효한 정수가 아닙니다.`);
+    }
+    if (parsed < minValue) {
+        throw new Error(`${envVar}=${parsed} 는 최소값 ${minValue}보다 작습니다.`);
+    }
+    return parsed;
+}
+
+const MAX_VUS = parseEnvInt('MAX_VUS', 50, 1);
+const PRE_ALLOCATED_VUS = parseEnvInt('PRE_ALLOCATED_VUS', Math.min(20, Math.floor(MAX_VUS * 0.4)), 1);
+const RUN_TAG = __ENV.RUN_TAG || 'default';
+
+// 검증: preAllocatedVUs <= maxVUs
+if (PRE_ALLOCATED_VUS > MAX_VUS) {
+    throw new Error(
+        `preAllocatedVUs (${PRE_ALLOCATED_VUS}) 는 maxVUs (${MAX_VUS}) 이하여야 합니다.`
+    );
+}
 
 // 챗봇 응답 레이턴시 커스텀 메트릭
 // Grafana 쿼리: SELECT percentile("value", 95) FROM "chat_duration_ms"
@@ -29,9 +53,12 @@ const stages = {
     ],
 };
 
-const testType = stages[__ENV.TEST_TYPE] ? __ENV.TEST_TYPE : 'smoke';
-if (__ENV.TEST_TYPE && !stages[__ENV.TEST_TYPE]) {
-    console.warn(`TEST_TYPE="${__ENV.TEST_TYPE}" 은 유효하지 않습니다. smoke 로 실행합니다. (유효값: smoke, load, stress)`);
+const testType = __ENV.TEST_TYPE || 'smoke';
+if (!stages[testType]) {
+    throw new Error(
+        `TEST_TYPE="${testType}" 은 유효하지 않습니다. ` +
+        `유효값: ${Object.keys(stages).join(', ')}`
+    );
 }
 
 export const options = {
@@ -40,7 +67,7 @@ export const options = {
             executor: 'ramping-arrival-rate',
             startRate: 1,
             timeUnit: '1s',
-            preAllocatedVUs: 20,
+            preAllocatedVUs: PRE_ALLOCATED_VUS,
             maxVUs: MAX_VUS,
             stages: stages[testType],
         },
@@ -71,10 +98,17 @@ const questions = [
 export function setup() {
     // 유저 1명만 로그인 — 챗봇은 인증된 사용자 1명으로 충분
     const { tokens } = loginUsers(1);
+    if (!tokens || !tokens[0]) {
+        throw new Error('setup 실패: 로그인 토큰을 획득하지 못했습니다.');
+    }
     return { token: tokens[0] };
 }
 
 export default function (data) {
+    if (!data || !data.token) {
+        throw new Error('setup에서 제공된 데이터가 없습니다.');
+    }
+
     const question = questions[Math.floor(Math.random() * questions.length)];
 
     const params = {

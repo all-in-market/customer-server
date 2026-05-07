@@ -1,7 +1,8 @@
-data "aws_ssoadmin_instances" "this" {}
-
+data "aws_ssoadmin_instances" "this" {
+  count = var.managed_grafana_enabled ? 1 : 0
+}
 locals {
-  identity_store_id = tolist(data.aws_ssoadmin_instances.this.identity_store_ids)[0]
+  identity_store_id = var.managed_grafana_enabled ? tolist(data.aws_ssoadmin_instances.this[0].identity_store_ids)[0] : ""
 }
 
 # IAM Identity Center 로그인에 사용할 사용자 생성

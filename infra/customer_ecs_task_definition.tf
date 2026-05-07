@@ -7,7 +7,7 @@ resource "aws_ecs_task_definition" "customer" {
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
   task_role_arn            = aws_iam_role.ecs_task.arn
 
-  # managed_prometheus_enabled = ture 일 경우, customer app과 ADOT collector 둘 다 실행
+  # managed_prometheus_enabled = true 일 경우, customer app과 ADOT collector 둘 다 실행
   # managed_prometheus_enabled = false 일 경우, customer app만 실행
   container_definitions = jsonencode(
     concat(

@@ -47,5 +47,5 @@ variable "managed_grafana_enabled" {
 # AWS가 공식 제공하는 ADOT 이미지
 variable "adot_collector_image" {
   type    = string
-  default = "public.ecr.aws/aws-observability/aws-otel-collector:latest"
+  default = "public.ecr.aws/aws-observability/aws-otel-collector:v0.44.0"
 }

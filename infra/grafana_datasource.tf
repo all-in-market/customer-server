@@ -12,6 +12,7 @@ resource "aws_grafana_workspace_service_account" "terraform" {
 }
 
 # Grafana Provider 인증용 Service Account Token
+# Grafana Provider 가 Grafana API 호출할 때 해당 토큰으로 인증
 resource "aws_grafana_workspace_service_account_token" "terraform" {
   count = var.managed_grafana_enabled ? 1 : 0
 
@@ -21,28 +22,4 @@ resource "aws_grafana_workspace_service_account_token" "terraform" {
 
   # 약 30일
   seconds_to_live = 2592000
-}
-
-# Grafana 내부에 Amazon Managed Prometheus datasource 생성
-resource "grafana_data_source" "amp" {
-  count = var.managed_grafana_enabled && var.managed_prometheus_enabled ? 1 : 0
-
-  type       = "prometheus"
-  name       = "${local.name_prefix}-${var.environment}-amp"
-  url        = trimsuffix(aws_prometheus_workspace.app[0].prometheus_endpoint, "/")
-  is_default = true
-
-  json_data_encoded = jsonencode({
-    httpMethod = "POST"
-
-    # Amazon Managed Prometheus 조회를 위한 SigV4 인증
-    sigV4Auth     = true
-    sigV4AuthType = "default"
-    sigV4Region   = var.aws_region
-  })
-
-  depends_on = [
-    aws_grafana_workspace_service_account_token.terraform,
-    aws_iam_role_policy_attachment.grafana_prometheus
-  ]
 }

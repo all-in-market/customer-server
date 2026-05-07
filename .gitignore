@@ -12,6 +12,10 @@ infra-bootstrap/.terraform/
 infra-bootstrap/*.tfstate
 infra-bootstrap/*.tfstate.*
 infra-bootstrap/.terraform.tfstate.lock.info
+infra-grafana/.terraform/
+infra-grafana/*.tfstate
+infra-grafana/*.tfstate.*
+infra-grafana/.terraform.tfstate.lock.info
 infra/.terraform/
 infra/*.tfstate
 infra/*.tfstate.*
@@ -22,6 +26,10 @@ infra-bootstrap/*.tfvars
 infra-bootstrap/*.tfvars.json
 infra-bootstrap/*.auto.tfvars
 infra-bootstrap/*.auto.tfvars.json
+infra-grafana/*.tfvars
+infra-grafana/*.tfvars.json
+infra-grafana/*.auto.tfvars
+infra-grafana/*.auto.tfvars.json
 infra/*.tfvars
 infra/*.tfvars.json
 infra/*.auto.tfvars

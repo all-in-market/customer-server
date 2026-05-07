@@ -3,6 +3,8 @@ resource "aws_ecr_repository" "customer" {
   name                 = local.customer_ecr_repository_name
   image_tag_mutability = "MUTABLE"
 
+  force_delete = var.environment == "dev"
+
   image_scanning_configuration {
     scan_on_push = true
   }
@@ -37,6 +39,8 @@ resource "aws_ecr_lifecycle_policy" "customer" {
 resource "aws_ecr_repository" "admin" {
   name                 = local.admin_ecr_repository_name
   image_tag_mutability = "MUTABLE"
+
+  force_delete = var.environment == "dev"
 
   image_scanning_configuration {
     scan_on_push = true
@@ -74,6 +78,8 @@ resource "aws_ecr_repository" "alarm" {
   name                 = local.alarm_ecr_repository_name
   image_tag_mutability = "MUTABLE"
 
+  force_delete = var.environment == "dev"
+
   image_scanning_configuration {
     scan_on_push = true
   }
@@ -108,6 +114,8 @@ resource "aws_ecr_lifecycle_policy" "alarm" {
 resource "aws_ecr_repository" "chat" {
   name                 = local.chat_ecr_repository_name
   image_tag_mutability = "MUTABLE"
+
+  force_delete = var.environment == "dev"
 
   image_scanning_configuration {
     scan_on_push = true

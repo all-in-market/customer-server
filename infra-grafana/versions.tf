@@ -6,5 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.61"
     }
+
+    grafana = {
+      source  = "grafana/grafana"
+      version = "~> 3.0"
+    }
   }
 }

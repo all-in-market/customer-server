@@ -1,0 +1,38 @@
+[[buyer-product]]
+== 구매자 상품
+
+[[buyer-product-list]]
+=== 상품 목록 조회
+
+`GET /products`
+
+==== 쿼리 파라미터
+include::{snippets}/buyer/product/list/query-parameters.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/product/list/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/product/list/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/product/list/http-response.adoc[]
+
+---
+
+[[buyer-product-detail]]
+=== 상품 상세 조회
+
+`GET /products/{productId}`
+
+==== 경로 파라미터
+include::{snippets}/buyer/product/detail/path-parameters.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/product/detail/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/product/detail/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/product/detail/http-response.adoc[]

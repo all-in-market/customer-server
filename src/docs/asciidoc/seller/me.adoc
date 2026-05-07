@@ -1,0 +1,35 @@
+[[seller-me]]
+== 판매자 내 정보
+
+[[seller-me-get]]
+=== 내 정보 조회
+
+`GET /sellers/me`
+
+==== 요청 예시
+include::{snippets}/seller/me/get/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/seller/me/get/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/seller/me/get/http-response.adoc[]
+
+---
+
+[[seller-me-update]]
+=== 내 정보 수정
+
+`PUT /sellers/me`
+
+==== 요청 필드
+include::{snippets}/seller/me/update/request-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/seller/me/update/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/seller/me/update/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/seller/me/update/http-response.adoc[]

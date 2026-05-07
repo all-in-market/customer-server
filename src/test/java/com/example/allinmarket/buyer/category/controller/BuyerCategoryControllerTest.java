@@ -5,89 +5,60 @@ import com.example.allinmarket.buyer.category.service.BuyerCategoryService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.security.JwtAuthenticationFilter;
-import com.example.allinmarket.common.security.LoginRateLimitFilter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.allinmarket.support.RestDocsControllerTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doAnswer;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BuyerCategoryController.class)
-@AutoConfigureRestTestClient
-public class BuyerCategoryControllerTest {
-    @Autowired
-    private RestTestClient restTestClient;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockitoBean
-    private LoginRateLimitFilter loginRateLimitFilter;
+public class BuyerCategoryControllerTest extends RestDocsControllerTest {
 
     @MockitoBean
     private BuyerCategoryService buyerCategoryService;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-    }
-
     @Test
-    void 카테고리_목록_조회_성공_테스트() {
-        // given
+    void 카테고리_목록_조회_성공_테스트() throws Exception {
         CategoryDetailResponse response = new CategoryDetailResponse(1L, "전자제품", 1);
+        given(buyerCategoryService.findAllCategory()).willReturn(List.of(response));
 
-        List<CategoryDetailResponse> responseList = List.of(response);
-
-        given(buyerCategoryService.findAllCategory()).willReturn(responseList);
-
-        // when & then
-        restTestClient.get().uri("/categories")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.READ_SUCCESS.getMessage())
-                .jsonPath("$.data[0].name").isEqualTo("전자제품");
+        mockMvc.perform(get("/categories"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessEnum.READ_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data[0].name").value("전자제품"))
+                .andDo(document("buyer/category/list",
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data[].id").description("카테고리 ID"),
+                                fieldWithPath("data[].name").description("카테고리 이름"),
+                                fieldWithPath("data[].sortOrder").description("카테고리 정렬 순서"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
-    void 카테고리_목록_조회_실패_테스트() {
-        // given
+    void 카테고리_목록_조회_실패_테스트() throws Exception {
         given(buyerCategoryService.findAllCategory())
                 .willThrow(new BaseException(ErrorEnum.CATEGORY_NOT_FOUND));
 
-        // when & then
-        restTestClient.get().uri("/categories")
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(404)
-                .jsonPath("$.message").isEqualTo(ErrorEnum.CATEGORY_NOT_FOUND.getMessage())
-                .jsonPath("$.data").isEmpty();
+        mockMvc.perform(get("/categories"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.CATEGORY_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.data").value(nullValue()));
     }
 }

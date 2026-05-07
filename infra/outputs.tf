@@ -173,6 +173,6 @@ output "grafana_workspace_id" {
 }
 
 output "grafana_service_account_token" {
-  value     = aws_grafana_workspace_service_account_token.terraform[0].key
+  value     = var.managed_grafana_enabled ? aws_grafana_workspace_service_account_token.terraform[0].key : null
   sensitive = true
 }

@@ -2,7 +2,7 @@ locals {
   customer_application_dashboard_json = jsondecode(
     replace(
       file("${path.module}/dashboards/customer-application-metrics.json"),
-      "$${DS_ALL-IN-MARKET-DEV-AMP}",
+      "$${DS_ALL-IN-MARKET-AMP}",
       grafana_data_source.amp.uid
     )
   )

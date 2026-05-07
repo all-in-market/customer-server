@@ -1,8 +1,8 @@
 {
   "__inputs": [
     {
-      "name": "DS_ALL-IN-MARKET-DEV-AMP",
-      "label": "all-in-market-dev-amp",
+      "name": "DS_ALL-IN-MARKET-AMP",
+      "label": "all-in-market-amp",
       "description": "",
       "type": "datasource",
       "pluginId": "prometheus",
@@ -55,7 +55,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+        "uid": "${DS_ALL-IN-MARKET-AMP}"
       },
       "description": "Average HTTP Requests Per Second (RPS) over the Last 1 Minute",
       "fieldConfig": {
@@ -135,7 +135,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum(rate(http_server_requests_seconds_count{service=\"customer\"}[1m]))",
@@ -151,7 +151,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+        "uid": "${DS_ALL-IN-MARKET-AMP}"
       },
       "description": "HTTP Request Count by Status Code over the Last 5 Minutes",
       "fieldConfig": {
@@ -231,7 +231,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum by (status) (\r\n  increase(http_server_requests_seconds_count{service=\"customer\"}[5m])\r\n)",
@@ -247,7 +247,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+        "uid": "${DS_ALL-IN-MARKET-AMP}"
       },
       "description": "P95 response time for all customer APIs (excluding UNKNOWN URIs)",
       "fieldConfig": {
@@ -327,7 +327,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(\r\n  0.95,\r\n  sum by (le) (\r\n    rate(http_server_requests_seconds_bucket{\r\n      service=\"customer\",\r\n      uri!=\"UNKNOWN\"\r\n    }[5m])\r\n  )\r\n)",
@@ -343,7 +343,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+        "uid": "${DS_ALL-IN-MARKET-AMP}"
       },
       "description": "4xx/5xx Error Request Count by URI and Status Code over the Last 5 Minutes\n",
       "fieldConfig": {
@@ -423,7 +423,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum by (status, uri) (\r\n  increase(http_server_requests_seconds_count{\r\n    service=\"customer\",\r\n    outcome=~\"CLIENT_ERROR|SERVER_ERROR\",\r\n    uri!=\"UNKNOWN\"\r\n  }[5m])\r\n)",
@@ -439,7 +439,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+        "uid": "${DS_ALL-IN-MARKET-AMP}"
       },
       "description": "Shows active, total, and maximum DB connections in the HikariCP connection pool.",
       "fieldConfig": {
@@ -519,7 +519,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum(hikaricp_connections_active{\r\n  service=\"customer\"\r\n})",
@@ -531,7 +531,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum(hikaricp_connections_max{\r\n  service=\"customer\"\r\n})",
@@ -544,7 +544,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum(hikaricp_connections{\r\n  service=\"customer\"\r\n})",
@@ -561,7 +561,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+        "uid": "${DS_ALL-IN-MARKET-AMP}"
       },
       "description": "Current JVM heap memory usage, committed heap size, and maximum allowed heap size for the customer service.",
       "fieldConfig": {
@@ -642,7 +642,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum(jvm_memory_used_bytes{service=\"customer\", area=\"heap\"}) ",
@@ -654,7 +654,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum(jvm_memory_committed_bytes{service=\"customer\", area=\"heap\"})",
@@ -667,7 +667,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_ALL-IN-MARKET-DEV-AMP}"
+            "uid": "${DS_ALL-IN-MARKET-AMP}"
           },
           "editorMode": "code",
           "expr": "sum(jvm_memory_max_bytes{service=\"customer\", area=\"heap\"})",

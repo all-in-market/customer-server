@@ -37,7 +37,7 @@ aws configure
 ## 4. Terraform Backend (bootstrap)
 - `infra-bootstrap` 디렉토리로 이동
 - S3, KMS, DynamoDB 기본 인프라 우선적으로 생성
-```
+```bash
 cd infra-bootstrap
 terraform init
 terraform apply
@@ -77,7 +77,7 @@ kms_key_id
 - 생성된 chat client의 WorkSpace ID 값을 콘솔에서 확인하여 `terraform.tfvars` 파일의 `slack_team_id` 값에 저장
 - 알림을 받을 Slack 채널에 접속 후 주소창에서 `Channel ID` 확인
 - 주소창의 WorkSpace ID 값 뒤에 나오는 `Channel ID` 값을 `terraform.tfvars` 파일의 `slack_channel_id` 값에 저장
-```
+```text
 예시: https://app.slack.com/client/T0B171BDCP9/C0B1LDTFZ4N?ssb_vid=....
 
 채널 id 값 -> C0B1LDTFZ4N
@@ -92,7 +92,7 @@ kms_key_id
 ---
 ## 9. 인프라 생성
 - infra 디렉토리에서 아래 명령어를 통해 메인 인프라 생성
-```
+```bash
 cd infra
 terraform init
 terraform apply
@@ -106,7 +106,7 @@ terraform apply
   - `Grafana service account token`
 - 따라서 인프라 생성 후 별도의 디렉토리(`infra-grafana`)에서 Grafana Resources 생성해야함
 - `infra-grafana` 디렉토리에서 아래 명령어를 통해 Grafana Resources 생성
-```
+```bash
 cd infra-grafana
 terraform init
 terraform apply
@@ -126,7 +126,7 @@ terraform apply
 
 - `Amazon Grafana 콘솔`로 이동
 - 생성된 워크스페이스의 `Grafana 워크스페이스 URL` 링크 클릭
-- 10 단계에서 설정한 이메일과 비밀번호를 통해 로그인
+- 11 단계에서 설정한 이메일과 비밀번호를 통해 로그인
 
 ---
 

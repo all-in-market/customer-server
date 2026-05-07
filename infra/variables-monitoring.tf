@@ -1,3 +1,6 @@
+# ==================================================
+# Cloudwatch
+# ==================================================
 variable "alert_email" {
   description = "CloudWatch Alarm notification email"
   type        = string
@@ -26,4 +29,23 @@ variable "slack_team_id" {
   description = "Slack workspace(team) ID"
   type        = string
   default     = ""
+}
+
+# ==================================================
+# Prometheus/Grafana
+# ==================================================
+variable "managed_prometheus_enabled" {
+  type    = bool
+  default = true
+}
+
+variable "managed_grafana_enabled" {
+  type    = bool
+  default = true
+}
+
+# AWS가 공식 제공하는 ADOT 이미지
+variable "adot_collector_image" {
+  type    = string
+  default = "public.ecr.aws/aws-observability/aws-otel-collector:v0.44.0"
 }

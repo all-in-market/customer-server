@@ -130,7 +130,7 @@ output "chat_ecs_container_name" {
 }
 
 # ==========================================
-# Monitoring
+# Monitoring (Cloudwatch)
 # ==========================================
 output "sns_alert_topic_arn" {
   description = "SNS topic ARN for CloudWatch alarms"
@@ -151,4 +151,23 @@ output "cloudwatch_dashboard_name" {
 output "slack_alert_enabled" {
   description = "Whether Slack alert integration is enabled"
   value       = var.slack_alert_enabled
+}
+
+# ==========================================
+# Monitoring (Prometheus/Grafana)
+# ==========================================
+output "amp_workspace_id" {
+  value = var.managed_prometheus_enabled ? aws_prometheus_workspace.app[0].id : null
+}
+
+output "amp_prometheus_endpoint" {
+  value = var.managed_prometheus_enabled ? aws_prometheus_workspace.app[0].prometheus_endpoint : null
+}
+
+output "grafana_workspace_endpoint" {
+  value = var.managed_grafana_enabled ? aws_grafana_workspace.this[0].endpoint : null
+}
+
+output "grafana_prometheus_datasource_name" {
+  value = var.managed_grafana_enabled && var.managed_prometheus_enabled ? grafana_data_source.amp[0].name : null
 }

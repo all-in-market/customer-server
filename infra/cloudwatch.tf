@@ -39,3 +39,15 @@ resource "aws_cloudwatch_log_group" "chat" {
     Name = local.chat_log_group_name
   })
 }
+
+# ADOT 컨테이너가 출력하는 로그 저장하는 로그 그룹
+resource "aws_cloudwatch_log_group" "adot" {
+  count = var.managed_prometheus_enabled ? 1 : 0
+
+  name              = "/ecs/${var.project_name}/adot"
+  retention_in_days = var.log_retention_in_days
+
+  tags = merge(local.common_tags, {
+    Name = "/ecs/${var.project_name}/adot"
+  })
+}

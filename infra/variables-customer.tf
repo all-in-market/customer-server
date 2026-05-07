@@ -26,13 +26,13 @@ variable "customer_image_tag" {
 variable "customer_ecs_task_cpu" {
   description = "Fargate task CPU"
   type        = number
-  default     = 256
+  default     = 512
 }
 
 variable "customer_ecs_task_memory" {
   description = "Fargate task memory"
   type        = number
-  default     = 512
+  default     = 1024
 }
 
 variable "customer_ecs_desired_count" {

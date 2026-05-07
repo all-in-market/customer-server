@@ -80,9 +80,14 @@ kms_key_id
 채널 id 값 -> C0B1LDTFZ4N
 ```
 
+---
+## 9. IAM Identity Center 활성화
+- Grafana 연동을 위해서 IAM Identity Center 활성화 필요
+- AWS IAM Identity Center 콘솔에 들어가서 Region 선택 후, 활성화 버튼 클릭
+- Grafana 연동을 위해 추후 작업은 인프라 생성 후 11 단계에서 이어서 진행
 
 ---
-## 8. 인프라 생성
+## 10. 인프라 생성
 - infra 디렉토리에서 아래 명령어를 통해 메인 인프라 생성
 ```bash
 cd infra
@@ -91,9 +96,26 @@ terraform apply
 ```
 
 ---
+## 11. IAM Identity Center 사용자 비밀번호 설정
+- 인프라가 생성되면 IAM Identity Center 콘솔로 이동
+- 사용자 탭에 들어가서 생성된 사용자를 클릭 후, '이메일 확인 링크 전송' 버튼을 클릭 (해당 이메일은 terraform.tfvars 파일의 grafana_admin_email 으로 등록한 값)
+- 해당 이메일로 발송된 메일을 통해 인증 진행
+- 다시 IAM Identity Center 콘솔로 이동하여 새로고침 후 '암호 재설정' 버튼을 클릭
+- 다시 발송된 메일을 통해 비밀번호 설정
 
-## 9. GitHub Secrets 설정
-- 8단계에서 apply 후 출력된 output을 확인하여 GitHub Repository에서 아래와 같이 GitHub Secrets으로 등록
+---
+
+## 12. Amazon Grafana 로그인
+
+- Amazon Grafana 콘솔로 이동
+- 생성된 워크스페이스의 'Grafana 워크스페이스 URL' 링크 클릭
+- 11 단계에서 설정한 이메일과 비밀번호를 통해 로그인
+
+---
+
+
+## 13. GitHub Secrets 설정
+- 10 단계에서 apply 후 출력된 output을 확인하여 GitHub Repository에서 아래와 같이 GitHub Secrets으로 등록
 
 ```
 AWS_ROLE_ARN = terraform output 에서의 github_actions_role_arn 값
@@ -106,13 +128,13 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 10. main / dev 브랜치에 merge
+## 14. main / dev 브랜치에 merge
 
 - main / dev 브랜치에 merge 시 CI /CD 절차 진행
 
 ---
 
-## 11. CI
+## 15. CI
 
 - main / dev 에 PR, push 시 CI 실행
 1. GitHub Actions 실행
@@ -122,7 +144,7 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 12. CD
+## 16. CD
 
 - main / dev에  push 시 실행
 
@@ -138,7 +160,7 @@ ECS_CONTAINER_NAME = task definition 안 container name
 
 ---
 
-## 13.  배포 확인 
+## 17.  배포 확인 
 
 - 주소창에 http://alb_dns_name/actuator/health 확인
 - AWS 콘솔에서 ECS 서비스 상태 확인

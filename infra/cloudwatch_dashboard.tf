@@ -296,28 +296,36 @@ resource "aws_cloudwatch_dashboard" "main" {
           stacked = false
           period  = 300
 
-          metrics = [
+          metrics = concat(
             [
-              "AWS/ElastiCache",
-              "CPUUtilization",
-              "ReplicationGroupId",
-              aws_elasticache_replication_group.this.replication_group_id,
-              {
-                stat  = "Average",
-                label = "Redis CPU"
-              }
+              for idx, cluster_id in aws_elasticache_replication_group.this.member_clusters : [
+                "AWS/ElastiCache",
+                "CPUUtilization",
+                "CacheClusterId",
+                cluster_id,
+                "CacheNodeId",
+                "0001",
+                {
+                  stat  = "Average",
+                  label = "Redis node ${cluster_id} CPU"
+                }
+              ]
             ],
             [
-              ".",
-              "DatabaseMemoryUsagePercentage",
-              ".",
-              ".",
-              {
-                stat  = "Average",
-                label = "Redis Memory"
-              }
+              for idx, cluster_id in aws_elasticache_replication_group.this.member_clusters : [
+                "AWS/ElastiCache",
+                "DatabaseMemoryUsagePercentage",
+                "CacheClusterId",
+                cluster_id,
+                "CacheNodeId",
+                "0001",
+                {
+                  stat  = "Average",
+                  label = "Redis node ${cluster_id} Memory"
+                }
+              ]
             ]
-          ]
+          )
         }
       },
       {
@@ -334,28 +342,36 @@ resource "aws_cloudwatch_dashboard" "main" {
           stacked = false
           period  = 300
 
-          metrics = [
+          metrics = concat(
             [
-              "AWS/ElastiCache",
-              "Evictions",
-              "ReplicationGroupId",
-              aws_elasticache_replication_group.this.replication_group_id,
-              {
-                stat  = "Sum",
-                label = "Evictions"
-              }
+              for idx, cluster_id in aws_elasticache_replication_group.this.member_clusters : [
+                "AWS/ElastiCache",
+                "Evictions",
+                "CacheClusterId",
+                cluster_id,
+                "CacheNodeId",
+                "0001",
+                {
+                  stat  = "Sum",
+                  label = "Redis node ${cluster_id} Evictions"
+                }
+              ]
             ],
             [
-              ".",
-              "CurrConnections",
-              ".",
-              ".",
-              {
-                stat  = "Average",
-                label = "Current Connections"
-              }
+              for idx, cluster_id in aws_elasticache_replication_group.this.member_clusters : [
+                "AWS/ElastiCache",
+                "CurrConnections",
+                "CacheClusterId",
+                cluster_id,
+                "CacheNodeId",
+                "0001",
+                {
+                  stat  = "Average",
+                  label = "Redis node ${cluster_id} Connections"
+                }
+              ]
             ]
-          ]
+          )
         }
       },
       {
@@ -412,7 +428,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "SUM(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"http.server.requests.count\" service=\"customer\"', 'Sum', 60))"
+                expression = "SUM(SEARCH('{${local.application_metrics_namespace},application,environment,error,exception,method,outcome,service,status,uri} MetricName=\"http.server.requests.count\" service=\"customer\"', 'Sum', 60))"
                 label      = "customer requests"
                 id         = "e1"
               }
@@ -428,31 +444,6 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
 
         properties = {
-          title   = "Customer HTTP 5xx"
-          region  = var.aws_region
-          view    = "timeSeries"
-          stacked = false
-          period  = 60
-
-          metrics = [
-            [
-              {
-                expression = "SUM(SEARCH('{${local.application_metrics_namespace},service,outcome} MetricName=\"http.server.requests.count\" service=\"customer\" outcome=\"SERVER_ERROR\"', 'Sum', 60))"
-                label      = "customer 5xx"
-                id         = "e1"
-              }
-            ]
-          ]
-        }
-      },
-      {
-        type   = "metric"
-        x      = 0
-        y      = 46
-        width  = 12
-        height = 6
-
-        properties = {
           title   = "Customer JVM Heap Used"
           region  = var.aws_region
           view    = "timeSeries"
@@ -462,9 +453,23 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service,area} MetricName=\"jvm.memory.used\" service=\"customer\" area=\"heap\"', 'Average', 60))"
-                label      = "heap used"
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},application,area,environment,id,service} MetricName=\"jvm.memory.used.value\" service=\"customer\" area=\"heap\"', 'Average', 60))"
+                label      = "Used"
                 id         = "e1"
+              }
+            ],
+            [
+              {
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},application,area,environment,id,service} MetricName=\"jvm.memory.committed.value\" service=\"customer\" area=\"heap\"', 'Average', 60))"
+                label      = "Committed"
+                id         = "e2"
+              }
+            ],
+            [
+              {
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},application,area,environment,id,service} MetricName=\"jvm.memory.max.value\" service=\"customer\" area=\"heap\"', 'Average', 60))"
+                label      = "Max"
+                id         = "e3"
               }
             ]
           ]
@@ -472,7 +477,7 @@ resource "aws_cloudwatch_dashboard" "main" {
       },
       {
         type   = "metric"
-        x      = 12
+        x      = 0
         y      = 46
         width  = 12
         height = 6
@@ -487,66 +492,23 @@ resource "aws_cloudwatch_dashboard" "main" {
           metrics = [
             [
               {
-                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"hikaricp.connections.active\" service=\"customer\"', 'Average', 60))"
-                label      = "active connections"
-                id         = "e1"
-              }
-            ]
-          ]
-        }
-      },
-      {
-        type   = "metric"
-        x      = 0
-        y      = 52
-        width  = 12
-        height = 6
-
-        properties = {
-          title   = "Customer Tomcat Busy Threads"
-          region  = var.aws_region
-          view    = "timeSeries"
-          stacked = false
-          period  = 60
-
-          metrics = [
-            [
-              {
-                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.busy\" service=\"customer\"', 'Average', 60))"
-                label      = "busy threads"
-                id         = "e1"
-              }
-            ]
-          ]
-        }
-      },
-      {
-        type   = "metric"
-        x      = 12
-        y      = 52
-        width  = 12
-        height = 6
-
-        properties = {
-          title   = "Customer Tomcat Threads"
-          region  = var.aws_region
-          view    = "timeSeries"
-          stacked = false
-          period  = 60
-
-          metrics = [
-            [
-              {
-                expression = "AVG(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.current\" service=\"customer\"', 'Average', 60))"
-                label      = "current threads"
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},application,environment,pool,service} MetricName=\"hikaricp.connections.active.value\" service=\"customer\"', 'Average', 60))"
+                label      = "Active"
                 id         = "e1"
               }
             ],
             [
               {
-                expression = "MAX(SEARCH('{${local.application_metrics_namespace},service} MetricName=\"tomcat.threads.config.max\" service=\"customer\"', 'Maximum', 60))"
-                label      = "max threads"
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},application,environment,pool,service} MetricName=\"hikaricp.connections.value\" service=\"customer\"', 'Average', 60))"
+                label      = "Total"
                 id         = "e2"
+              }
+            ],
+            [
+              {
+                expression = "AVG(SEARCH('{${local.application_metrics_namespace},application,environment,pool,service} MetricName=\"hikaricp.connections.max.value\" service=\"customer\"', 'Average', 60))"
+                label      = "Max"
+                id         = "e3"
               }
             ]
           ]

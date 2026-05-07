@@ -2,23 +2,16 @@ package com.example.allinmarket.seller.dailystatistics.controller;
 
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.security.JwtAuthenticationFilter;
-import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.seller.dailystatistics.dto.DailyStatisticsResponse;
 import com.example.allinmarket.seller.dailystatistics.service.SellerDailyStatisticsService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
+import com.example.allinmarket.support.RestDocsControllerTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,142 +19,79 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SellerDailyStatisticsController.class)
-@AutoConfigureRestTestClient
-class SellerDailyStatisticsControllerTest {
-
-    @Autowired
-    private RestTestClient restTestClient;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockitoBean
-    private LoginRateLimitFilter loginRateLimitFilter;
+class SellerDailyStatisticsControllerTest extends RestDocsControllerTest {
 
     @MockitoBean
     private SellerDailyStatisticsService sellerDailyStatisticsService;
 
     @BeforeEach
-    void setUp() throws Exception {
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-    }
-
-    private void setAuth() {
+    void setAuth() {
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(1L, null, List.of(new SimpleGrantedAuthority("SELLER")));
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     @Test
-    void 특정일_통계_조회_성공_테스트() {
-        // given
-        setAuth();
+    void 특정일_통계_조회_성공_테스트() throws Exception {
         LocalDate date = LocalDate.of(2025, 4, 10);
-
         DailyStatisticsResponse response = new DailyStatisticsResponse(
-                1L,
-                date,
-                date,
-                5,
-                10,
-                BigDecimal.valueOf(150000),
-                1,
-                BigDecimal.valueOf(30000),
-                BigDecimal.valueOf(120000)
+                1L, date, date, 5, 10,
+                BigDecimal.valueOf(150000), 1, BigDecimal.valueOf(30000), BigDecimal.valueOf(120000)
         );
-
         when(sellerDailyStatisticsService.getDailyStatistics(any(Long.class), eq(date)))
                 .thenReturn(response);
 
-        // when & then
-        restTestClient.get().uri("/seller/statistics/daily/2025-04-10")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.data.from").isEqualTo("2025-04-10")
-                .jsonPath("$.data.to").isEqualTo("2025-04-10")
-                .jsonPath("$.data.totalOrders").isEqualTo(5)
-                .jsonPath("$.data.totalItems").isEqualTo(10)
-                .jsonPath("$.data.totalRefunds").isEqualTo(1)
-                .jsonPath("$.data.totalSales").isEqualTo(150000)
-                .jsonPath("$.data.refundAmount").isEqualTo(30000)
-                .jsonPath("$.data.netSales").isEqualTo(120000);
+        mockMvc.perform(get("/seller/statistics/daily/2025-04-10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data.from").value("2025-04-10"))
+                .andExpect(jsonPath("$.data.to").value("2025-04-10"))
+                .andExpect(jsonPath("$.data.totalOrders").value(5))
+                .andExpect(jsonPath("$.data.totalItems").value(10))
+                .andExpect(jsonPath("$.data.totalRefunds").value(1))
+                .andExpect(jsonPath("$.data.totalSales").value(150000))
+                .andExpect(jsonPath("$.data.refundAmount").value(30000))
+                .andExpect(jsonPath("$.data.netSales").value(120000));
     }
 
     @Test
-    void 특정일_통계_조회_판매없는날_영값_성공_테스트() {
-        // given
-        setAuth();
+    void 특정일_통계_조회_판매없는날_영값_성공_테스트() throws Exception {
         LocalDate date = LocalDate.of(2025, 4, 10);
-
         DailyStatisticsResponse response = new DailyStatisticsResponse(
-                1L,
-                date,
-                date,
-                0,
-                0,
-                BigDecimal.ZERO,
-                0,
-                BigDecimal.ZERO,
-                BigDecimal.ZERO
+                1L, date, date, 0, 0,
+                BigDecimal.ZERO, 0, BigDecimal.ZERO, BigDecimal.ZERO
         );
-
         when(sellerDailyStatisticsService.getDailyStatistics(any(Long.class), eq(date)))
                 .thenReturn(response);
 
-        // when & then
-        restTestClient.get().uri("/seller/statistics/daily/2025-04-10")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.data.totalOrders").isEqualTo(0)
-                .jsonPath("$.data.totalSales").isEqualTo(0)
-                .jsonPath("$.data.netSales").isEqualTo(0);
+        mockMvc.perform(get("/seller/statistics/daily/2025-04-10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalOrders").value(0))
+                .andExpect(jsonPath("$.data.totalSales").value(0))
+                .andExpect(jsonPath("$.data.netSales").value(0));
     }
 
     @Test
-    void 특정일_통계_조회_데이터없음_예외_테스트() {
-        // given
-        setAuth();
-
+    void 특정일_통계_조회_데이터없음_예외_테스트() throws Exception {
         when(sellerDailyStatisticsService.getDailyStatistics(any(Long.class), any(LocalDate.class)))
                 .thenThrow(new BaseException(ErrorEnum.STATISTICS_NOT_FOUND));
 
-        // when & then
-        restTestClient.get().uri("/seller/statistics/daily/2025-04-10")
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false);
+        mockMvc.perform(get("/seller/statistics/daily/2025-04-10"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
-    void 특정일_통계_조회_잘못된날짜형식_400_테스트() {
-        // given
-        setAuth();
-
-        // when & then
-        restTestClient.get().uri("/seller/statistics/daily/20250410")
-                .exchange()
-                .expectStatus().isEqualTo(400)
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false);
+    void 특정일_통계_조회_잘못된날짜형식_400_테스트() throws Exception {
+        mockMvc.perform(get("/seller/statistics/daily/20250410"))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.success").value(false));
     }
 }

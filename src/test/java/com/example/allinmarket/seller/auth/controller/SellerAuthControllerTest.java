@@ -6,315 +6,320 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.enums.UserRole;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.security.JwtAuthenticationFilter;
-import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.seller.auth.dto.request.SellerCreateRequest;
 import com.example.allinmarket.seller.auth.dto.request.SellerLoginRequest;
 import com.example.allinmarket.seller.auth.dto.response.SellerCreateResponse;
 import com.example.allinmarket.seller.auth.service.SellerAuthService;
 import com.example.allinmarket.seller.enums.SellerStatus;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.allinmarket.support.RestDocsControllerTest;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.client.RestTestClient;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.restdocs.cookies.CookieDocumentation.cookieWithName;
+import static org.springframework.restdocs.cookies.CookieDocumentation.requestCookies;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.headers.HeaderDocumentation.responseHeaders;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SellerAuthController.class)
-@AutoConfigureRestTestClient
-public class SellerAuthControllerTest {
-
-    @Autowired
-    private RestTestClient restTestClient;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockitoBean
-    private LoginRateLimitFilter loginRateLimitFilter;
+public class SellerAuthControllerTest extends RestDocsControllerTest {
 
     @MockitoBean
     private SellerAuthService sellerAuthService;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-    }
-
     @Test
-    void 판매자_회원가입_성공_테스트() {
+    void 판매자_회원가입_성공_테스트() throws Exception {
         SellerCreateResponse response = new SellerCreateResponse(
-                1L,
-                "seller@test.com",
-                "홍길동",
-                "010-1234-5678",
-                "홍길동상점",
-                "123-45-67890",
-                SellerStatus.PENDING,
-                UserRole.SELLER
+                1L, "seller@test.com", "홍길동", "010-1234-5678",
+                "홍길동상점", "123-45-67890", SellerStatus.PENDING, UserRole.SELLER
         );
-
         when(sellerAuthService.signup(any(SellerCreateRequest.class))).thenReturn(response);
 
-        restTestClient.post().uri("/seller/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "seller@test.com",
-                            "password": "password123",
-                            "name": "홍길동",
-                            "phone": "010-1234-5678",
-                            "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890",
-                            "bankCode": "KOOKMIN",
-                            "bankAccount": "123-456-7890"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(201)
-                .jsonPath("$.data.email").isEqualTo("seller@test.com")
-                .jsonPath("$.data.status").isEqualTo("PENDING")
-                .jsonPath("$.data.role").isEqualTo("SELLER");
+        String requestBody = """
+                {
+                    "email": "seller@test.com",
+                    "password": "password123",
+                    "name": "홍길동",
+                    "phone": "010-1234-5678",
+                    "storeName": "홍길동상점",
+                    "bizNumber": "123-45-67890",
+                    "bankCode": "KOOKMIN",
+                    "bankAccount": "123-456-7890"
+                }
+                """;
+
+        mockMvc.perform(post("/seller/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(201))
+                .andExpect(jsonPath("$.data.email").value("seller@test.com"))
+                .andExpect(jsonPath("$.data.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.role").value("SELLER"))
+                .andDo(document("seller/auth/signup",
+                        requestFields(
+                                fieldWithPath("email").description("이메일 주소 (최대 100자)"),
+                                fieldWithPath("password").description("비밀번호 (8~20자)"),
+                                fieldWithPath("name").description("이름 (최대 50자)"),
+                                fieldWithPath("phone").description("전화번호 (최대 20자)"),
+                                fieldWithPath("storeName").description("상점명 (최대 100자)"),
+                                fieldWithPath("bizNumber").description("사업자등록번호 (최대 20자)"),
+                                fieldWithPath("bankCode").description("은행 코드 (최대 30자)"),
+                                fieldWithPath("bankAccount").description("계좌번호 (최대 50자)")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("판매자 ID"),
+                                fieldWithPath("data.email").description("이메일 주소"),
+                                fieldWithPath("data.name").description("이름"),
+                                fieldWithPath("data.phone").description("전화번호"),
+                                fieldWithPath("data.storeName").description("상점명"),
+                                fieldWithPath("data.bizNumber").description("사업자등록번호"),
+                                fieldWithPath("data.status").description("판매자 상태 (PENDING: 승인 대기)"),
+                                fieldWithPath("data.role").description("사용자 권한 (SELLER)"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
-    void 판매자_회원가입_이메일_형식_오류_테스트() {
-        restTestClient.post().uri("/seller/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "not-an-email",
-                            "password": "password123",
-                            "name": "홍길동",
-                            "phone": "010-1234-5678",
-                            "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890",
-                            "bankCode": "KOOKMIN",
-                            "bankAccount": "123-456-7890"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(400);
+    void 판매자_회원가입_이메일_형식_오류_테스트() throws Exception {
+        mockMvc.perform(post("/seller/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "not-an-email",
+                                    "password": "password123",
+                                    "name": "홍길동",
+                                    "phone": "010-1234-5678",
+                                    "storeName": "홍길동상점",
+                                    "bizNumber": "123-45-67890",
+                                    "bankCode": "KOOKMIN",
+                                    "bankAccount": "123-456-7890"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(400));
 
         verifyNoInteractions(sellerAuthService);
     }
 
     @Test
-    void 판매자_회원가입_비밀번호_길이_오류_테스트() {
-        restTestClient.post().uri("/seller/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "seller@test.com",
-                            "password": "short",
-                            "name": "홍길동",
-                            "phone": "010-1234-5678",
-                            "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890",
-                            "bankCode": "KOOKMIN",
-                            "bankAccount": "123-456-7890"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(400)
-                .jsonPath("$.message").isEqualTo("비밀번호는 8자 이상 20자 이하여야 합니다.");
+    void 판매자_회원가입_비밀번호_길이_오류_테스트() throws Exception {
+        mockMvc.perform(post("/seller/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "seller@test.com",
+                                    "password": "short",
+                                    "name": "홍길동",
+                                    "phone": "010-1234-5678",
+                                    "storeName": "홍길동상점",
+                                    "bizNumber": "123-45-67890",
+                                    "bankCode": "KOOKMIN",
+                                    "bankAccount": "123-456-7890"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("비밀번호는 8자 이상 20자 이하여야 합니다."));
 
         verifyNoInteractions(sellerAuthService);
     }
 
     @Test
-    void 판매자_회원가입_이름_공백_오류_테스트() {
-        restTestClient.post().uri("/seller/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "seller@test.com",
-                            "password": "password123",
-                            "name": "   ",
-                            "phone": "010-1234-5678",
-                            "storeName": "홍길동상점",
-                            "bizNumber": "123-45-67890",
-                            "bankCode": "KOOKMIN",
-                            "bankAccount": "123-456-7890"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(400);
+    void 판매자_회원가입_이름_공백_오류_테스트() throws Exception {
+        mockMvc.perform(post("/seller/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "seller@test.com",
+                                    "password": "password123",
+                                    "name": "   ",
+                                    "phone": "010-1234-5678",
+                                    "storeName": "홍길동상점",
+                                    "bizNumber": "123-45-67890",
+                                    "bankCode": "KOOKMIN",
+                                    "bankAccount": "123-456-7890"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(400));
 
         verifyNoInteractions(sellerAuthService);
     }
 
     @Test
-    void 판매자_로그인_성공_테스트() {
+    void 판매자_로그인_성공_테스트() throws Exception {
         LoginResult loginResult = new LoginResult(
-                new LoginResponse("jwt.token.here"),
-                "test-refresh-token"
+                new LoginResponse("jwt.token.here"), "test-refresh-token"
         );
-
         when(sellerAuthService.login(any(SellerLoginRequest.class))).thenReturn(loginResult);
 
-        restTestClient.post().uri("/seller/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "seller@test.com",
-                            "password": "password123"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isOk()
-                .expectHeader().valueMatches("Set-Cookie", ".*refreshToken=test-refresh-token.*")
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.LOGIN_SUCCESS.getMessage())
-                .jsonPath("$.data.accessToken").isEqualTo("jwt.token.here");
+        String requestBody = """
+                {
+                    "email": "seller@test.com",
+                    "password": "password123"
+                }
+                """;
+
+        mockMvc.perform(post("/seller/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Set-Cookie", containsString("refreshToken=test-refresh-token")))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value(SuccessEnum.LOGIN_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.accessToken").value("jwt.token.here"))
+                .andDo(document("seller/auth/login",
+                        requestFields(
+                                fieldWithPath("email").description("이메일 주소"),
+                                fieldWithPath("password").description("비밀번호")
+                        ),
+                        responseHeaders(
+                                headerWithName("Set-Cookie").description("리프레시 토큰 쿠키 (HttpOnly, Secure)")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.accessToken").description("액세스 토큰 (Bearer)"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
-    void 판매자_로그인_이메일_형식_오류_테스트() {
-        restTestClient.post().uri("/seller/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "not-an-email",
-                            "password": "password123"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(400);
+    void 판매자_로그인_이메일_형식_오류_테스트() throws Exception {
+        mockMvc.perform(post("/seller/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "not-an-email",
+                                    "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(400));
 
         verifyNoInteractions(sellerAuthService);
     }
 
     @Test
-    void 판매자_로그인_비밀번호_길이_오류_테스트() {
-        restTestClient.post().uri("/seller/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "seller@test.com",
-                            "password": "short"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(400)
-                .jsonPath("$.message").isEqualTo("비밀번호는 8자 이상 20자 이하여야 합니다.");
+    void 판매자_로그인_비밀번호_길이_오류_테스트() throws Exception {
+        mockMvc.perform(post("/seller/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "seller@test.com",
+                                    "password": "short"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("비밀번호는 8자 이상 20자 이하여야 합니다."));
 
         verifyNoInteractions(sellerAuthService);
     }
 
     @Test
-    void 판매자_로그인_판매자_없음_예외_테스트() {
+    void 판매자_로그인_판매자_없음_예외_테스트() throws Exception {
         when(sellerAuthService.login(any(SellerLoginRequest.class)))
                 .thenThrow(new BaseException(ErrorEnum.SELLER_NOT_FOUND));
 
-        restTestClient.post().uri("/seller/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "seller@test.com",
-                            "password": "password123"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(404)
-                .jsonPath("$.message").isEqualTo(ErrorEnum.SELLER_NOT_FOUND.getMessage());
+        mockMvc.perform(post("/seller/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "seller@test.com",
+                                    "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.SELLER_NOT_FOUND.getMessage()));
     }
 
     @Test
-    void 판매자_로그인_비밀번호_불일치_예외_테스트() {
+    void 판매자_로그인_비밀번호_불일치_예외_테스트() throws Exception {
         when(sellerAuthService.login(any(SellerLoginRequest.class)))
                 .thenThrow(new BaseException(ErrorEnum.PASSWORD_MISMATCH));
 
-        restTestClient.post().uri("/seller/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("""
-                        {
-                            "email": "seller@test.com",
-                            "password": "wrongPassword"
-                        }
-                        """)
-                .exchange()
-                .expectStatus().isUnauthorized()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo(ErrorEnum.PASSWORD_MISMATCH.getMessage());
+        mockMvc.perform(post("/seller/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "seller@test.com",
+                                    "password": "wrongPassword"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.PASSWORD_MISMATCH.getMessage()));
     }
 
     @Test
-    void 판매자_토큰_재발급_성공_테스트() {
+    void 판매자_토큰_재발급_성공_테스트() throws Exception {
         LoginResult loginResult = new LoginResult(
-                new LoginResponse("new-accessToken"),
-                "new-refresh-token"
+                new LoginResponse("new-accessToken"), "new-refresh-token"
         );
-
         given(sellerAuthService.refresh("valid-refresh-token")).willReturn(loginResult);
 
-        restTestClient.post().uri("/seller/auth/refresh")
-                .cookie("refreshToken", "valid-refresh-token")
-                .exchange()
-                .expectStatus().isOk()
-                .expectHeader().valueMatches("Set-Cookie", ".*refreshToken=new-refresh-token.*")
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.TOKEN_REFRESHED.getMessage())
-                .jsonPath("$.data.accessToken").isEqualTo("new-accessToken");
+        mockMvc.perform(post("/seller/auth/refresh")
+                        .cookie(new Cookie("refreshToken", "valid-refresh-token")))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Set-Cookie", containsString("refreshToken=new-refresh-token")))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value(SuccessEnum.TOKEN_REFRESHED.getMessage()))
+                .andExpect(jsonPath("$.data.accessToken").value("new-accessToken"))
+                .andDo(document("seller/auth/refresh",
+                        requestCookies(
+                                cookieWithName("refreshToken").description("리프레시 토큰")
+                        ),
+                        responseHeaders(
+                                headerWithName("Set-Cookie").description("갱신된 리프레시 토큰 쿠키 (HttpOnly, Secure)")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.accessToken").description("새로 발급된 액세스 토큰 (Bearer)"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
-    void 판매자_토큰_재발급_실패_만료된_토큰_테스트() {
+    void 판매자_토큰_재발급_실패_만료된_토큰_테스트() throws Exception {
         given(sellerAuthService.refresh(anyString()))
                 .willThrow(new BaseException(ErrorEnum.TOKEN_EXPIRED));
 
-        restTestClient.post().uri("/seller/auth/refresh")
-                .cookie("refreshToken", "expired-token")
-                .exchange()
-                .expectStatus().isUnauthorized()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(ErrorEnum.TOKEN_EXPIRED.getStatus())
-                .jsonPath("$.message").isEqualTo(ErrorEnum.TOKEN_EXPIRED.getMessage());
+        mockMvc.perform(post("/seller/auth/refresh")
+                        .cookie(new Cookie("refreshToken", "expired-token")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(ErrorEnum.TOKEN_EXPIRED.getStatus()))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.TOKEN_EXPIRED.getMessage()));
     }
 }

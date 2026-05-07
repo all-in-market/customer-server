@@ -9,17 +9,10 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.response.PageResponse;
-import com.example.allinmarket.common.security.JwtAuthenticationFilter;
-import com.example.allinmarket.common.security.LoginRateLimitFilter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
+import com.example.allinmarket.support.RestDocsControllerTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,273 +20,178 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doAnswer;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BuyerCartController.class)
-@AutoConfigureRestTestClient
-public class BuyerCartControllerTest {
-    @Autowired
-    private RestTestClient restTestClient;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockitoBean
-    private LoginRateLimitFilter loginRateLimitFilter;
+public class BuyerCartControllerTest extends RestDocsControllerTest {
 
     @MockitoBean
     private BuyerCartService buyerCartService;
 
     @BeforeEach
-    void setUp() throws Exception {
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-
+    void setAuth() {
         Authentication auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     @Test
     @WithMockUser
-    void 장바구니_조회_성공_테스트() {
-        // given
+    void 장바구니_조회_성공_테스트() throws Exception {
         CartDetailResponse response = new CartDetailResponse(
-                1L,
-                1L,
+                1L, 1L,
                 new PageResponse<>(
-                        List.of(new CartItemDetailResponse(
-                                1L,
-                                1L,
-                                1L,
-                                "노트북",
-                                BigDecimal.valueOf(1200000),
-                                1
-                                )
-                        ),
+                        List.of(new CartItemDetailResponse(1L, 1L, 1L, "노트북", BigDecimal.valueOf(1200000), 1)),
                         1, 1, 1, 10, true
                 )
         );
-
         given(buyerCartService.getCart(eq(1L), any(Pageable.class))).willReturn(response);
 
-        // when & then
-        restTestClient.get().uri("/carts")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.READ_SUCCESS.getMessage())
-                .jsonPath("$.data.buyerId").isEqualTo(1)
-                .jsonPath("$.data.items.content[0].cartId").isEqualTo(1)
-                .jsonPath("$.data.items.content[0].productName").isEqualTo("노트북")
-                .jsonPath("$.data.items.content[0].productPrice").isEqualTo(1200000)
-                .jsonPath("$.data.items.content[0].quantity").isEqualTo(1);
+        mockMvc.perform(get("/carts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessEnum.READ_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.buyerId").value(1))
+                .andExpect(jsonPath("$.data.items.content[0].cartId").value(1))
+                .andExpect(jsonPath("$.data.items.content[0].productName").value("노트북"))
+                .andExpect(jsonPath("$.data.items.content[0].productPrice").value(1200000))
+                .andExpect(jsonPath("$.data.items.content[0].quantity").value(1));
     }
 
     @Test
     @WithMockUser
-    void 장비구니_조회_실패_테스트() {
-        // given
+    void 장비구니_조회_실패_테스트() throws Exception {
         given(buyerCartService.getCart(eq(1L), any(Pageable.class)))
                 .willThrow(new BaseException(ErrorEnum.UNAUTHORIZED));
 
-        // when & then
-        restTestClient.get().uri("/carts")
-                .exchange()
-                .expectStatus().isUnauthorized()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo(ErrorEnum.UNAUTHORIZED.getMessage())
-                .jsonPath("$.data").isEmpty();
+        mockMvc.perform(get("/carts"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.UNAUTHORIZED.getMessage()))
+                .andExpect(jsonPath("$.data").value(nullValue()));
     }
 
     @Test
     @WithMockUser
-    void 장바구니_상품_추가_성공_테스트() {
-        // given
+    void 장바구니_상품_추가_성공_테스트() throws Exception {
         AddProductToCartRequest request = new AddProductToCartRequest(1L, 2);
-
         CartDetailResponse response = new CartDetailResponse(
-                1L,
-                1L,
+                1L, 1L,
                 new PageResponse<>(
-                        List.of(new CartItemDetailResponse(
-                                        1L,
-                                        1L,
-                                        1L,
-                                        "노트북",
-                                        BigDecimal.valueOf(1200000),
-                                        1
-                                )
-                        ),
+                        List.of(new CartItemDetailResponse(1L, 1L, 1L, "노트북", BigDecimal.valueOf(1200000), 1)),
                         1, 1, 1, 10, true
                 )
         );
-
         given(buyerCartService.addProductToCart(eq(1L), eq(request), any(Pageable.class))).willReturn(response);
 
-        // when & then
-        restTestClient.post().uri("/carts/items")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(201)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.CREATE_SUCCESS.getMessage())
-                .jsonPath("$.data.buyerId").isEqualTo(1)
-                .jsonPath("$.data.items.content[0].cartId").isEqualTo(1)
-                .jsonPath("$.data.items.content[0].quantity").isEqualTo(1);
+        mockMvc.perform(post("/carts/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(201))
+                .andExpect(jsonPath("$.message").value(SuccessEnum.CREATE_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.buyerId").value(1))
+                .andExpect(jsonPath("$.data.items.content[0].cartId").value(1))
+                .andExpect(jsonPath("$.data.items.content[0].quantity").value(1));
     }
 
     @Test
     @WithMockUser
-    void 장바구니_상품_추가_실패_테스트() {
-        // given
+    void 장바구니_상품_추가_실패_테스트() throws Exception {
         AddProductToCartRequest request = new AddProductToCartRequest(1L, 5);
-
         given(buyerCartService.addProductToCart(eq(1L), eq(request), any(Pageable.class)))
                 .willThrow(new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK));
 
-        // when & then
-        restTestClient.post()
-                .uri("/carts/items")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .exchange()
-                .expectStatus().isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus())
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus())
-                .jsonPath("$.message").isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getMessage());
+        mockMvc.perform(post("/carts/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().is(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus()))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus()))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.PRODUCT_OUT_OF_STOCK.getMessage()));
     }
 
     @Test
     @WithMockUser
-    void 장바구니_상품_수량_변경_성공_테스트() {
-        // given
+    void 장바구니_상품_수량_변경_성공_테스트() throws Exception {
         UpdateCartItemQuantityRequest request = new UpdateCartItemQuantityRequest(5);
-
         CartDetailResponse response = new CartDetailResponse(
-                1L,
-                1L,
+                1L, 1L,
                 new PageResponse<>(
-                        List.of(new CartItemDetailResponse(
-                                        1L,
-                                        1L,
-                                        1L,
-                                        "노트북",
-                                        BigDecimal.valueOf(1200000),
-                                        5
-                                )
-                        ),
+                        List.of(new CartItemDetailResponse(1L, 1L, 1L, "노트북", BigDecimal.valueOf(1200000), 5)),
                         1, 1, 1, 10, true
                 )
         );
+        given(buyerCartService.updateCartItemQuantity(eq(1L), eq(1L), eq(request), any(Pageable.class)))
+                .willReturn(response);
 
-        given(buyerCartService.updateCartItemQuantity(
-                eq(1L),
-                eq(1L),
-                eq(request),
-                any(Pageable.class)
-                )
-        ).willReturn(response);
-
-        // when & then
-        restTestClient.put().uri("/carts/items/{productId}", 1L)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.UPDATE_SUCCESS.getMessage())
-                .jsonPath("$.data.buyerId").isEqualTo(1)
-                .jsonPath("$.data.items.content[0].cartId").isEqualTo(1)
-                .jsonPath("$.data.items.content[0].quantity").isEqualTo(5);
+        mockMvc.perform(put("/carts/items/{productId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessEnum.UPDATE_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.buyerId").value(1))
+                .andExpect(jsonPath("$.data.items.content[0].cartId").value(1))
+                .andExpect(jsonPath("$.data.items.content[0].quantity").value(5));
     }
 
     @Test
     @WithMockUser
-    void 장바구니_수량_변경_실패_테스트() {
-        // given
+    void 장바구니_수량_변경_실패_테스트() throws Exception {
         UpdateCartItemQuantityRequest request = new UpdateCartItemQuantityRequest(5);
-
         given(buyerCartService.updateCartItemQuantity(eq(1L), eq(1L), eq(request), any(Pageable.class)))
                 .willThrow(new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK));
 
-        // when & then
-        restTestClient.put()
-                .uri("/carts/items/{productId}", 1L)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(request)
-                .exchange()
-                .expectStatus().isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus())
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus())
-                .jsonPath("$.message").isEqualTo(ErrorEnum.PRODUCT_OUT_OF_STOCK.getMessage());
+        mockMvc.perform(put("/carts/items/{productId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().is(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus()))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(ErrorEnum.PRODUCT_OUT_OF_STOCK.getStatus()))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.PRODUCT_OUT_OF_STOCK.getMessage()));
     }
 
     @Test
     @WithMockUser
-    void 장바구니_상품_삭제_성공_테스트() {
-        // given
+    void 장바구니_상품_삭제_성공_테스트() throws Exception {
         CartDetailResponse response = new CartDetailResponse(
-                1L,
-                1L,
-                new PageResponse<>(List.of(), 1, 1, 1, 10, true));
-
+                1L, 1L,
+                new PageResponse<>(List.of(), 1, 1, 1, 10, true)
+        );
         given(buyerCartService.removeCartItem(anyLong(), eq(1L), any(Pageable.class)))
                 .willReturn(response);
 
-        // when & then
-        restTestClient.delete().uri("/carts/items/{productId}", 1L)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.DELETE_SUCCESS.getMessage())
-                .jsonPath("$.data.buyerId").isEqualTo(1)
-                .jsonPath("$.data.items.content").isEmpty();
+        mockMvc.perform(delete("/carts/items/{productId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessEnum.DELETE_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.buyerId").value(1))
+                .andExpect(jsonPath("$.data.items.content").isEmpty());
     }
 
     @Test
     @WithMockUser
-    void 장바구니_상품_삭제_실패_테스트() {
-        // given
+    void 장바구니_상품_삭제_실패_테스트() throws Exception {
         given(buyerCartService.removeCartItem(anyLong(), eq(1L), any(Pageable.class)))
                 .willThrow(new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
 
-        // when & then
-        restTestClient.delete()
-                .uri("/carts/items/{productId}", 1L)
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(ErrorEnum.PRODUCT_NOT_FOUND.getStatus())
-                .jsonPath("$.message").isEqualTo(ErrorEnum.PRODUCT_NOT_FOUND.getMessage());
+        mockMvc.perform(delete("/carts/items/{productId}", 1L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(ErrorEnum.PRODUCT_NOT_FOUND.getStatus()))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.PRODUCT_NOT_FOUND.getMessage()));
     }
 }

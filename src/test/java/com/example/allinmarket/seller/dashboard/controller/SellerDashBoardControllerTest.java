@@ -2,62 +2,29 @@ package com.example.allinmarket.seller.dashboard.controller;
 
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.security.JwtAuthenticationFilter;
-import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.seller.dashboard.dto.response.SellerDashboardResponse;
 import com.example.allinmarket.seller.dashboard.service.SellerDashboardService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
+import com.example.allinmarket.support.RestDocsControllerTest;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SellerDashBoardController.class)
-@AutoConfigureRestTestClient
-public class SellerDashBoardControllerTest {
-
-    @Autowired
-    private RestTestClient restTestClient;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockitoBean
-    private LoginRateLimitFilter loginRateLimitFilter;
+public class SellerDashBoardControllerTest extends RestDocsControllerTest {
 
     @MockitoBean
     private SellerDashboardService sellerDashboardService;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-    }
 
     private void setAuthContext(Long userId) {
         UsernamePasswordAuthenticationToken auth =
@@ -71,144 +38,102 @@ public class SellerDashBoardControllerTest {
     }
 
     @Test
-    void 판매자_대시보드_조회_성공_테스트() {
-        // given
+    void 판매자_대시보드_조회_성공_테스트() throws Exception {
         setAuthContext(1L);
 
         LocalDate today = LocalDate.now();
         SellerDashboardResponse response = new SellerDashboardResponse(
-                1L,
-                today,
-                10,
-                BigDecimal.valueOf(500000),
-                8,
-                2,
-                BigDecimal.valueOf(30000),
-                BigDecimal.valueOf(455000),
-                BigDecimal.valueOf(15000)
+                1L, today, 10, BigDecimal.valueOf(500000), 8, 2,
+                BigDecimal.valueOf(30000), BigDecimal.valueOf(455000), BigDecimal.valueOf(15000)
         );
-
         when(sellerDashboardService.getSellerDashboard(1L)).thenReturn(response);
 
-        // when & then
-        restTestClient.get().uri("/seller/dashboard")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo("데이터 조회에 성공하였습니다.")
-                .jsonPath("$.data.sellerId").isEqualTo(1)
-                .jsonPath("$.data.statDate").isEqualTo(today.toString())
-                .jsonPath("$.data.totalOrders").isEqualTo(10)
-                .jsonPath("$.data.totalSales").isEqualTo(500000)
-                .jsonPath("$.data.totalProductsSold").isEqualTo(8)
-                .jsonPath("$.data.totalRefunds").isEqualTo(2)
-                .jsonPath("$.data.refundAmount").isEqualTo(30000)
-                .jsonPath("$.data.settlementAmount").isEqualTo(455000)
-                .jsonPath("$.data.feeAmount").isEqualTo(15000);
+        mockMvc.perform(get("/seller/dashboard"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("데이터 조회에 성공하였습니다."))
+                .andExpect(jsonPath("$.data.sellerId").value(1))
+                .andExpect(jsonPath("$.data.statDate").value(today.toString()))
+                .andExpect(jsonPath("$.data.totalOrders").value(10))
+                .andExpect(jsonPath("$.data.totalSales").value(500000))
+                .andExpect(jsonPath("$.data.totalProductsSold").value(8))
+                .andExpect(jsonPath("$.data.totalRefunds").value(2))
+                .andExpect(jsonPath("$.data.refundAmount").value(30000))
+                .andExpect(jsonPath("$.data.settlementAmount").value(455000))
+                .andExpect(jsonPath("$.data.feeAmount").value(15000));
     }
 
     @Test
-    void 판매자_대시보드_조회_미인증_예외_테스트() {
-        // given - SecurityContext 비어있는 상태 (인증 없음)
+    void 판매자_대시보드_조회_미인증_예외_테스트() throws Exception {
         SecurityContextHolder.clearContext();
 
-        // when & then
-        restTestClient.get().uri("/seller/dashboard")
-                .exchange()
-                .expectStatus().isUnauthorized()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(401);
+        mockMvc.perform(get("/seller/dashboard"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(401));
     }
 
     @Test
-    void 판매자_대시보드_조회_데이터없음_예외_테스트() {
-        // given
+    void 판매자_대시보드_조회_데이터없음_예외_테스트() throws Exception {
         setAuthContext(999L);
-
         when(sellerDashboardService.getSellerDashboard(999L))
                 .thenThrow(new BaseException(ErrorEnum.NOT_FOUND));
 
-        // when & then
-        restTestClient.get().uri("/seller/dashboard")
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(404)
-                .jsonPath("$.message").isEqualTo(ErrorEnum.NOT_FOUND.getMessage());
+        mockMvc.perform(get("/seller/dashboard"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.NOT_FOUND.getMessage()));
     }
 
     @Test
-    void 판매자_대시보드_갱신_성공_테스트() {
-        // given
+    void 판매자_대시보드_갱신_성공_테스트() throws Exception {
         setAuthContext(1L);
 
         LocalDate today = LocalDate.now();
         SellerDashboardResponse response = new SellerDashboardResponse(
-                1L,
-                today,
-                10,
-                BigDecimal.valueOf(500000),
-                8,
-                2,
-                BigDecimal.valueOf(30000),
-                BigDecimal.valueOf(455000),
-                BigDecimal.valueOf(15000)
+                1L, today, 10, BigDecimal.valueOf(500000), 8, 2,
+                BigDecimal.valueOf(30000), BigDecimal.valueOf(455000), BigDecimal.valueOf(15000)
         );
-
         when(sellerDashboardService.refreshSellerDashboard(1L)).thenReturn(response);
 
-        // when & then
-        restTestClient.post().uri("/seller/dashboard/refresh")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo("데이터 조회에 성공하였습니다.")
-                .jsonPath("$.data.sellerId").isEqualTo(1)
-                .jsonPath("$.data.statDate").isEqualTo(today.toString())
-                .jsonPath("$.data.totalOrders").isEqualTo(10)
-                .jsonPath("$.data.totalSales").isEqualTo(500000)
-                .jsonPath("$.data.totalProductsSold").isEqualTo(8)
-                .jsonPath("$.data.totalRefunds").isEqualTo(2)
-                .jsonPath("$.data.refundAmount").isEqualTo(30000)
-                .jsonPath("$.data.settlementAmount").isEqualTo(455000)
-                .jsonPath("$.data.feeAmount").isEqualTo(15000);
+        mockMvc.perform(post("/seller/dashboard/refresh"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("데이터 조회에 성공하였습니다."))
+                .andExpect(jsonPath("$.data.sellerId").value(1))
+                .andExpect(jsonPath("$.data.statDate").value(today.toString()))
+                .andExpect(jsonPath("$.data.totalOrders").value(10))
+                .andExpect(jsonPath("$.data.totalSales").value(500000))
+                .andExpect(jsonPath("$.data.totalProductsSold").value(8))
+                .andExpect(jsonPath("$.data.totalRefunds").value(2))
+                .andExpect(jsonPath("$.data.refundAmount").value(30000))
+                .andExpect(jsonPath("$.data.settlementAmount").value(455000))
+                .andExpect(jsonPath("$.data.feeAmount").value(15000));
     }
 
     @Test
-    void 판매자_대시보드_갱신_미인증_예외_테스트() {
-        // given
+    void 판매자_대시보드_갱신_미인증_예외_테스트() throws Exception {
         SecurityContextHolder.clearContext();
 
-        // when & then
-        restTestClient.post().uri("/seller/dashboard/refresh")
-                .exchange()
-                .expectStatus().isUnauthorized()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(401);
+        mockMvc.perform(post("/seller/dashboard/refresh"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(401));
     }
 
     @Test
-    void 판매자_대시보드_갱신_데이터없음_예외_테스트() {
-        // given
+    void 판매자_대시보드_갱신_데이터없음_예외_테스트() throws Exception {
         setAuthContext(999L);
-
         when(sellerDashboardService.refreshSellerDashboard(999L))
                 .thenThrow(new BaseException(ErrorEnum.DASHBOARD_NOT_FOUND));
 
-        // when & then
-        restTestClient.post().uri("/seller/dashboard/refresh")
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(404)
-                .jsonPath("$.message").isEqualTo(ErrorEnum.DASHBOARD_NOT_FOUND.getMessage());
+        mockMvc.perform(post("/seller/dashboard/refresh"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.DASHBOARD_NOT_FOUND.getMessage()));
     }
 }

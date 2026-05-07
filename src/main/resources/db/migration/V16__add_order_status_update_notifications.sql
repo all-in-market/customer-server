@@ -8,6 +8,6 @@ create table order_status_update_notifications
     is_read boolean not null default false,
     created_at timestamp not null default CURRENT_TIMESTAMP,
     updated_at timestamp not null default CURRENT_TIMESTAMP,
-    constraint fk_order_status_update_notifications_user foreign key(user_id) references users(id),
+    constraint fk_order_status_update_notifications_user foreign key(user_id) references buyers(id),
     constraint fk_order_status_update_notifications_order foreign key (order_id) references orders(id)
 );

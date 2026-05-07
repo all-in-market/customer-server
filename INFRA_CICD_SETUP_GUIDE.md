@@ -8,15 +8,15 @@
   https://developer.hashicorp.com/terraform/install
 
 - 설치된 terraform.exe을 원하는 폴더에 위치
-- 환경변수 설정에 들어가서 path에 해당 exe파일이 위치한 경로 추가
+- 환경변수 설정에 들어가서 path에 해당 .exe 파일이 위치한 경로 추가
 - 아래 명령어를 통해 설치 확인
-```bash
+```
 terraform -version
 ```
 
 ---
 
-## 2. IAM 생성 (Terraform용 - AWS 콘솔에서 직접 생성)
+## 2. IAM 생성 (AWS 콘솔에서 수동 생성)
 
 - AWS IAM 사용자 생성
 - 권한:
@@ -28,7 +28,7 @@ terraform -version
 
 ## 3. AWS CLI 인증
 - 아래 명령어를 통해 터미널에서 AWS CLI 인증 절차 진행
-```bash
+```
 aws configure
 ```
 
@@ -37,7 +37,7 @@ aws configure
 ## 4. Terraform Backend (bootstrap)
 - infra-bootstrap 디렉토리로 이동
 - S3, KMS, DynamoDB 기본 인프라 우선적으로 생성
-```bash
+```
 cd infra-bootstrap
 terraform init
 terraform apply
@@ -47,7 +47,7 @@ terraform apply
 
 ## 5. backend.tf 설정
 
-- 4단계에서 apply 후 출력된 아래 세개의 output 값을 infra/backend.tf 에 넣어서 수정
+- 4단계에서 terraform apply 실행 후 출력된 아래 세개의 output 값을 infra/backend.tf 에 넣어서 수정
 
 ```
 bucket
@@ -66,14 +66,14 @@ kms_key_id
 
 ---
 
-## 7. Slack 알림 연동
+## 7. AWS Chatbot Slack Workspace 연동
 
 - Amazon Q Developer in chat applications 콘솔에서 "클라이언트 구성" 클릭
 - AWS와 연동할 Slack의 workspace 선택
-- OAuth 인증을 통해 AWS가 해당 Slack workspace에 접근할 권한 승인
-- AWS 콘솔에서 생성된 chat client의 WorkSpace ID 값을 terraform.tfvars 파일의 slack_team_id 값에 저장
-- 연동시킨 slack workspace의 채널 중 알림을 받을 채널을 선택하여 들어간 후 주소창 확인
-- 주소창의 WorkSpace ID 값 뒤에 나오는 채널 id 값을 terraform.tfvars 파일의 slack_channel_id 값에 저장
+- OAuth 인증을 통해 AWS가 해당 Slack Workspace에 접근할 권한 승인
+- 생성된 chat client의 WorkSpace ID 값을 콘솔에서 확인하여 terraform.tfvars 파일의 slack_team_id 값에 저장
+- 알림을 받을 Slack 채널에 접속 후 주소창에서 Channel ID 확인
+- 주소창의 WorkSpace ID 값 뒤에 나오는 Channel ID 값을 terraform.tfvars 파일의 slack_channel_id 값에 저장
 ```
 예시: https://app.slack.com/client/T0B171BDCP9/C0B1LDTFZ4N?ssb_vid=.80639255a1f4295e6f7b049bd41c9315
 
@@ -84,12 +84,12 @@ kms_key_id
 ## 8. IAM Identity Center 활성화
 - Grafana 연동을 위해서 IAM Identity Center 활성화 필요
 - AWS IAM Identity Center 콘솔에 들어가서 Region 선택 후, 활성화 버튼 클릭
-- Grafana 연동을 위해 추후 작업은 인프라 생성 후 11 단계에서 이어서 진행
+- 인프라 생성 후 11 단계에서 이어서 진행
 
 ---
 ## 9. 인프라 생성
 - infra 디렉토리에서 아래 명령어를 통해 메인 인프라 생성
-```bash
+```
 cd infra
 terraform init -migrate-state
 terraform apply
@@ -98,10 +98,10 @@ terraform apply
 ---
 ## 10. IAM Identity Center 사용자 비밀번호 설정
 - 인프라가 생성되면 IAM Identity Center 콘솔로 이동
-- 사용자 탭에 들어가서 생성된 사용자를 클릭 후, '이메일 확인 링크 전송' 버튼을 클릭 (해당 이메일은 terraform.tfvars 파일의 grafana_admin_email 으로 등록한 값)
+- 사용자 탭에 들어가서 생성된 사용자를 클릭 후, '이메일 확인 링크 전송' 버튼을 클릭 (해당 이메일은 terraform.tfvars 파일의 grafana_admin_email 에 할당한 값)
 - 해당 이메일로 발송된 메일을 통해 인증 진행
 - 다시 IAM Identity Center 콘솔로 이동하여 새로고침 후 '암호 재설정' 버튼을 클릭
-- 다시 발송된 메일을 통해 비밀번호 설정
+- 발송된 메일을 통해 비밀번호 설정
 
 ---
 

@@ -160,7 +160,10 @@ export default function (data) {
         JSON.stringify({ productId, quantity: 1 }),
         {
             ...jsonAuth(user.token),
-            tags: {name: 'cart_add'},
+            tags: {
+                phase: 'scenario',
+                name: 'cart_add'
+            },
         }
     );
 
@@ -181,7 +184,9 @@ export default function (data) {
         JSON.stringify({ cartItemIds: [cartItemId], addressId: user.addressId }),
         {
             ...jsonAuth(user.token),
-            tags: {name: 'order_create'},
+            tags: {
+                phase: 'scenario',
+                name: 'order_create'},
         }
     );
 
@@ -206,7 +211,9 @@ export default function (data) {
         paymentPayload,
         {
             ...jsonAuth(user.token),
-            tags: {name: 'payment_create'},
+            tags: {
+                phase: 'scenario',
+                name: 'payment_create'},
         }
     );
 

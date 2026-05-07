@@ -45,7 +45,7 @@ export const options = {
             timeUnit: '1s',
             preAllocatedVUs: 100,
             maxVUs: MAX_VUS,
-            stages: stages[__ENV.TEST_TYPE || 'smoke'],
+            stages: stages[__ENV.TEST_TYPE || stages.smoke],
         },
     },
 

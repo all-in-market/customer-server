@@ -31,7 +31,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: 빌드 (테스트 제외)
-        run: ./gradlew build -x test
+        run: ./gradlew build -x test -x asciidoctor
 
   test:
     runs-on: ubuntu-latest

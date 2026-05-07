@@ -694,7 +694,7 @@ public class DummyDataService {
 
                 count = count + DAILY_STATISTICS_BATCH_SIZE;
 
-                log.info("create {} dailyStatistics in {} s", batchDailyStatistics.size(), elapsed / 1000.0);
+                log.info("create {} dailyStatistics in {} s", count, elapsed / 1000.0);
             }
         }
 

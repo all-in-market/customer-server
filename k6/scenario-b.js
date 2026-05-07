@@ -73,11 +73,14 @@ export const options = {
     },
 };
 
-export function setup() {
+export function setupTags() {
     // 1. 상품 ID 수집 (인증 불필요)
     const productRes = http.get(`${BASE_URL}/products?page=0&size=20`,
         {
-            tags: {name: 'product_list'},
+            tags: {
+                phase: 'setup',
+                name: 'product_list'
+            },
         }
     );
 
@@ -101,7 +104,13 @@ export function setup() {
     const { tokens } = loginUsers(50);
 
     const users = tokens.map(token => {
-        const addrRes = http.get(`${BASE_URL}/addresses`, authHeaders(token));
+        const addrRes = http.get(`${BASE_URL}/addresses`, authHeaders(token),
+            {
+                tags: {
+                    phase: 'setup',
+                    name: 'address_fetch'
+                }
+            });
 
         check(addrRes, {
             'address fetch success': (r) => r.status === 200,

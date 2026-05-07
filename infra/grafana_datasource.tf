@@ -15,9 +15,9 @@ resource "aws_grafana_workspace_service_account" "terraform" {
 resource "aws_grafana_workspace_service_account_token" "terraform" {
   count = var.managed_grafana_enabled ? 1 : 0
 
-  workspace_id        = aws_grafana_workspace.this[0].id
-  service_account_id  = aws_grafana_workspace_service_account.terraform[0].service_account_id
-  name                = "${local.name_prefix}-${var.environment}-terraform-token"
+  workspace_id       = aws_grafana_workspace.this[0].id
+  service_account_id = aws_grafana_workspace_service_account.terraform[0].service_account_id
+  name               = "${local.name_prefix}-${var.environment}-terraform-token"
 
   # 약 30일
   seconds_to_live = 2592000
@@ -33,7 +33,7 @@ resource "grafana_data_source" "amp" {
   is_default = true
 
   json_data_encoded = jsonencode({
-    httpMethod     = "POST"
+    httpMethod = "POST"
 
     # Amazon Managed Prometheus 조회를 위한 SigV4 인증
     sigV4Auth     = true

@@ -21,7 +21,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.restdocs.cookies.CookieDocumentation.*;
+import static org.springframework.restdocs.headers.HeaderDocumentation.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BuyerAuthController.class)
@@ -49,7 +53,24 @@ public class BuyerAuthControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.message").value(SuccessEnum.REGISTER_SUCCESS.getMessage()))
                 .andExpect(jsonPath("$.data.email").value("테스트@테스트.com"))
                 .andExpect(jsonPath("$.data.name").value("테스트"))
-                .andExpect(jsonPath("$.data.phone").value("010-1234-1234"));
+                .andExpect(jsonPath("$.data.phone").value("010-1234-1234"))
+                .andDo(document("buyer/auth/signup",
+                        requestFields(
+                                fieldWithPath("email").description("이메일 주소"),
+                                fieldWithPath("password").description("비밀번호 (8자 이상)"),
+                                fieldWithPath("name").description("이름"),
+                                fieldWithPath("phone").description("전화번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.email").description("이메일 주소"),
+                                fieldWithPath("data.name").description("이름"),
+                                fieldWithPath("data.phone").description("전화번호"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -85,7 +106,23 @@ public class BuyerAuthControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value(SuccessEnum.LOGIN_SUCCESS.getMessage()))
-                .andExpect(jsonPath("$.data.accessToken").value("test-accessToken"));
+                .andExpect(jsonPath("$.data.accessToken").value("test-accessToken"))
+                .andDo(document("buyer/auth/login",
+                        requestFields(
+                                fieldWithPath("email").description("이메일 주소"),
+                                fieldWithPath("password").description("비밀번호")
+                        ),
+                        responseHeaders(
+                                headerWithName("Set-Cookie").description("리프레시 토큰 쿠키 (HttpOnly, Secure)")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.accessToken").description("액세스 토큰 (Bearer)"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -115,7 +152,22 @@ public class BuyerAuthControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(SuccessEnum.TOKEN_REFRESHED.getStatus()))
                 .andExpect(jsonPath("$.message").value(SuccessEnum.TOKEN_REFRESHED.getMessage()))
-                .andExpect(jsonPath("$.data.accessToken").value("new-accessToken"));
+                .andExpect(jsonPath("$.data.accessToken").value("new-accessToken"))
+                .andDo(document("buyer/auth/refresh",
+                        requestCookies(
+                                cookieWithName("refreshToken").description("리프레시 토큰")
+                        ),
+                        responseHeaders(
+                                headerWithName("Set-Cookie").description("갱신된 리프레시 토큰 쿠키 (HttpOnly, Secure)")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.accessToken").description("새로 발급된 액세스 토큰 (Bearer)"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test

@@ -27,7 +27,10 @@ import java.util.List;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BuyerCartController.class)
@@ -63,7 +66,28 @@ public class BuyerCartControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.items.content[0].cartId").value(1))
                 .andExpect(jsonPath("$.data.items.content[0].productName").value("노트북"))
                 .andExpect(jsonPath("$.data.items.content[0].productPrice").value(1200000))
-                .andExpect(jsonPath("$.data.items.content[0].quantity").value(1));
+                .andExpect(jsonPath("$.data.items.content[0].quantity").value(1))
+                .andDo(document("buyer/cart/get",
+                        relaxedResponseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("장바구니 ID"),
+                                fieldWithPath("data.buyerId").description("구매자 ID"),
+                                fieldWithPath("data.items.content[].id").description("장바구니 아이템 ID"),
+                                fieldWithPath("data.items.content[].cartId").description("장바구니 ID"),
+                                fieldWithPath("data.items.content[].productId").description("상품 ID"),
+                                fieldWithPath("data.items.content[].productName").description("상품명"),
+                                fieldWithPath("data.items.content[].productPrice").description("상품 가격"),
+                                fieldWithPath("data.items.content[].quantity").description("수량"),
+                                fieldWithPath("data.items.currentPage").description("현재 페이지 번호"),
+                                fieldWithPath("data.items.totalPages").description("전체 페이지 수"),
+                                fieldWithPath("data.items.totalElements").description("전체 항목 수"),
+                                fieldWithPath("data.items.size").description("페이지 크기"),
+                                fieldWithPath("data.items.isLast").description("마지막 페이지 여부"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -102,7 +126,32 @@ public class BuyerCartControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.message").value(SuccessEnum.CREATE_SUCCESS.getMessage()))
                 .andExpect(jsonPath("$.data.buyerId").value(1))
                 .andExpect(jsonPath("$.data.items.content[0].cartId").value(1))
-                .andExpect(jsonPath("$.data.items.content[0].quantity").value(1));
+                .andExpect(jsonPath("$.data.items.content[0].quantity").value(1))
+                .andDo(document("buyer/cart/add-item",
+                        requestFields(
+                                fieldWithPath("productId").description("장바구니에 추가할 상품 ID"),
+                                fieldWithPath("quantity").description("추가할 수량")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("장바구니 ID"),
+                                fieldWithPath("data.buyerId").description("구매자 ID"),
+                                fieldWithPath("data.items.content[].id").description("장바구니 아이템 ID"),
+                                fieldWithPath("data.items.content[].cartId").description("장바구니 ID"),
+                                fieldWithPath("data.items.content[].productId").description("상품 ID"),
+                                fieldWithPath("data.items.content[].productName").description("상품명"),
+                                fieldWithPath("data.items.content[].productPrice").description("상품 가격"),
+                                fieldWithPath("data.items.content[].quantity").description("수량"),
+                                fieldWithPath("data.items.currentPage").description("현재 페이지 번호"),
+                                fieldWithPath("data.items.totalPages").description("전체 페이지 수"),
+                                fieldWithPath("data.items.totalElements").description("전체 항목 수"),
+                                fieldWithPath("data.items.size").description("페이지 크기"),
+                                fieldWithPath("data.items.isLast").description("마지막 페이지 여부"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -144,7 +193,34 @@ public class BuyerCartControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.message").value(SuccessEnum.UPDATE_SUCCESS.getMessage()))
                 .andExpect(jsonPath("$.data.buyerId").value(1))
                 .andExpect(jsonPath("$.data.items.content[0].cartId").value(1))
-                .andExpect(jsonPath("$.data.items.content[0].quantity").value(5));
+                .andExpect(jsonPath("$.data.items.content[0].quantity").value(5))
+                .andDo(document("buyer/cart/update-item",
+                        pathParameters(
+                                parameterWithName("productId").description("수량을 변경할 상품 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("quantity").description("변경할 수량")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("장바구니 ID"),
+                                fieldWithPath("data.buyerId").description("구매자 ID"),
+                                fieldWithPath("data.items.content[].id").description("장바구니 아이템 ID"),
+                                fieldWithPath("data.items.content[].cartId").description("장바구니 ID"),
+                                fieldWithPath("data.items.content[].productId").description("상품 ID"),
+                                fieldWithPath("data.items.content[].productName").description("상품명"),
+                                fieldWithPath("data.items.content[].productPrice").description("상품 가격"),
+                                fieldWithPath("data.items.content[].quantity").description("변경된 수량"),
+                                fieldWithPath("data.items.currentPage").description("현재 페이지 번호"),
+                                fieldWithPath("data.items.totalPages").description("전체 페이지 수"),
+                                fieldWithPath("data.items.totalElements").description("전체 항목 수"),
+                                fieldWithPath("data.items.size").description("페이지 크기"),
+                                fieldWithPath("data.items.isLast").description("마지막 페이지 여부"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -179,7 +255,26 @@ public class BuyerCartControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value(SuccessEnum.DELETE_SUCCESS.getMessage()))
                 .andExpect(jsonPath("$.data.buyerId").value(1))
-                .andExpect(jsonPath("$.data.items.content").isEmpty());
+                .andExpect(jsonPath("$.data.items.content").isEmpty())
+                .andDo(document("buyer/cart/remove-item",
+                        pathParameters(
+                                parameterWithName("productId").description("삭제할 상품 ID")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("장바구니 ID"),
+                                fieldWithPath("data.buyerId").description("구매자 ID"),
+                                fieldWithPath("data.items.content").description("장바구니 아이템 목록 (삭제 후 빈 배열)"),
+                                fieldWithPath("data.items.currentPage").description("현재 페이지 번호"),
+                                fieldWithPath("data.items.totalPages").description("전체 페이지 수"),
+                                fieldWithPath("data.items.totalElements").description("전체 항목 수"),
+                                fieldWithPath("data.items.size").description("페이지 크기"),
+                                fieldWithPath("data.items.isLast").description("마지막 페이지 여부"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test

@@ -7,3 +7,23 @@
 :sectlinks:
 
 include::seller/auth.adoc[]
+
+include::seller/product.adoc[]
+
+include::seller/me.adoc[]
+
+include::seller/dashboard.adoc[]
+
+include::seller/statistics.adoc[]
+
+include::seller/orderitem.adoc[]
+
+include::seller/settlement.adoc[]
+
+include::buyer/auth.adoc[]
+
+include::buyer/category.adoc[]
+
+include::buyer/cart.adoc[]
+
+include::buyer/product.adoc[]

@@ -21,7 +21,9 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SellerMeController.class)
@@ -30,8 +32,6 @@ public class SellerMeControllerTest extends RestDocsControllerTest {
     @MockitoBean
     private SellerMeService sellerMeService;
 
-    // SecurityUtils가 (Long) authentication.getPrincipal()로 캐스팅하므로
-    // principal을 반드시 Long 타입으로 설정해야 합니다.
     private void setAuthContext(Long userId) {
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(userId, null, List.of());
@@ -65,7 +65,23 @@ public class SellerMeControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.storeName").value("홍길동상점"))
                 .andExpect(jsonPath("$.data.bizNumber").value("123-45-67890"))
                 .andExpect(jsonPath("$.data.status").value("PENDING"))
-                .andExpect(jsonPath("$.data.role").value("SELLER"));
+                .andExpect(jsonPath("$.data.role").value("SELLER"))
+                .andDo(document("seller/me/get",
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("판매자 ID"),
+                                fieldWithPath("data.email").description("이메일 주소"),
+                                fieldWithPath("data.name").description("이름"),
+                                fieldWithPath("data.phone").description("전화번호"),
+                                fieldWithPath("data.storeName").description("상점명"),
+                                fieldWithPath("data.bizNumber").description("사업자등록번호"),
+                                fieldWithPath("data.status").description("판매자 상태 (PENDING: 승인 대기, APPROVED: 승인)"),
+                                fieldWithPath("data.role").description("사용자 권한 (SELLER)"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -120,7 +136,32 @@ public class SellerMeControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.message").value("데이터 수정에 성공하였습니다."))
                 .andExpect(jsonPath("$.data.email").value("updated@test.com"))
                 .andExpect(jsonPath("$.data.name").value("김철수"))
-                .andExpect(jsonPath("$.data.storeName").value("김철수상점"));
+                .andExpect(jsonPath("$.data.storeName").value("김철수상점"))
+                .andDo(document("seller/me/update",
+                        requestFields(
+                                fieldWithPath("email").optional().description("변경할 이메일 주소"),
+                                fieldWithPath("password").optional().description("변경할 비밀번호 (8~20자)"),
+                                fieldWithPath("name").optional().description("변경할 이름"),
+                                fieldWithPath("phone").optional().description("변경할 전화번호"),
+                                fieldWithPath("storeName").optional().description("변경할 상점명"),
+                                fieldWithPath("bizNumber").optional().description("변경할 사업자등록번호"),
+                                fieldWithPath("bankAccount").optional().description("변경할 계좌번호")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("판매자 ID"),
+                                fieldWithPath("data.email").description("이메일 주소"),
+                                fieldWithPath("data.name").description("이름"),
+                                fieldWithPath("data.phone").description("전화번호"),
+                                fieldWithPath("data.storeName").description("상점명"),
+                                fieldWithPath("data.bizNumber").description("사업자등록번호"),
+                                fieldWithPath("data.status").description("판매자 상태"),
+                                fieldWithPath("data.role").description("사용자 권한"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test

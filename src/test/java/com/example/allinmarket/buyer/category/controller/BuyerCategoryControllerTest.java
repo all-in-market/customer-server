@@ -14,7 +14,9 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BuyerCategoryController.class)
@@ -33,7 +35,18 @@ public class BuyerCategoryControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value(SuccessEnum.READ_SUCCESS.getMessage()))
-                .andExpect(jsonPath("$.data[0].name").value("전자제품"));
+                .andExpect(jsonPath("$.data[0].name").value("전자제품"))
+                .andDo(document("buyer/category/list",
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data[].id").description("카테고리 ID"),
+                                fieldWithPath("data[].name").description("카테고리 이름"),
+                                fieldWithPath("data[].sortOrder").description("카테고리 정렬 순서"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test

@@ -21,7 +21,10 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BuyerProductController.class)
@@ -48,7 +51,30 @@ public class BuyerProductControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.content[0].price").value(10000))
                 .andExpect(jsonPath("$.data.content[0].stock").value(50))
                 .andExpect(jsonPath("$.data.content[0].status").value("ON_SALE"))
-                .andExpect(jsonPath("$.data.content[0].description").value("설명"));
+                .andExpect(jsonPath("$.data.content[0].description").value("설명"))
+                .andDo(document("buyer/product/list",
+                        queryParameters(
+                                parameterWithName("categoryId").optional().description("카테고리 ID 필터"),
+                                parameterWithName("page").optional().description("페이지 번호 (0부터 시작, 기본값: 0)"),
+                                parameterWithName("size").optional().description("페이지 크기 (기본값: 20)")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.content[].id").description("상품 ID"),
+                                fieldWithPath("data.content[].sellerId").optional().description("판매자 ID"),
+                                fieldWithPath("data.content[].categoryId").optional().description("카테고리 ID"),
+                                fieldWithPath("data.content[].name").description("상품명"),
+                                fieldWithPath("data.content[].price").description("판매 가격"),
+                                fieldWithPath("data.content[].stock").description("재고 수량"),
+                                fieldWithPath("data.content[].status").description("상품 상태 (ON_SALE: 판매 중)"),
+                                fieldWithPath("data.content[].description").description("상품 설명"),
+                                fieldWithPath("data.totalElements").description("전체 상품 수"),
+                                fieldWithPath("data.totalPages").description("전체 페이지 수"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -78,7 +104,26 @@ public class BuyerProductControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.price").value(12000))
                 .andExpect(jsonPath("$.data.stock").value(30))
                 .andExpect(jsonPath("$.data.status").value("ON_SALE"))
-                .andExpect(jsonPath("$.data.description").value("상품 설명"));
+                .andExpect(jsonPath("$.data.description").value("상품 설명"))
+                .andDo(document("buyer/product/detail",
+                        pathParameters(
+                                parameterWithName("productId").description("조회할 상품 ID")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("상품 ID"),
+                                fieldWithPath("data.sellerId").optional().description("판매자 ID"),
+                                fieldWithPath("data.categoryId").optional().description("카테고리 ID"),
+                                fieldWithPath("data.name").description("상품명"),
+                                fieldWithPath("data.price").description("판매 가격"),
+                                fieldWithPath("data.stock").description("재고 수량"),
+                                fieldWithPath("data.status").description("상품 상태"),
+                                fieldWithPath("data.description").description("상품 설명"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test

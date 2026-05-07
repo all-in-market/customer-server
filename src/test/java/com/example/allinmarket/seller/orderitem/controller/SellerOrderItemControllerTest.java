@@ -18,7 +18,10 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SellerOrderItemController.class)
@@ -54,7 +57,31 @@ public class SellerOrderItemControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.content[0].productName").value("신발"))
                 .andExpect(jsonPath("$.data.content[0].unitPrice").value(30000))
                 .andExpect(jsonPath("$.data.totalElements").value(1))
-                .andExpect(jsonPath("$.data.currentPage").value(1));
+                .andExpect(jsonPath("$.data.currentPage").value(1))
+                .andDo(document("seller/orderitem/list",
+                        queryParameters(
+                                parameterWithName("page").optional().description("페이지 번호 (0부터 시작, 기본값: 0)"),
+                                parameterWithName("size").optional().description("페이지 크기 (기본값: 10)")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.content[].id").description("주문 상품 ID"),
+                                fieldWithPath("data.content[].orderId").description("주문 ID"),
+                                fieldWithPath("data.content[].productId").description("상품 ID"),
+                                fieldWithPath("data.content[].sellerId").description("판매자 ID"),
+                                fieldWithPath("data.content[].productName").description("상품명"),
+                                fieldWithPath("data.content[].unitPrice").description("단가"),
+                                fieldWithPath("data.content[].quantity").description("수량"),
+                                fieldWithPath("data.currentPage").description("현재 페이지 번호"),
+                                fieldWithPath("data.totalPages").description("전체 페이지 수"),
+                                fieldWithPath("data.totalElements").description("전체 항목 수"),
+                                fieldWithPath("data.size").description("페이지 크기"),
+                                fieldWithPath("data.isLast").description("마지막 페이지 여부"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test

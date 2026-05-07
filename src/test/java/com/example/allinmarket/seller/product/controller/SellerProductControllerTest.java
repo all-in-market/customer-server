@@ -24,7 +24,10 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SellerProductController.class)
@@ -68,7 +71,30 @@ public class SellerProductControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.price").value(10000))
                 .andExpect(jsonPath("$.data.stock").value(50))
                 .andExpect(jsonPath("$.data.status").value("ON_SALE"))
-                .andExpect(jsonPath("$.data.description").value("상품 설명"));
+                .andExpect(jsonPath("$.data.description").value("상품 설명"))
+                .andDo(document("seller/product/create",
+                        requestFields(
+                                fieldWithPath("categoryId").description("카테고리 ID"),
+                                fieldWithPath("name").description("상품명 (최대 200자)"),
+                                fieldWithPath("price").description("판매 가격"),
+                                fieldWithPath("stock").description("재고 수량"),
+                                fieldWithPath("description").description("상품 설명")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("상품 ID"),
+                                fieldWithPath("data.sellerId").description("판매자 ID"),
+                                fieldWithPath("data.categoryId").description("카테고리 ID"),
+                                fieldWithPath("data.name").description("상품명"),
+                                fieldWithPath("data.price").description("판매 가격"),
+                                fieldWithPath("data.stock").description("재고 수량"),
+                                fieldWithPath("data.status").description("상품 상태 (ON_SALE: 판매 중)"),
+                                fieldWithPath("data.description").description("상품 설명"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -114,7 +140,7 @@ public class SellerProductControllerTest extends RestDocsControllerTest {
         when(sellerProductService.update(any(Long.class), any(Long.class), any(SellerProductUpdateRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(put("/seller/products/1")
+        mockMvc.perform(put("/seller/products/{productId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -131,7 +157,33 @@ public class SellerProductControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.name").value("수정된 상품"))
                 .andExpect(jsonPath("$.data.price").value(20000))
                 .andExpect(jsonPath("$.data.status").value("ON_SALE"))
-                .andExpect(jsonPath("$.data.description").value("수정된 설명"));
+                .andExpect(jsonPath("$.data.description").value("수정된 설명"))
+                .andDo(document("seller/product/update",
+                        pathParameters(
+                                parameterWithName("productId").description("수정할 상품 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("categoryId").optional().description("카테고리 ID"),
+                                fieldWithPath("name").optional().description("상품명 (최대 200자)"),
+                                fieldWithPath("price").optional().description("판매 가격"),
+                                fieldWithPath("status").optional().description("상품 상태 (ON_SALE, SOLD_OUT 등)"),
+                                fieldWithPath("description").optional().description("상품 설명")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("상품 ID"),
+                                fieldWithPath("data.sellerId").description("판매자 ID"),
+                                fieldWithPath("data.categoryId").description("카테고리 ID"),
+                                fieldWithPath("data.name").description("상품명"),
+                                fieldWithPath("data.price").description("판매 가격"),
+                                fieldWithPath("data.stock").description("재고 수량"),
+                                fieldWithPath("data.status").description("상품 상태"),
+                                fieldWithPath("data.description").description("상품 설명"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -200,11 +252,30 @@ public class SellerProductControllerTest extends RestDocsControllerTest {
         );
         when(sellerProductService.delete(any(Long.class), any(Long.class))).thenReturn(response);
 
-        mockMvc.perform(delete("/seller/products/1"))
+        mockMvc.perform(delete("/seller/products/{productId}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.data.name").value("테스트 상품"));
+                .andExpect(jsonPath("$.data.name").value("테스트 상품"))
+                .andDo(document("seller/product/delete",
+                        pathParameters(
+                                parameterWithName("productId").description("삭제할 상품 ID")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("삭제된 상품 ID"),
+                                fieldWithPath("data.sellerId").description("판매자 ID"),
+                                fieldWithPath("data.categoryId").description("카테고리 ID"),
+                                fieldWithPath("data.name").description("상품명"),
+                                fieldWithPath("data.price").description("판매 가격"),
+                                fieldWithPath("data.stock").description("재고 수량"),
+                                fieldWithPath("data.status").description("상품 상태"),
+                                fieldWithPath("data.description").description("상품 설명"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -244,7 +315,7 @@ public class SellerProductControllerTest extends RestDocsControllerTest {
         when(sellerProductService.stockUpdate(any(Long.class), any(Long.class), any(SellerProductStockUpdateRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(put("/seller/products/1/stock")
+        mockMvc.perform(put("/seller/products/{productId}/stock", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -254,7 +325,29 @@ public class SellerProductControllerTest extends RestDocsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value(200))
-                .andExpect(jsonPath("$.data.stock").value(100));
+                .andExpect(jsonPath("$.data.stock").value(100))
+                .andDo(document("seller/product/stock-update",
+                        pathParameters(
+                                parameterWithName("productId").description("재고를 수정할 상품 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("stock").description("변경할 재고 수량 (0 이상)")
+                        ),
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("상품 ID"),
+                                fieldWithPath("data.sellerId").description("판매자 ID"),
+                                fieldWithPath("data.categoryId").description("카테고리 ID"),
+                                fieldWithPath("data.name").description("상품명"),
+                                fieldWithPath("data.price").description("판매 가격"),
+                                fieldWithPath("data.stock").description("수정된 재고 수량"),
+                                fieldWithPath("data.status").description("상품 상태"),
+                                fieldWithPath("data.description").description("상품 설명"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test

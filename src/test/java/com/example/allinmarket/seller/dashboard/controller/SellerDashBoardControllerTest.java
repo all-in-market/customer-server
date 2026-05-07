@@ -17,7 +17,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SellerDashBoardController.class)
@@ -61,7 +63,24 @@ public class SellerDashBoardControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.totalRefunds").value(2))
                 .andExpect(jsonPath("$.data.refundAmount").value(30000))
                 .andExpect(jsonPath("$.data.settlementAmount").value(455000))
-                .andExpect(jsonPath("$.data.feeAmount").value(15000));
+                .andExpect(jsonPath("$.data.feeAmount").value(15000))
+                .andDo(document("seller/dashboard/get",
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.sellerId").description("판매자 ID"),
+                                fieldWithPath("data.statDate").description("통계 기준 날짜"),
+                                fieldWithPath("data.totalOrders").description("총 주문 수"),
+                                fieldWithPath("data.totalSales").description("총 매출액"),
+                                fieldWithPath("data.totalProductsSold").description("총 판매 상품 수"),
+                                fieldWithPath("data.totalRefunds").description("총 환불 건수"),
+                                fieldWithPath("data.refundAmount").description("총 환불 금액"),
+                                fieldWithPath("data.settlementAmount").description("정산 금액"),
+                                fieldWithPath("data.feeAmount").description("수수료 금액"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
@@ -111,7 +130,24 @@ public class SellerDashBoardControllerTest extends RestDocsControllerTest {
                 .andExpect(jsonPath("$.data.totalRefunds").value(2))
                 .andExpect(jsonPath("$.data.refundAmount").value(30000))
                 .andExpect(jsonPath("$.data.settlementAmount").value(455000))
-                .andExpect(jsonPath("$.data.feeAmount").value(15000));
+                .andExpect(jsonPath("$.data.feeAmount").value(15000))
+                .andDo(document("seller/dashboard/refresh",
+                        responseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.sellerId").description("판매자 ID"),
+                                fieldWithPath("data.statDate").description("통계 기준 날짜"),
+                                fieldWithPath("data.totalOrders").description("총 주문 수"),
+                                fieldWithPath("data.totalSales").description("총 매출액"),
+                                fieldWithPath("data.totalProductsSold").description("총 판매 상품 수"),
+                                fieldWithPath("data.totalRefunds").description("총 환불 건수"),
+                                fieldWithPath("data.refundAmount").description("총 환불 금액"),
+                                fieldWithPath("data.settlementAmount").description("정산 금액"),
+                                fieldWithPath("data.feeAmount").description("수수료 금액"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test

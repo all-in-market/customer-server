@@ -1,0 +1,32 @@
+[[seller-dashboard]]
+== 판매자 대시보드
+
+[[seller-dashboard-get]]
+=== 대시보드 조회
+
+`GET /seller/dashboard`
+
+==== 요청 예시
+include::{snippets}/seller/dashboard/get/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/seller/dashboard/get/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/seller/dashboard/get/http-response.adoc[]
+
+---
+
+[[seller-dashboard-refresh]]
+=== 대시보드 갱신
+
+`POST /seller/dashboard/refresh`
+
+==== 요청 예시
+include::{snippets}/seller/dashboard/refresh/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/seller/dashboard/refresh/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/seller/dashboard/refresh/http-response.adoc[]

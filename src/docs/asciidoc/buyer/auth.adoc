@@ -1,0 +1,63 @@
+[[buyer-auth]]
+== 구매자 인증
+
+[[buyer-auth-signup]]
+=== 회원가입
+
+`POST /auth/signup`
+
+==== 요청 필드
+include::{snippets}/buyer/auth/signup/request-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/auth/signup/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/auth/signup/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/auth/signup/http-response.adoc[]
+
+---
+
+[[buyer-auth-login]]
+=== 로그인
+
+`POST /auth/login`
+
+==== 요청 필드
+include::{snippets}/buyer/auth/login/request-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/auth/login/http-request.adoc[]
+
+==== 응답 헤더
+include::{snippets}/buyer/auth/login/response-headers.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/auth/login/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/auth/login/http-response.adoc[]
+
+---
+
+[[buyer-auth-refresh]]
+=== 토큰 재발급
+
+`POST /auth/refresh`
+
+==== 요청 쿠키
+include::{snippets}/buyer/auth/refresh/request-cookies.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/auth/refresh/http-request.adoc[]
+
+==== 응답 헤더
+include::{snippets}/buyer/auth/refresh/response-headers.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/auth/refresh/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/auth/refresh/http-response.adoc[]

@@ -1,0 +1,19 @@
+[[seller-statistics]]
+== 판매자 통계
+
+[[seller-statistics-daily]]
+=== 일별 통계 조회
+
+`GET /seller/statistics/daily/{date}`
+
+==== 경로 파라미터
+include::{snippets}/seller/statistics/daily/path-parameters.adoc[]
+
+==== 요청 예시
+include::{snippets}/seller/statistics/daily/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/seller/statistics/daily/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/seller/statistics/daily/http-response.adoc[]

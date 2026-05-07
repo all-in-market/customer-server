@@ -1,0 +1,76 @@
+[[buyer-cart]]
+== 구매자 장바구니
+
+[[buyer-cart-get]]
+=== 장바구니 조회
+
+`GET /carts`
+
+==== 요청 예시
+include::{snippets}/buyer/cart/get/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/cart/get/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/cart/get/http-response.adoc[]
+
+---
+
+[[buyer-cart-add-item]]
+=== 장바구니 상품 추가
+
+`POST /carts/items`
+
+==== 요청 필드
+include::{snippets}/buyer/cart/add-item/request-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/cart/add-item/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/cart/add-item/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/cart/add-item/http-response.adoc[]
+
+---
+
+[[buyer-cart-update-item]]
+=== 장바구니 상품 수량 변경
+
+`PUT /carts/items/{productId}`
+
+==== 경로 파라미터
+include::{snippets}/buyer/cart/update-item/path-parameters.adoc[]
+
+==== 요청 필드
+include::{snippets}/buyer/cart/update-item/request-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/cart/update-item/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/cart/update-item/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/cart/update-item/http-response.adoc[]
+
+---
+
+[[buyer-cart-remove-item]]
+=== 장바구니 상품 삭제
+
+`DELETE /carts/items/{productId}`
+
+==== 경로 파라미터
+include::{snippets}/buyer/cart/remove-item/path-parameters.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/cart/remove-item/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/cart/remove-item/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/cart/remove-item/http-response.adoc[]

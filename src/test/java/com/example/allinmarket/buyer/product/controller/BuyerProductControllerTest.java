@@ -4,155 +4,139 @@ import com.example.allinmarket.buyer.product.service.BuyerProductService;
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.enums.SuccessEnum;
 import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.security.JwtAuthenticationFilter;
-import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.enums.ProductStatus;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.allinmarket.support.RestDocsControllerTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BuyerProductController.class)
-@AutoConfigureRestTestClient
-public class BuyerProductControllerTest {
-
-    @Autowired
-    private RestTestClient restTestClient;
-
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockitoBean
-    private LoginRateLimitFilter loginRateLimitFilter;
+public class BuyerProductControllerTest extends RestDocsControllerTest {
 
     @MockitoBean
     private BuyerProductService buyerProductService;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(jwtAuthenticationFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-
-        doAnswer(invocation -> {
-            FilterChain chain = invocation.getArgument(2);
-            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
-            return null;
-        }).when(loginRateLimitFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
-    }
-
     @Test
     @WithMockUser
-    void 구매자_상품_목록_조회_성공_테스트() {
-        // given
+    void 구매자_상품_목록_조회_성공_테스트() throws Exception {
         ProductDetailResponse response = new ProductDetailResponse(
-                1L,
-                null,
-                null,
-                "테스트",
-                BigDecimal.valueOf(10000),
-                50,
-                ProductStatus.ON_SALE,
-                "설명"
+                1L, null, null, "테스트", BigDecimal.valueOf(10000), 50, ProductStatus.ON_SALE, "설명"
         );
-
         when(buyerProductService.findAllProducts(any(Pageable.class), any()))
                 .thenReturn(new PageImpl<>(List.of(response)));
 
-        // when & then
-        restTestClient.get().uri("/products")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo("데이터 조회에 성공하였습니다.")
-                .jsonPath("$.data.content[0].name").isEqualTo("테스트")
-                .jsonPath("$.data.content[0].price").isEqualTo(10000)
-                .jsonPath("$.data.content[0].stock").isEqualTo(50)
-                .jsonPath("$.data.content[0].status").isEqualTo("ON_SALE")
-                .jsonPath("$.data.content[0].description").isEqualTo("설명");
+        mockMvc.perform(get("/products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("데이터 조회에 성공하였습니다."))
+                .andExpect(jsonPath("$.data.content[0].name").value("테스트"))
+                .andExpect(jsonPath("$.data.content[0].price").value(10000))
+                .andExpect(jsonPath("$.data.content[0].stock").value(50))
+                .andExpect(jsonPath("$.data.content[0].status").value("ON_SALE"))
+                .andExpect(jsonPath("$.data.content[0].description").value("설명"))
+                .andDo(document("buyer/product/list",
+                        queryParameters(
+                                parameterWithName("categoryId").optional().description("카테고리 ID 필터"),
+                                parameterWithName("page").optional().description("페이지 번호 (0부터 시작, 기본값: 0)"),
+                                parameterWithName("size").optional().description("페이지 크기 (기본값: 20)")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.content[].id").description("상품 ID"),
+                                fieldWithPath("data.content[].sellerId").optional().description("판매자 ID"),
+                                fieldWithPath("data.content[].categoryId").optional().description("카테고리 ID"),
+                                fieldWithPath("data.content[].name").description("상품명"),
+                                fieldWithPath("data.content[].price").description("판매 가격"),
+                                fieldWithPath("data.content[].stock").description("재고 수량"),
+                                fieldWithPath("data.content[].status").description("상품 상태 (ON_SALE: 판매 중)"),
+                                fieldWithPath("data.content[].description").description("상품 설명"),
+                                fieldWithPath("data.totalElements").description("전체 상품 수"),
+                                fieldWithPath("data.totalPages").description("전체 페이지 수"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
     @WithMockUser
-    void 구매자_상품_목록_조회_500에러_실패_테스트() {
-        // given
+    void 구매자_상품_목록_조회_500에러_실패_테스트() throws Exception {
         when(buyerProductService.findAllProducts(any(Pageable.class), any()))
                 .thenThrow(new BaseException(ErrorEnum.INTERNAL_SERVER_ERROR));
 
-        // when & then
-        restTestClient.get().uri("/products")
-                .exchange()
-                .expectStatus().is5xxServerError();
+        mockMvc.perform(get("/products"))
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
     @WithMockUser
-    void 상품_상세_조회_성공_테스트() {
-        // given
+    void 상품_상세_조회_성공_테스트() throws Exception {
         ProductDetailResponse response = new ProductDetailResponse(
-                1L,
-                null,
-                null,
-                "상품 테스트",
-                BigDecimal.valueOf(12000),
-                30,
-                ProductStatus.ON_SALE,
-                "상품 설명"
+                1L, null, null, "상품 테스트", BigDecimal.valueOf(12000), 30, ProductStatus.ON_SALE, "상품 설명"
         );
-
         given(buyerProductService.findOneProduct(any())).willReturn(response);
 
-        // when & then
-        restTestClient.get().uri("/products/{productId}", response.id())
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(true)
-                .jsonPath("$.status").isEqualTo(200)
-                .jsonPath("$.message").isEqualTo(SuccessEnum.READ_SUCCESS.getMessage())
-                .jsonPath("$.data.name").isEqualTo("상품 테스트")
-                .jsonPath("$.data.price").isEqualTo(12000)
-                .jsonPath("$.data.stock").isEqualTo(30)
-                .jsonPath("$.data.status").isEqualTo("ON_SALE")
-                .jsonPath("$.data.description").isEqualTo("상품 설명");
+        mockMvc.perform(get("/products/{productId}", response.id()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessEnum.READ_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.name").value("상품 테스트"))
+                .andExpect(jsonPath("$.data.price").value(12000))
+                .andExpect(jsonPath("$.data.stock").value(30))
+                .andExpect(jsonPath("$.data.status").value("ON_SALE"))
+                .andExpect(jsonPath("$.data.description").value("상품 설명"))
+                .andDo(document("buyer/product/detail",
+                        pathParameters(
+                                parameterWithName("productId").description("조회할 상품 ID")
+                        ),
+                        relaxedResponseFields(
+                                fieldWithPath("success").description("요청 성공 여부"),
+                                fieldWithPath("status").description("HTTP 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data.id").description("상품 ID"),
+                                fieldWithPath("data.sellerId").optional().description("판매자 ID"),
+                                fieldWithPath("data.categoryId").optional().description("카테고리 ID"),
+                                fieldWithPath("data.name").description("상품명"),
+                                fieldWithPath("data.price").description("판매 가격"),
+                                fieldWithPath("data.stock").description("재고 수량"),
+                                fieldWithPath("data.status").description("상품 상태"),
+                                fieldWithPath("data.description").description("상품 설명"),
+                                fieldWithPath("timestamp").description("응답 시각")
+                        )
+                ));
     }
 
     @Test
     @WithMockUser
-    void 상품_상세_조회_실패_테스트() {
-        // given
-        given(buyerProductService.findOneProduct(any())).willThrow(new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+    void 상품_상세_조회_실패_테스트() throws Exception {
+        given(buyerProductService.findOneProduct(any()))
+                .willThrow(new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
 
-        // when & then
-        restTestClient.get().uri("/products/1")
-                .exchange()
-                .expectStatus().isNotFound()
-                .expectBody()
-                .jsonPath("$.success").isEqualTo(false)
-                .jsonPath("$.status").isEqualTo(404)
-                .jsonPath("$.message").isEqualTo(ErrorEnum.PRODUCT_NOT_FOUND.getMessage())
-                .jsonPath("$.data").isEmpty();
+        mockMvc.perform(get("/products/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value(ErrorEnum.PRODUCT_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.data").value(nullValue()));
     }
 }

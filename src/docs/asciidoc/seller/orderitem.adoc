@@ -1,0 +1,19 @@
+[[seller-orderitem]]
+== 판매자 주문 상품
+
+[[seller-orderitem-list]]
+=== 주문 상품 목록 조회
+
+`GET /seller/orderitems`
+
+==== 쿼리 파라미터
+include::{snippets}/seller/orderitem/list/query-parameters.adoc[]
+
+==== 요청 예시
+include::{snippets}/seller/orderitem/list/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/seller/orderitem/list/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/seller/orderitem/list/http-response.adoc[]

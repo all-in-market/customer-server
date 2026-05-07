@@ -1,0 +1,19 @@
+[[seller-settlement]]
+== 판매자 정산
+
+[[seller-settlement-list]]
+=== 정산 내역 조회
+
+`GET /seller/settlements`
+
+==== 쿼리 파라미터
+include::{snippets}/seller/settlement/list/query-parameters.adoc[]
+
+==== 요청 예시
+include::{snippets}/seller/settlement/list/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/seller/settlement/list/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/seller/settlement/list/http-response.adoc[]

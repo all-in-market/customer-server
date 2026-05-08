@@ -31,3 +31,6 @@ include::buyer/product.adoc[]
 include::buyer/order.adoc[]
 
 include::buyer/payment.adoc[]
+include::buyer/address.adoc[]
+
+include::buyer/me.adoc[]

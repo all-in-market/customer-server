@@ -23,7 +23,7 @@ public class DashboardOutboxScheduler {
     // Outbox Polling 스케줄러
     // 결제 트랜잭션과 대시보드 업데이트를 분리하기 위한 Outbox 패턴 사용
     // 일정 주기로 처리되지 않은 Outbox 이벤트를 조회하여 처리
-    @Scheduled(fixedDelay = 2000)
+    @Scheduled(fixedDelay = 60000)
     @Transactional // 비관적 락 적용을 위한 트랜잭션 추가
     public void processOutbox() {
         Pageable pageable = PageRequest.of(0, 100);

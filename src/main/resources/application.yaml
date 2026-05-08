@@ -9,8 +9,8 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-#    hikari:
-#      maximum-pool-size: 20
+    hikari:
+      maximum-pool-size: 50
 
   data:
     redis:
@@ -81,15 +81,15 @@ management:
         namespace: ${CLOUDWATCH_METRICS_NAMESPACE:all-in-market/dev/ApplicationMetrics}
         step: 60s
 
-
-
-
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:3600000} # 1시간
 
 server:
   port: 8080
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 seller:
   email: ${SELLER_ID}
@@ -104,3 +104,8 @@ notification:
   auth:
     client-id: ${CUSTOMER_SERVER}
     secret: ${SERVER_SECRET_KEY}
+
+payment:
+  mock:
+    latency:
+      enabled: false

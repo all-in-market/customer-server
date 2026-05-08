@@ -28,6 +28,9 @@ include::buyer/cart.adoc[]
 
 include::buyer/product.adoc[]
 
+include::buyer/restock-notification.adoc[]
+
+include::buyer/restock-subscription.adoc[]
 include::buyer/order.adoc[]
 
 include::buyer/payment.adoc[]

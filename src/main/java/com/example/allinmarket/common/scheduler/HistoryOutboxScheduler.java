@@ -21,7 +21,7 @@ public class HistoryOutboxScheduler {
     private final HistoryOutboxRepository historyOutBoxRepository;
     private final HistoryOutboxService historyOutBoxService;
 
-    @Scheduled(fixedDelay = 10_000)
+    @Scheduled(fixedDelay = 300_000)
     public void processOutboxEvents() {
         Pageable pageable = PageRequest.of(0, 200);
         List<HistoryOutbox> outBoxes = historyOutBoxRepository.findUnprocessed(HistoryOutBoxConsts.MAX_RETRY_COUNT, pageable);

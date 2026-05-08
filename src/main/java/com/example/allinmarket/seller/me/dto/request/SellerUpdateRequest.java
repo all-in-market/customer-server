@@ -1,7 +1,6 @@
 package com.example.allinmarket.seller.me.dto.request;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
 
 // 의도적으로 dto에 null값 허용하여 부분적 수정이 가능하도록 함

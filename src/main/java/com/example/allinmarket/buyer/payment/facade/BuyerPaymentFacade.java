@@ -10,6 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 @Service
 @RequiredArgsConstructor
 public class BuyerPaymentFacade {
@@ -27,7 +29,21 @@ public class BuyerPaymentFacade {
         // 결제 이력 조회 (지금은 연동 전이므로 항상 결제 완료 상태를 반환한다고 가정)
         // 실연동 시 PortOne이 생성한 impUid를 별도로 받아야 함.
         PortOnePaymentResponse payment = paymentGateway.getPayment(paymentCreateResult.merchantUid());
+        simulateExternalLatency();
+
 
         return paymentRetryService.retryConfirmPayment(currentUserId, paymentCreateResult.merchantUid(), payment);
+    }
+
+    private void simulateExternalLatency() {
+        try {
+            Thread.sleep(
+                    ThreadLocalRandom.current()
+                            .nextLong(300,700) // 응답 지연 시간 300~700ms 사이 랜덤하게 지정
+            );
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
     }
 }

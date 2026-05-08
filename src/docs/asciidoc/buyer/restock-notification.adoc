@@ -1,5 +1,5 @@
 [[buyer-notification]]
-== 구매자 구독
+== 구매자 알림
 
 [[buyer-restock-notification-list]]
 === 안읽은 알림 전체 조회

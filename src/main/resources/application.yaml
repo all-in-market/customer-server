@@ -56,8 +56,8 @@ management:
     health:
       show-details: never
 
-  # 생성되는 metrics에 어디서 발생한 metrics인지 tag 부착
-  # 아래 3개 dimension은 모든 Metric에 공통적으로 붙여짐
+  # 모든 레지스트리에 생성되는 metrics에 어디서 발생한 metrics인지 tag 부착
+  # 아래 3개 dimension은 모든 Metrics에 공통적으로 붙여짐
   metrics:
     tags:
       application: ${spring.application.name}

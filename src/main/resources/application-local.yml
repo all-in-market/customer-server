@@ -4,14 +4,23 @@ spring:
       ssl:
         enabled: false
 dummy:
-  enabled: false
+  enabled: true
   batch-type:
   category-count: 100
-  seller-count: 10000
-  buyer-cart-count: 300000
-  product-count: 1000000
-  address-count: 300000
-  order-count: 300000
+  seller-count: 1000
+  buyer-cart-count: 30000
+  product-count: 100000
+  address-count: 30000
+  order-count: 30000
 
 notification-server:
   url: http://localhost:8083
+
+management:
+  influx:
+    metrics:
+      export:
+        enabled: true
+        uri: http://localhost:8086
+        db: k6
+        step: 1s

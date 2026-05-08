@@ -2,7 +2,7 @@
 == 구매자 정보
 
 [[buyer-me-get]]
-== 구매자 정보 조회
+=== 구매자 정보 조회
 
 `GET /buyers/me`
 
@@ -21,7 +21,7 @@ include::{snippets}/buyer/me/get/http-response.adoc[]
 ---
 
 [[buyer-me-update]]
-== 구매자 정보 수정
+=== 구매자 정보 수정
 
 `PUT /buyers/me`
 

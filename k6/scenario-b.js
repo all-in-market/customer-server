@@ -5,17 +5,25 @@ import {authHeaders, loginUsers} from './common.js';
 const BASE_URL = __ENV.BASE_URL || 'http://host.docker.internal:8080';
 const MAX_VUS = parseInt(__ENV.MAX_VUS || '500');
 
-// 각 단계별 목표 RPS (iterations/s 기준, 1 iteration = 장바구니 추가 + 주문 + 결제 3건)
-// 쓰기 + DB 락이 포함되므로 시나리오 A보다 낮은 RPS에서 한계 도달 예상
 const stages = {
     smoke: [
         {target: 5, duration: '30s'},
     ],
     load: [
-        {target: 50, duration: '1m'},  // 워밍업: 50 RPS까지 증가
-        {target: 50, duration: '5m'},  // 안정 상태 유지: 개선 전후 비교 기준값
-        {target: 0, duration: '30s'},  // 쿨다운
+        {target: 10, duration: '1m'},
+        {target: 20, duration: '1m'},
+        {target: 30, duration: '1m'},
+        {target: 0, duration: '30s'},
     ],
+
+    pressure: [
+        { target: 30, duration: '1m' },
+        { target: 50, duration: '1m' },
+        { target: 70, duration: '1m' },
+        { target: 100, duration: '1m' },
+        { target: 0, duration: '30s' },
+    ],
+
     stress: [
         {target: 15, duration: '1m'},
         {target: 60, duration: '1m'},
@@ -27,6 +35,7 @@ const stages = {
 };
 
 export const options = {
+    setupTimeout: '3m',
     scenarios: {
         purchase_flow: {
             executor: 'ramping-arrival-rate',
@@ -75,7 +84,7 @@ export function setup() {
     const productIds = products.map(p => p.id);
 
     // 2. 로그인 후 배송지 ID 수집
-    const {tokens} = loginUsers(50);
+    const {tokens} = loginUsers(MAX_VUS);
 
     const users = tokens.map(token => {
         const addrRes = http.get(`${BASE_URL}/addresses`, {

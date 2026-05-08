@@ -4,7 +4,7 @@ spring:
       ssl:
         enabled: false
 dummy:
-  enabled: false
+  enabled: true
   batch-type:
   category-count: 100
   seller-count: 10000
@@ -24,3 +24,8 @@ management:
         uri: http://localhost:8086
         db: k6
         step: 1s
+
+payment:
+  mock:
+    latency:
+      enabled: true

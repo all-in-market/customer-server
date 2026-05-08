@@ -81,6 +81,9 @@ dependencies {
     // monitoring (Prometheus)
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
+    // monitoring (K6)
+    implementation 'io.micrometer:micrometer-registry-influx'
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'

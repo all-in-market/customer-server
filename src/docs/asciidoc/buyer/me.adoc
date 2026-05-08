@@ -6,9 +6,6 @@
 
 `GET /buyers/me`
 
-==== 요청 필드
-include::{snippets}/buyer/me/get/request-fields.adoc[]
-
 ==== 요청 예시
 include::{snippets}/buyer/me/get/http-request.adoc[]
 

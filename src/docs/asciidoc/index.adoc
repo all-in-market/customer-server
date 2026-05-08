@@ -31,3 +31,9 @@ include::buyer/product.adoc[]
 include::buyer/restock-notification.adoc[]
 
 include::buyer/restock-subscription.adoc[]
+include::buyer/order.adoc[]
+
+include::buyer/payment.adoc[]
+include::buyer/address.adoc[]
+
+include::buyer/me.adoc[]

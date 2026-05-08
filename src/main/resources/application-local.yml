@@ -24,3 +24,8 @@ management:
         uri: http://localhost:8086
         db: k6
         step: 1s
+
+payment:
+  mock:
+    latency:
+      enabled: true

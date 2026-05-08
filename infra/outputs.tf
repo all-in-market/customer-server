@@ -168,6 +168,11 @@ output "grafana_workspace_endpoint" {
   value = var.managed_grafana_enabled ? aws_grafana_workspace.this[0].endpoint : null
 }
 
-output "grafana_prometheus_datasource_name" {
-  value = var.managed_grafana_enabled && var.managed_prometheus_enabled ? grafana_data_source.amp[0].name : null
+output "grafana_workspace_id" {
+  value = var.managed_grafana_enabled ? aws_grafana_workspace.this[0].id : null
+}
+
+output "grafana_service_account_token" {
+  value     = var.managed_grafana_enabled ? aws_grafana_workspace_service_account_token.terraform[0].key : null
+  sensitive = true
 }

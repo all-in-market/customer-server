@@ -1,0 +1,55 @@
+[[buyer-payment]]
+== 구매자 결제
+
+[[buyer-payment-create]]
+=== 결제 요청
+
+`POST /payments`
+
+==== 요청 필드
+include::{snippets}/buyer/payment/create/request-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/payment/create/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/payment/create/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/payment/create/http-response.adoc[]
+
+
+[[buyer-payment-detail]]
+=== 결제 단건 조회
+
+`GET /payments/{paymentId}`
+
+==== 경로 파라미터
+include::{snippets}/buyer/payment/detail/path-parameters.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/payment/detail/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/payment/detail/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/payment/detail/http-response.adoc[]
+
+
+[[buyer-payment-list]]
+=== 내 결제 목록 조회
+
+`GET /payments`
+
+==== 쿼리 파라미터
+include::{snippets}/buyer/payment/list/query-parameters.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/payment/list/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/payment/list/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/payment/list/http-response.adoc[]

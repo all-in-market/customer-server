@@ -27,3 +27,7 @@ include::buyer/category.adoc[]
 include::buyer/cart.adoc[]
 
 include::buyer/product.adoc[]
+
+include::buyer/order.adoc[]
+
+include::buyer/payment.adoc[]

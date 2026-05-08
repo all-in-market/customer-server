@@ -1,0 +1,38 @@
+[[buyer-me]]
+== 구매자 정보
+
+[[buyer-me-get]]
+== 구매자 정보 조회
+
+`GET /buyers/me`
+
+==== 요청 필드
+include::{snippets}/buyer/me/get/request-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/me/get/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/me/get/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/me/get/http-response.adoc[]
+
+---
+
+[[buyer-me-update]]
+== 구매자 정보 수정
+
+`PUT /buyers/me`
+
+==== 요청 필드
+include::{snippets}/buyer/me/update/request-fields.adoc[]
+
+==== 요청 예시
+include::{snippets}/buyer/me/update/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/me/update/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/me/update/http-response.adoc[]

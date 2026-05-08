@@ -1,0 +1,76 @@
+[[buyer-address]]
+== 구매자 주소
+
+[[buyer-address-create]]
+== 주소 등록
+
+`POST /addresses`
+
+==== 요청 필드
+include::{snippets}/buyer/address/create/request-fields.adoc[]
+
+=== 요청 예시
+include::{snippets}/buyer/address/create/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/address/create/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/address/create/http-response.adoc[]
+
+---
+
+[[buyer-address-delete]]
+=== 주소 삭제
+
+`DELETE /addresses/{addressId}`
+
+==== 요청 필드
+include::{snippets}/buyer/address/delete/request-fields.adoc[]
+
+=== 요청 예시
+include::{snippets}/buyer/address/delete/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/address/delete/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/address/delete/http-response.adoc[]
+
+---
+
+[[buyer-address-list]]
+== 주소 목록 조회
+
+`GET /addresses`
+
+==== 요청 필드
+include::{snippets}/buyer/address/list/request-fields.adoc[]
+
+=== 요청 예시
+include::{snippets}/buyer/address/list/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/address/list/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/address/list/http-response.adoc[]
+
+---
+
+[[buyer-address-update]]
+=== 주소 수정
+
+`PUT /addresses/{addressId}`
+
+==== 요청 필드
+include::{snippets}/buyer/address/update/request-fields.adoc[]
+
+=== 요청 예시
+include::{snippets}/buyer/address/update/http-request.adoc[]
+
+==== 응답 필드
+include::{snippets}/buyer/address/update/response-fields.adoc[]
+
+==== 응답 예시
+include::{snippets}/buyer/address/update/http-response.adoc[]

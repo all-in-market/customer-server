@@ -39,6 +39,10 @@ spring:
         static: ap-northeast-2
       cloudwatch:
         enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
+  # 가상 스레드 적용
+  threads:
+    virtual:
+      enabled: true
 
 management:
   endpoints:
@@ -98,4 +102,3 @@ notification:
   auth:
     client-id: ${CUSTOMER_SERVER}
     secret: ${SERVER_SECRET_KEY}
-

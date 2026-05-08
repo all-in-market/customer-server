@@ -1,10 +1,11 @@
 package com.example.allinmarket.buyer.me.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 public record BuyerUpdateRequest(
 
+        @Email(message = "이메일 형식이 올바르지 않습니다.")
         @Size(max = 100, message = "이메일은 최대 100자 까지 입력 가능합니다.")
         String email,
 

@@ -10,7 +10,7 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 50
+      maximum-pool-size: 10
 
   data:
     redis:

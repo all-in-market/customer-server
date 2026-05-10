@@ -8,8 +8,8 @@ resource "aws_ecs_service" "customer" {
   force_new_deployment              = true
 
   # prod 환경에서는 무중단 배포 가능하도록 설정
-  deployment_minimum_healthy_percent = var.environment == "prod" ? 100 : 0
-  deployment_maximum_percent         = var.environment == "prod" ? 200 : 100
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
 
   network_configuration {
     subnets          = [for subnet in aws_subnet.ecs_private : subnet.id]

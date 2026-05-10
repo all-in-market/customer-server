@@ -11,8 +11,8 @@ resource "aws_ecs_service" "admin" {
   launch_type                        = "EC2"
   health_check_grace_period_seconds  = 120
   force_new_deployment               = true
-  deployment_minimum_healthy_percent = var.environment == "prod" ? 100 : 0
-  deployment_maximum_percent         = var.environment == "prod" ? 200 : 100
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
 
   network_configuration {
     subnets          = local.admin_ec2_subnet_ids

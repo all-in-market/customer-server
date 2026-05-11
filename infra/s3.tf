@@ -12,25 +12,8 @@ resource "aws_s3_bucket_public_access_block" "product_images" {
   block_public_acls       = true
   ignore_public_acls      = true
 
-  block_public_policy     = false
-  restrict_public_buckets = false
-}
-
-resource "aws_s3_bucket_policy" "product_images_public_read" {
-  bucket = aws_s3_bucket.product_images.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "AllowPublicReadForTest"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.product_images.arn}/*"
-      }
-    ]
-  })
+  block_public_policy     = true
+  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "product_images" {

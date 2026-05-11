@@ -135,7 +135,7 @@ resource "aws_s3_bucket_policy" "product_images_cloudfront" {
           }
         }
       }
-    cd
+    ]
   })
 }
 

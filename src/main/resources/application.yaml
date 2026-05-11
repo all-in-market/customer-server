@@ -1,9 +1,11 @@
 spring:
   application:
     name: all-in-market
+
   sql:
     init:
       mode: never
+
   datasource: # 환경 변수가 설정되어 있으면 그 값을 쓰고, 없으면 기본값을 쓴다.
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:allinmarket}?reWriteBatchedInserts=true
     username: ${DB_USERNAME:postgres}
@@ -41,10 +43,18 @@ spring:
         static: ap-northeast-2
       cloudwatch:
         enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
+      s3:
+        bucket: ${PRODUCT_IMAGE_BUCKET:all-in-market-product-images}
+
   # 가상 스레드 적용
   threads:
     virtual:
       enabled: false
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 50MB
 
 management:
   endpoints:
@@ -109,3 +119,7 @@ payment:
   mock:
     latency:
       enabled: false
+
+cdn:
+  enabled: ${CDN_ENABLED:true}
+  url: ${PRODUCT_IMAGE_CDN_DOMAIN:}

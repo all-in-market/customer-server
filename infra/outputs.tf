@@ -34,6 +34,18 @@ output "github_actions_aws_role_arn" {
   value = aws_iam_role.github_actions.arn
 }
 
+output "product_image_bucket_name" {
+  value = aws_s3_bucket.product_images.bucket
+}
+
+# output "product_image_cdn_domain_name" {
+#   value = aws_cloudfront_distribution.product_images.domain_name
+# }
+#
+# output "product_image_cdn_url" {
+#   value = local.product_image_cdn_custom_domain_enabled ? "https://${var.product_image_cdn_domain}" : "https://${aws_cloudfront_distribution.product_images.domain_name}"
+# }
+
 # ==========================================
 # Customer
 # ==========================================

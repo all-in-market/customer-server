@@ -122,4 +122,4 @@ payment:
 
 cdn:
   enabled: ${CDN_ENABLED:true}
-  url: ${PRODUCT_IMAGE_CDN_DOMAIN}
+  url: ${PRODUCT_IMAGE_CDN_DOMAIN:}

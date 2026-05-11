@@ -25,7 +25,7 @@ public class ProductImage extends CreatableEntity {
     private String imageUrl;
 
     @PositiveOrZero
-    @Column(name = "sort_order")
+    @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 
     @Column(nullable = false)

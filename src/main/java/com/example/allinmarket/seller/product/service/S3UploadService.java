@@ -3,6 +3,7 @@ package com.example.allinmarket.seller.product.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -27,8 +28,15 @@ public class S3UploadService {
     private boolean cdnEnabled;
 
     public String uploadProductImage(MultipartFile file, Long productId) {
-        String originalFilename = file.getOriginalFilename();
-        String key = "products/" + productId + "/" + UUID.randomUUID() + "-" + originalFilename;
+
+        String originalFilename = StringUtils.hasText(file.getOriginalFilename())
+                        ? file.getOriginalFilename()
+                        : "unnamed";
+
+        String extension = StringUtils.getFilenameExtension(originalFilename);
+        String safeName = UUID.randomUUID() + (StringUtils.hasText(extension) ? "." + extension.toLowerCase() : "");
+
+        String key = "products/" + productId + "/" + safeName;
 
         try {
             PutObjectRequest request = PutObjectRequest.builder()

@@ -88,7 +88,9 @@ public class SellerProductController {
     public ResponseEntity<ApiResponse<List<ProductImageDetailResponse>>> getProductImages(
             @PathVariable Long productId
     ) {
-        List<ProductImageDetailResponse> response = sellerProductService.getProductImages(productId);
+        Long sellerId = SecurityUtils.getCurrentUserId();
+
+        List<ProductImageDetailResponse> response = sellerProductService.getProductImages(sellerId, productId);
 
         return ResponseEntity.ok(ApiResponse.success(SuccessEnum.READ_SUCCESS, response));
     }

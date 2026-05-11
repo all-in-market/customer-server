@@ -230,7 +230,7 @@ public class SellerProductService {
             Integer sortOrder,
             boolean representative
     ) {
-        Product product = productRepository.findById(productId).orElseThrow(
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
         );
 
@@ -246,13 +246,16 @@ public class SellerProductService {
         );
 
         ProductImage savedImage = productImageRepository.save(productImage);
+        evictSellerSearchProductCacheAfterCommit(sellerId);
 
         return ProductImageDetailResponse.from(savedImage);
     }
 
-    public List<ProductImageDetailResponse> getProductImages(Long productId) {
-        Product product = productRepository.findById(productId)
+    public List<ProductImageDetailResponse> getProductImages(Long sellerId, Long productId) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
                 .orElseThrow(() -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+
+        validateProductOwner(product, sellerId);
 
         List<ProductImage> productImages =
                 productImageRepository.findByProductIdOrderByRepresentativeDescSortOrderAsc(product.getId());

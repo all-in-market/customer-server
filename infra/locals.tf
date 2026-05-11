@@ -67,6 +67,9 @@ locals {
 
       CLOUDWATCH_METRICS_ENABLED   = "true"
       CLOUDWATCH_METRICS_NAMESPACE = local.application_metrics_namespace
+
+      PRODUCT_IMAGE_BUCKET     = aws_s3_bucket.product_images.bucket
+      PRODUCT_IMAGE_CDN_DOMAIN = var.product_image_cdn_domain
     }
   )
 

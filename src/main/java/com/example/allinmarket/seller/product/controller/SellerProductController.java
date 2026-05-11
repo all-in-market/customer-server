@@ -8,6 +8,7 @@ import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
+import com.example.allinmarket.seller.product.dto.response.ProductImageDetailResponse;
 import com.example.allinmarket.seller.product.service.SellerProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -54,5 +59,37 @@ public class SellerProductController {
     public ResponseEntity<ApiResponse<ProductDetailResponse>> stockUpdate(@PathVariable(name = "productId") Long productId, @Valid @RequestBody SellerProductStockUpdateRequest request) {
         Long sellerId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.success(SuccessEnum.UPDATE_SUCCESS, sellerProductService.stockUpdate(sellerId, productId, request)));
+    }
+
+    @PostMapping(
+            value = "/{productId}/images",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ApiResponse<ProductImageDetailResponse>> uploadProductImage(
+            @PathVariable Long productId,
+            @RequestParam MultipartFile image,
+            @RequestParam(defaultValue = "0") Integer sortOrder,
+            @RequestParam(defaultValue = "false") boolean representative
+    ) {
+        Long sellerId = SecurityUtils.getCurrentUserId();
+
+        ProductImageDetailResponse response = sellerProductService.uploadProductImage(
+                sellerId,
+                productId,
+                image,
+                sortOrder,
+                representative
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(SuccessEnum.CREATE_SUCCESS, response));
+    }
+
+    @GetMapping("/{productId}/images")
+    public ResponseEntity<ApiResponse<List<ProductImageDetailResponse>>> getProductImages(
+            @PathVariable Long productId
+    ) {
+        List<ProductImageDetailResponse> response = sellerProductService.getProductImages(productId);
+
+        return ResponseEntity.ok(ApiResponse.success(SuccessEnum.READ_SUCCESS, response));
     }
 }

@@ -84,6 +84,9 @@ dependencies {
     // monitoring (K6)
     //implementation 'io.micrometer:micrometer-registry-influx'
 
+    // s3 image upload
+    implementation 'software.amazon.awssdk:s3'
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'

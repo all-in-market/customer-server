@@ -121,5 +121,4 @@ payment:
       enabled: false
 
 cdn:
-  enabled: ${CDN_ENABLED:true}
   url: ${PRODUCT_IMAGE_CDN_DOMAIN:}

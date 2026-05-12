@@ -37,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LoginRateLimitFilter extends OncePerRequestFilter {
 
+    static final int MAX_BODY_BYTES = 8_192;
+
     // IP+이메일: 같은 네트워크에서 특정 계정 반복 공격 방어 (5회 / 5분)
     static final int MAX_FAILURES_IP_EMAIL = 5;
 
@@ -72,7 +74,14 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
-        CachedBodyRequestWrapper requestWrapper = new CachedBodyRequestWrapper(request);
+        CachedBodyRequestWrapper requestWrapper;
+        try {
+            requestWrapper = new CachedBodyRequestWrapper(request);
+        } catch (CachedBodyRequestWrapper.BodyTooLargeException e) {
+            log.warn("[RateLimit] 요청 본문 크기 초과 - IP: {}", extractClientIp(request));
+            response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+            return;
+        }
         String ip = extractClientIp(request);
         String email = extractEmail(requestWrapper.getBody());
 
@@ -184,9 +193,19 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
     private static class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
         private final byte[] body;
 
+        static final class BodyTooLargeException extends IOException {
+            BodyTooLargeException(int limit) {
+                super("Login request body exceeds " + limit + " bytes");
+            }
+        }
+
         CachedBodyRequestWrapper(HttpServletRequest request) throws IOException {
             super(request);
-            this.body = request.getInputStream().readAllBytes();
+            byte[] buffer = request.getInputStream().readNBytes(MAX_BODY_BYTES + 1);
+            if (buffer.length > MAX_BODY_BYTES) {
+                throw new BodyTooLargeException(MAX_BODY_BYTES);
+            }
+            this.body = buffer;
         }
 
         byte[] getBody() {

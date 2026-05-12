@@ -16,6 +16,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -261,6 +262,24 @@ class LoginRateLimitFilterTest {
 
         verify(stringRedisTemplate).delete(expectedIpEmailKey);
         verify(stringRedisTemplate).delete(KEY_EMAIL);
+    }
+
+    // ── 요청 본문 크기 제한 ──────────────────────────────────────────────────────
+
+    @Test
+    void 요청_본문이_최대_크기를_초과하면_413을_반환한다() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/auth/login");
+        request.setRemoteAddr("1.2.3.4");
+        request.setContentType("application/json");
+        byte[] oversizedBody = new byte[LoginRateLimitFilter.MAX_BODY_BYTES + 1];
+        Arrays.fill(oversizedBody, (byte) 'a');
+        request.setContent(oversizedBody);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain, never()).doFilter(any(), any());
+        assertThat(response.getStatus()).isEqualTo(413);
     }
 
     // ── Redis Fail-open ─────────────────────────────────────────────────────────

@@ -44,7 +44,8 @@
 
 # 3. 🔄 서비스 플로우
 
-## 구매 플로우
+<details>
+<summary><h2>구매 플로우</h2></summary>
 
 ```mermaid
 sequenceDiagram
@@ -110,10 +111,14 @@ sequenceDiagram
         Commerce-->>Buyer: 주문 실패 응답
     end
 ```
+</details>
 
 <br>
 
-## 판매 플로우
+---
+
+<details>
+<summary><h2>판매 플로우</h2></summary>
 
 ```mermaid
 sequenceDiagram
@@ -168,9 +173,14 @@ sequenceDiagram
         Commerce-->>Seller: 배송 처리 완료 응답
     end
 ```
+</details>
+
 <br>
 
-## 판매자 정산 생성 플로우
+---
+
+<details>
+<summary><h2>판매자 정산 생성 플로우</h2></summary>
 
 ```mermaid
 sequenceDiagram
@@ -210,12 +220,14 @@ sequenceDiagram
 
     Service->>Redis: 정산 캐시 버전 증가
 ```
+</details>
 
 <br>
 
 ---
 
-## 판매자 지급 생성 플로우
+<details>
+<summary><h2>판매자 지급 생성 플로우</h2></summary>
 
 ```mermaid
 sequenceDiagram
@@ -249,12 +261,14 @@ sequenceDiagram
         end
     end
 ```
+</details>
 
 <br>
 
 ---
 
-## 판매자 지급 처리 플로우
+<details>
+<summary><h2>판매자 지급 처리 플로우</h2></summary>
 
 ```mermaid
 sequenceDiagram
@@ -310,12 +324,14 @@ sequenceDiagram
         end
     end
 ```
+</details>
 
 <br>
 
 ---
 
-## 지급 재시도 전략
+<details>
+<summary><h2>지급 재시도 전략</h2></summary>
 
 ```mermaid
 flowchart TD
@@ -334,12 +350,14 @@ flowchart TD
 
     G --> H[다음 Scheduler 실행 시 재시도]
 ```
+</details>
 
 <br>
 
 ---
 
-## Settlement 상태 흐름
+<details>
+<summary><h2>Settlement 상태 흐름</h2></summary>
 
 ```mermaid
 stateDiagram-v2
@@ -352,7 +370,7 @@ stateDiagram-v2
 
     COMPLETED --> FAILED : 정산 실패
 ```
-
+</details>
 <br>
 
 ---

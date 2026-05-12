@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -260,6 +261,56 @@ class LoginRateLimitFilterTest {
 
         verify(stringRedisTemplate).delete(expectedIpEmailKey);
         verify(stringRedisTemplate).delete(KEY_EMAIL);
+    }
+
+    // ── Redis Fail-open ─────────────────────────────────────────────────────────
+
+    @Test
+    void Redis_장애시_차단_확인이_fail_open으로_처리된다() throws Exception {
+        // isBlocked에서 DataAccessException → false 반환 → 요청 통과
+        MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
+        given(valueOps.get(any())).willThrow(new RedisConnectionFailureException("Redis down"));
+        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(200); return null; })
+                .when(filterChain).doFilter(any(), any());
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(any(), any());
+        assertThat(response.getStatus()).isNotEqualTo(429);
+    }
+
+    @Test
+    void Redis_장애시_카운터_증가가_fail_open으로_처리된다() throws Exception {
+        // incrementFailureCount에서 DataAccessException → 로그 후 no-op
+        MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
+        given(valueOps.increment(any())).willThrow(new RedisConnectionFailureException("Redis down"));
+        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
+                .when(filterChain).doFilter(any(), any());
+
+        // 예외가 전파되지 않으면 성공
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(any(), any());
+    }
+
+    @Test
+    void Redis_장애시_카운터_삭제가_fail_open으로_처리된다() throws Exception {
+        // deleteKey에서 DataAccessException → 로그 후 no-op
+        MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
+        given(stringRedisTemplate.delete(any(String.class))).willThrow(new RedisConnectionFailureException("Redis down"));
+        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(200); return null; })
+                .when(filterChain).doFilter(any(), any());
+
+        // 예외가 전파되지 않으면 성공
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(any(), any());
     }
 
     // ── shouldNotFilter ─────────────────────────────────────────────────────────

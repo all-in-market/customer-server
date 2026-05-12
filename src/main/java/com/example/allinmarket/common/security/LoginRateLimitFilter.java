@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -99,30 +100,45 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
             if (emailKey != null) incrementFailureCount(emailKey, MAX_FAILURES_EMAIL);
             log.warn("[RateLimit] 로그인 실패 - IP: {}, email: {}", ip, email);
         } else if (status < 300) {
-            if (ipEmailKey != null) stringRedisTemplate.delete(ipEmailKey);
-            if (emailKey != null) stringRedisTemplate.delete(emailKey);
+            if (ipEmailKey != null) deleteKey(ipEmailKey);
+            if (emailKey != null) deleteKey(emailKey);
         }
 
         responseWrapper.copyBodyToResponse();
     }
 
     private boolean isBlocked(String key, int maxFailures) {
-        String countStr = stringRedisTemplate.opsForValue().get(key);
-        if (countStr == null) return false;
         try {
+            String countStr = stringRedisTemplate.opsForValue().get(key);
+            if (countStr == null) return false;
             return Integer.parseInt(countStr) >= maxFailures;
         } catch (NumberFormatException e) {
-            log.warn("[RateLimit] 실패 횟수 파싱 오류 - key: {}, value: '{}'", key, countStr);
+            log.warn("[RateLimit] 실패 횟수 파싱 오류 - key: {}", key);
+            return false;
+        } catch (DataAccessException e) {
+            log.warn("[RateLimit] Redis 오류로 차단 확인 생략 (fail-open) - key: {}", key, e);
             return false;
         }
     }
 
     private void incrementFailureCount(String key, int maxFailures) {
-        Long count = stringRedisTemplate.opsForValue().increment(key);
-        if (count != null && count == 1) {
-            stringRedisTemplate.expire(key, BLOCK_DURATION_SECONDS, TimeUnit.SECONDS);
+        try {
+            Long count = stringRedisTemplate.opsForValue().increment(key);
+            if (count != null && count == 1) {
+                stringRedisTemplate.expire(key, BLOCK_DURATION_SECONDS, TimeUnit.SECONDS);
+            }
+            log.warn("[RateLimit] 카운터 증가 - key: {}, 누적: {}/{}", key, count, maxFailures);
+        } catch (DataAccessException e) {
+            log.warn("[RateLimit] Redis 오류로 카운터 증가 생략 (fail-open) - key: {}", key, e);
         }
-        log.warn("[RateLimit] 카운터 증가 - key: {}, 누적: {}/{}", key, count, maxFailures);
+    }
+
+    private void deleteKey(String key) {
+        try {
+            stringRedisTemplate.delete(key);
+        } catch (DataAccessException e) {
+            log.warn("[RateLimit] Redis 오류로 카운터 삭제 생략 (fail-open) - key: {}", key, e);
+        }
     }
 
     private String extractEmail(byte[] body) {

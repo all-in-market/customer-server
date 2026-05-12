@@ -5,6 +5,7 @@ resource "aws_vpc_endpoint" "s3" {
   service_name      = "com.amazonaws.${var.aws_region}.s3"
   vpc_endpoint_type = "Gateway"
 
+  # private subnet의 route table에 S3 Gateway Endpoint 를 추가
   route_table_ids = [
     for _, rt in aws_route_table.private : rt.id
   ]

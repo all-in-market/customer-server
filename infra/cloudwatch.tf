@@ -51,3 +51,15 @@ resource "aws_cloudwatch_log_group" "adot" {
     Name = "/ecs/${var.project_name}/adot"
   })
 }
+
+# WAF 로그 그룹
+resource "aws_cloudwatch_log_group" "waf" {
+  count = var.waf_enabled && var.waf_logging_enabled ? 1 : 0
+
+  name              = "aws-waf-logs-${var.project_name}-${var.environment}"
+  retention_in_days = var.waf_log_retention_in_days
+
+  tags = merge(local.common_tags, {
+    Name = "aws-waf-logs-${var.project_name}-${var.environment}"
+  })
+}

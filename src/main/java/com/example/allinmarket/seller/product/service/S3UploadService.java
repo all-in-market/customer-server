@@ -24,9 +24,6 @@ public class S3UploadService {
     @Value("${cdn.url}")
     private String productImageCdnUrl;
 
-    @Value("${cdn.enabled}")
-    private boolean cdnEnabled;
-
     public String uploadProductImage(MultipartFile file, Long productId) {
 
         String originalFilename = StringUtils.hasText(file.getOriginalFilename())
@@ -50,11 +47,7 @@ public class S3UploadService {
                     RequestBody.fromBytes(file.getBytes())
             );
 
-            if(cdnEnabled){
-                return "https://" + productImageCdnUrl + "/" + key;
-            }
-
-            return "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com/" + key;
+            return "https://" + productImageCdnUrl + "/" + key;
 
         } catch (IOException e) {
             throw new RuntimeException("상품 이미지 업로드에 실패했습니다.", e);

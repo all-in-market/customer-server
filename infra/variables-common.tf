@@ -137,3 +137,32 @@ variable "environment" {
     error_message = "environment는 dev 또는 prod만 가능합니다."
   }
 }
+
+variable "waf_enabled" {
+  description = "Whether to create and associate WAF with the public ALB"
+  type        = bool
+  default     = true
+}
+
+variable "waf_logging_enabled" {
+  description = "Whether to enable WAF logging to CloudWatch Logs"
+  type        = bool
+  default     = true
+}
+
+variable "waf_log_retention_in_days" {
+  description = "WAF log retention days"
+  type        = number
+  default     = 7
+}
+
+variable "waf_rate_limit_per_5min" {
+  description = "Maximum requests per IP during a 5-minute window"
+  type        = number
+  default     = 1000
+
+  validation {
+    condition     = var.waf_rate_limit_per_5min >= 100
+    error_message = "waf_rate_limit_per_5min은 최소 100 이상이어야 합니다."
+  }
+}

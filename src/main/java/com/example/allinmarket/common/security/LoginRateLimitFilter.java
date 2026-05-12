@@ -36,16 +36,16 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LoginRateLimitFilter extends OncePerRequestFilter {
 
-    // IP 단독: 대규모 플러딩 방어 (100회 / 5분)
-    static final int MAX_FAILURES_IP = 100;
-    static final long BLOCK_DURATION_IP_SECONDS = 300;
-
-    // IP+이메일: 계정 브루트포스 방어 (5회 / 10분)
+    // IP+이메일: 같은 네트워크에서 특정 계정 반복 공격 방어 (5회 / 5분)
     static final int MAX_FAILURES_IP_EMAIL = 5;
-    static final long BLOCK_DURATION_IP_EMAIL_SECONDS = 600;
 
-    static final String KEY_PREFIX_IP = "login:fail:ip:";
+    // 이메일 전용: 분산 IP를 사용한 특정 계정 공격 방어 (10회 / 5분)
+    static final int MAX_FAILURES_EMAIL = 10;
+
+    static final long BLOCK_DURATION_SECONDS = 300;
+
     static final String KEY_PREFIX_IP_EMAIL = "login:fail:ip-email:";
+    static final String KEY_PREFIX_EMAIL = "login:fail:email:";
 
     private static final Set<String> LOGIN_PATHS = Set.of("/auth/login", "/seller/auth/login");
 
@@ -75,17 +75,17 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         String ip = extractClientIp(request);
         String email = extractEmail(requestWrapper.getBody());
 
-        String ipKey = KEY_PREFIX_IP + ip;
         String ipEmailKey = (email != null) ? KEY_PREFIX_IP_EMAIL + ip + ":" + sha256(email) : null;
+        String emailKey = (email != null) ? KEY_PREFIX_EMAIL + sha256(email) : null;
 
-        if (isBlocked(ipKey, MAX_FAILURES_IP)) {
-            log.warn("[RateLimit] IP 글로벌 차단 - IP: {}", ip);
+        if (ipEmailKey != null && isBlocked(ipEmailKey, MAX_FAILURES_IP_EMAIL)) {
+            log.warn("[RateLimit] IP+이메일 차단 - IP: {}, email: {}", ip, email);
             sendRateLimitError(response);
             return;
         }
 
-        if (ipEmailKey != null && isBlocked(ipEmailKey, MAX_FAILURES_IP_EMAIL)) {
-            log.warn("[RateLimit] IP+이메일 차단 - IP: {}, email: {}", ip, email);
+        if (emailKey != null && isBlocked(emailKey, MAX_FAILURES_EMAIL)) {
+            log.warn("[RateLimit] 이메일 차단 - email: {}", email);
             sendRateLimitError(response);
             return;
         }
@@ -95,13 +95,12 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
 
         int status = responseWrapper.getStatus();
         if (status == 400) {
-            incrementFailureCount(ipKey, MAX_FAILURES_IP, BLOCK_DURATION_IP_SECONDS);
-            if (ipEmailKey != null) {
-                incrementFailureCount(ipEmailKey, MAX_FAILURES_IP_EMAIL, BLOCK_DURATION_IP_EMAIL_SECONDS);
-            }
+            if (ipEmailKey != null) incrementFailureCount(ipEmailKey, MAX_FAILURES_IP_EMAIL);
+            if (emailKey != null) incrementFailureCount(emailKey, MAX_FAILURES_EMAIL);
             log.warn("[RateLimit] 로그인 실패 - IP: {}, email: {}", ip, email);
-        } else if (status < 300 && ipEmailKey != null) {
-            stringRedisTemplate.delete(ipEmailKey);
+        } else if (status < 300) {
+            if (ipEmailKey != null) stringRedisTemplate.delete(ipEmailKey);
+            if (emailKey != null) stringRedisTemplate.delete(emailKey);
         }
 
         responseWrapper.copyBodyToResponse();
@@ -118,10 +117,10 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         }
     }
 
-    private void incrementFailureCount(String key, int maxFailures, long blockDurationSeconds) {
+    private void incrementFailureCount(String key, int maxFailures) {
         Long count = stringRedisTemplate.opsForValue().increment(key);
         if (count != null && count == 1) {
-            stringRedisTemplate.expire(key, blockDurationSeconds, TimeUnit.SECONDS);
+            stringRedisTemplate.expire(key, BLOCK_DURATION_SECONDS, TimeUnit.SECONDS);
         }
         log.warn("[RateLimit] 카운터 증가 - key: {}, 누적: {}/{}", key, count, maxFailures);
     }

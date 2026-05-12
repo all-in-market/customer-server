@@ -2,6 +2,7 @@ package com.example.allinmarket.common.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,8 +31,8 @@ class LoginRateLimitFilterTest {
 
     private static final String EMAIL = "test@example.com";
     private static final String EMAIL_HASH = LoginRateLimitFilter.sha256(EMAIL);
-    private static final String KEY_IP = LoginRateLimitFilter.KEY_PREFIX_IP + "1.2.3.4";
     private static final String KEY_IP_EMAIL = LoginRateLimitFilter.KEY_PREFIX_IP_EMAIL + "1.2.3.4:" + EMAIL_HASH;
+    private static final String KEY_EMAIL = LoginRateLimitFilter.KEY_PREFIX_EMAIL + EMAIL_HASH;
 
     @Mock private StringRedisTemplate stringRedisTemplate;
     @Mock private ValueOperations<String, String> valueOps;
@@ -43,21 +45,6 @@ class LoginRateLimitFilterTest {
         filter = new LoginRateLimitFilter(stringRedisTemplate, new ObjectMapper().findAndRegisterModules());
     }
 
-    // ── IP 글로벌 차단 ──────────────────────────────────────────────────────────
-
-    @Test
-    void IP_글로벌_제한_초과시_429를_반환한다() throws Exception {
-        MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        given(valueOps.get(KEY_IP)).willReturn(String.valueOf(LoginRateLimitFilter.MAX_FAILURES_IP));
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain, never()).doFilter(any(), any());
-        assertThat(response.getStatus()).isEqualTo(429);
-    }
-
     // ── IP+이메일 차단 ──────────────────────────────────────────────────────────
 
     @Test
@@ -65,7 +52,6 @@ class LoginRateLimitFilterTest {
         MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
         MockHttpServletResponse response = new MockHttpServletResponse();
         given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        given(valueOps.get(KEY_IP)).willReturn("3");
         given(valueOps.get(KEY_IP_EMAIL)).willReturn(String.valueOf(LoginRateLimitFilter.MAX_FAILURES_IP_EMAIL));
 
         filter.doFilterInternal(request, response, filterChain);
@@ -74,20 +60,39 @@ class LoginRateLimitFilterTest {
         assertThat(response.getStatus()).isEqualTo(429);
     }
 
-    // ── 실패 시 카운터 증가 ──────────────────────────────────────────────────────
+    // ── 이메일 전용 차단 ────────────────────────────────────────────────────────
 
     @Test
-    void 로그인_실패시_IP_카운터를_증가시킨다() throws Exception {
+    void 이메일_전용_제한_초과시_429를_반환한다() throws Exception {
         MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
         MockHttpServletResponse response = new MockHttpServletResponse();
         given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
+        given(valueOps.get(KEY_IP_EMAIL)).willReturn("3");
+        given(valueOps.get(KEY_EMAIL)).willReturn(String.valueOf(LoginRateLimitFilter.MAX_FAILURES_EMAIL));
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain, never()).doFilter(any(), any());
+        assertThat(response.getStatus()).isEqualTo(429);
+    }
+
+    // ── 성공 시 두 카운터 초기화 ────────────────────────────────────────────────
+
+    @Test
+    void 로그인_성공시_두_카운터를_모두_삭제한다() throws Exception {
+        MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
+        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(200); return null; })
                 .when(filterChain).doFilter(any(), any());
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(valueOps).increment(KEY_IP);
+        verify(stringRedisTemplate).delete(KEY_IP_EMAIL);
+        verify(stringRedisTemplate).delete(KEY_EMAIL);
     }
+
+    // ── 실패 시 두 카운터 증가 ──────────────────────────────────────────────────
 
     @Test
     void 로그인_실패시_IP_이메일_카운터를_증가시킨다() throws Exception {
@@ -103,20 +108,16 @@ class LoginRateLimitFilterTest {
     }
 
     @Test
-    void 첫번째_실패시_IP_키에_TTL을_설정한다() throws Exception {
+    void 로그인_실패시_이메일_카운터를_증가시킨다() throws Exception {
         MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
         MockHttpServletResponse response = new MockHttpServletResponse();
         given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        given(valueOps.increment(KEY_IP)).willReturn(1L);
-        given(valueOps.increment(KEY_IP_EMAIL)).willReturn(2L); // 2L → IP+이메일 키 TTL 미설정
         doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
                 .when(filterChain).doFilter(any(), any());
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(stringRedisTemplate).expire(
-                eq(KEY_IP), eq(LoginRateLimitFilter.BLOCK_DURATION_IP_SECONDS), eq(TimeUnit.SECONDS)
-        );
+        verify(valueOps).increment(KEY_EMAIL);
     }
 
     @Test
@@ -124,97 +125,122 @@ class LoginRateLimitFilterTest {
         MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
         MockHttpServletResponse response = new MockHttpServletResponse();
         given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        given(valueOps.increment(KEY_IP)).willReturn(2L); // 2L → IP 키 TTL 미설정
         given(valueOps.increment(KEY_IP_EMAIL)).willReturn(1L);
+        given(valueOps.increment(KEY_EMAIL)).willReturn(2L);
         doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
                 .when(filterChain).doFilter(any(), any());
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(stringRedisTemplate).expire(
-                eq(KEY_IP_EMAIL), eq(LoginRateLimitFilter.BLOCK_DURATION_IP_EMAIL_SECONDS), eq(TimeUnit.SECONDS)
+                eq(KEY_IP_EMAIL), eq(LoginRateLimitFilter.BLOCK_DURATION_SECONDS), eq(TimeUnit.SECONDS)
         );
     }
 
-    // ── 성공 시 카운터 처리 ──────────────────────────────────────────────────────
-
     @Test
-    void 로그인_성공시_IP_이메일_카운터를_삭제한다() throws Exception {
+    void 첫번째_실패시_이메일_키에_TTL을_설정한다() throws Exception {
         MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
         MockHttpServletResponse response = new MockHttpServletResponse();
         given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(200); return null; })
+        given(valueOps.increment(KEY_IP_EMAIL)).willReturn(2L);
+        given(valueOps.increment(KEY_EMAIL)).willReturn(1L);
+        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
                 .when(filterChain).doFilter(any(), any());
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(stringRedisTemplate).delete(KEY_IP_EMAIL);
+        verify(stringRedisTemplate).expire(
+                eq(KEY_EMAIL), eq(LoginRateLimitFilter.BLOCK_DURATION_SECONDS), eq(TimeUnit.SECONDS)
+        );
     }
 
-    @Test
-    void 로그인_성공시_IP_카운터는_삭제하지_않는다() throws Exception {
-        MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(200); return null; })
-                .when(filterChain).doFilter(any(), any());
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(stringRedisTemplate, never()).delete(KEY_IP);
-    }
-
-    // ── 이메일 처리 ─────────────────────────────────────────────────────────────
+    // ── 이메일 없을 때 폴백 ─────────────────────────────────────────────────────
 
     @Test
-    void 이메일이_없으면_IP_카운터만_증가시킨다() throws Exception {
+    void 잘못된_JSON이면_레이트_리밋_없이_요청을_통과시킨다() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/auth/login");
         request.setRemoteAddr("1.2.3.4");
         request.setContentType("application/json");
-        request.setContent("{\"password\":\"pass1234\"}".getBytes(StandardCharsets.UTF_8));
+        request.setContent("not-valid-json".getBytes(StandardCharsets.UTF_8));
         MockHttpServletResponse response = new MockHttpServletResponse();
-        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
-                .when(filterChain).doFilter(any(), any());
+        // email = null → Redis 접근 없음 → 스텁 불필요
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(valueOps).increment(KEY_IP);
-        verify(valueOps, never()).increment(KEY_IP_EMAIL);
+        verify(filterChain).doFilter(any(), any());
+        verify(stringRedisTemplate, never()).opsForValue();
     }
 
     @Test
-    void 이메일_대소문자는_소문자로_정규화된다() throws Exception {
-        String upperEmail = "Test@Example.COM";
-        // "test@example.com"의 해시와 동일해야 한다
-        String expectedKey = LoginRateLimitFilter.KEY_PREFIX_IP_EMAIL + "1.2.3.4:" + LoginRateLimitFilter.sha256("test@example.com");
-
-        MockHttpServletRequest request = loginRequest("1.2.3.4", upperEmail);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
-        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
-                .when(filterChain).doFilter(any(), any());
-
-        filter.doFilterInternal(request, response, filterChain);
-
-        verify(valueOps).increment(expectedKey);
-    }
-
-    @Test
-    void 빈_이메일은_IP_단독_제한으로_처리한다() throws Exception {
+    void 빈_이메일이면_레이트_리밋_없이_요청을_통과시킨다() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/auth/login");
         request.setRemoteAddr("1.2.3.4");
         request.setContentType("application/json");
         request.setContent("{\"email\":\"   \",\"password\":\"pass1234\"}".getBytes(StandardCharsets.UTF_8));
         MockHttpServletResponse response = new MockHttpServletResponse();
+        // email.isBlank() → null → Redis 접근 없음
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(any(), any());
+        verify(stringRedisTemplate, never()).opsForValue();
+    }
+
+    // ── Redis 키 형식 검증 ─────────────────────────────────────────────────────
+
+    @Test
+    void Redis_키에는_이메일_원문이_아닌_해시를_사용한다() throws Exception {
+        MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
+        MockHttpServletResponse response = new MockHttpServletResponse();
         given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
         doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
                 .when(filterChain).doFilter(any(), any());
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(valueOps).increment(KEY_IP);
-        verify(valueOps, never()).increment(KEY_IP_EMAIL);
+        verify(valueOps).increment(KEY_IP_EMAIL);
+        verify(valueOps).increment(KEY_EMAIL);
+        assertThat(KEY_IP_EMAIL).doesNotContain(EMAIL).contains(EMAIL_HASH);
+        assertThat(KEY_EMAIL).doesNotContain(EMAIL).contains(EMAIL_HASH);
+    }
+
+    // ── 요청 본문 재사용 ─────────────────────────────────────────────────────────
+
+    @Test
+    void 필터_실행_후에도_요청_본문을_읽을_수_있다() throws Exception {
+        MockHttpServletRequest request = loginRequest("1.2.3.4", EMAIL);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
+
+        AtomicReference<HttpServletRequest> captured = new AtomicReference<>();
+        doAnswer(inv -> {
+            captured.set((HttpServletRequest) inv.getArgument(0));
+            ((HttpServletResponse) inv.getArgument(1)).setStatus(200);
+            return null;
+        }).when(filterChain).doFilter(any(), any());
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        String body = new String(captured.get().getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(body).contains("\"email\":\"" + EMAIL + "\"");
+    }
+
+    // ── 이메일 정규화 ────────────────────────────────────────────────────────────
+
+    @Test
+    void 이메일_대소문자는_소문자로_정규화된다() throws Exception {
+        // "Test@Example.COM" → sha256("test@example.com") = EMAIL_HASH
+        MockHttpServletRequest request = loginRequest("1.2.3.4", "Test@Example.COM");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        given(stringRedisTemplate.opsForValue()).willReturn(valueOps);
+        doAnswer(inv -> { ((HttpServletResponse) inv.getArgument(1)).setStatus(400); return null; })
+                .when(filterChain).doFilter(any(), any());
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        // 대소문자 무관하게 동일한 해시 키를 사용한다
+        verify(valueOps).increment(KEY_IP_EMAIL);
+        verify(valueOps).increment(KEY_EMAIL);
     }
 
     // ── IP 추출 ─────────────────────────────────────────────────────────────────
@@ -233,6 +259,7 @@ class LoginRateLimitFilterTest {
         filter.doFilterInternal(request, response, filterChain);
 
         verify(stringRedisTemplate).delete(expectedIpEmailKey);
+        verify(stringRedisTemplate).delete(KEY_EMAIL);
     }
 
     // ── shouldNotFilter ─────────────────────────────────────────────────────────

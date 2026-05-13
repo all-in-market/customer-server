@@ -78,6 +78,10 @@ public record PortOnePaymentResponse(
     }
 
     public String getPaymentId() {
+        return merchantId;
+    }
+
+    public String getImpUid() {
         return id;
     }
 

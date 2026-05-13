@@ -33,7 +33,7 @@ resource "aws_wafv2_web_acl" "alb" {
     }
   }
 
-  # 2. 일반적인 웹 공격 방어 (XSS, 비정상 요청, 크기 제한 등, /ws 로 시작하는 경로의 요청은 제외)
+  # 2. 일반적인 웹 공격 방어 (XSS, 비정상 요청, 크기 제한 등, /ws-chat 로 시작하는 경로의 요청은 제외)
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 20

@@ -33,7 +33,7 @@ resource "aws_wafv2_web_acl" "alb" {
     }
   }
 
-  # 2. 일반적인 웹 공격 방어 (XSS, 비정상 요청, 크기 제한 등)
+  # 2. 일반적인 웹 공격 방어 (XSS, 비정상 요청, 크기 제한 등, /ws 로 시작하는 경로의 요청은 제외)
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 20
@@ -47,7 +47,27 @@ resource "aws_wafv2_web_acl" "alb" {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
 
-        # 이미지 업로드 / multipart 요청이 있을 수 있어서 BODY 크기 제한 룰은 Count 처리
+        scope_down_statement {
+          not_statement {
+            statement {
+              byte_match_statement {
+                search_string = "/ws-chat"
+
+                field_to_match {
+                  uri_path {}
+                }
+
+                positional_constraint = "STARTS_WITH"
+
+                text_transformation {
+                  priority = 0
+                  type     = "NONE"
+                }
+              }
+            }
+          }
+        }
+
         rule_action_override {
           name = "SizeRestrictions_BODY"
 

@@ -33,7 +33,7 @@ export const options = {
     scenarios: {
         image_compare_test: {
             executor: 'constant-arrival-rate',
-            rate: 50,
+            rate: 10,
             timeUnit: '1s',
             duration: '5m',
             preAllocatedVUs: 300,

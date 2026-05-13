@@ -81,4 +81,8 @@ public class Payment extends ModifiableEntity {
             this.status = PaymentStatus.REFUNDED;
         }
     }
+
+    public void saveImpUid(String impUid) {
+        this.impUid = impUid;
+    }
 }

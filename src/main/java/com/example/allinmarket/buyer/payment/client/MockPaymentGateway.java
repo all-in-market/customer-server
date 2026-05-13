@@ -20,7 +20,7 @@ public class MockPaymentGateway implements PaymentGateway {
      * isPaid 가 항상 true가 나오는 PortOnePaymentResponse 객체 반환
      */
     @Override
-    public PortOnePaymentResponse getPayment(String paymentId) {
+    public PortOnePaymentResponse getPayment(String paymentId, String impUid) {
 
         Payment payment = paymentRepository.findByMerchantUid(paymentId).orElseThrow(
                 () -> new BaseException(ErrorEnum.PAYMENT_NOT_FOUND)
@@ -42,9 +42,9 @@ public class MockPaymentGateway implements PaymentGateway {
 
         return new PortOnePaymentResponse(
                 "PAID",
+                impUid,
+                "tx_" + impUid,
                 paymentId,
-                "tx_" + paymentId,
-                "merchant_mock",
                 "store_mock",
                 null,
                 null,

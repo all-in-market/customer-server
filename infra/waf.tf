@@ -34,6 +34,7 @@ resource "aws_wafv2_web_acl" "alb" {
   }
 
   # 2. 일반적인 웹 공격 방어 (XSS, 비정상 요청, 크기 제한 등, /ws-chat 로 시작하는 경로의 요청은 제외)
+  # 이미지 전송 사이즈 제한 해제
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 20

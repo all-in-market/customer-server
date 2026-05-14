@@ -1,123 +1,123 @@
-name: CD
-
-on:
-  workflow_dispatch:
-  push:
-    # 필요시 dev 추가
-    branches: [ main, dev ]
-
-permissions:
-  contents: read
-  id-token: write
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: cd-${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
-
-    steps:
-      # 1. 소스코드 checkout
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2. AWS 인증
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      # 3. ECR 로그인
-      - name: Login to Amazon ECR
-        id: ecr-login
-        uses: aws-actions/amazon-ecr-login@v2
-
-      # 4. Docker 이미지 빌드 + ECR push
-      - name: Build and push Docker image
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-          IMAGE_TAG: 1.0.${{ github.run_number }}.${{ github.run_attempt }}
-        run: |
-          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-          docker build -t $IMAGE_URI .
-          docker push $IMAGE_URI
-
-          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
-          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-      # 5. 현재 ECS Service가 사용 중인 Task Definition ARN 조회
-      - name: Get current task definition ARN
-        id: current-task-def
-        env:
-          ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
-          ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
-        run: |
-          TASK_DEF_ARN=$(aws ecs describe-services \
-            --cluster $ECS_CLUSTER \
-            --services $ECS_SERVICE \
-            --query "services[0].taskDefinition" \
-            --output text)
-
-          echo "task_def_arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
-
-      # 6. 기존 Task Definition JSON 다운로드
-      - name: Download current task definition
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ steps.current-task-def.outputs.task_def_arn }} \
-            --query taskDefinition \
-            | jq 'del(
-                .taskDefinitionArn,
-                .revision,
-                .status,
-                .requiresAttributes,
-                .compatibilities,
-                .registeredAt,
-                .registeredBy
-              )' > task-definition.json
-
-      # 7. 새 이미지 URI를 넣은 새 Task Definition JSON 생성
-      - name: Render new task definition
-        id: render-task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ secrets.ECS_CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.image_uri }}
-
-      # 8. desiredCount가 0일 경우 1로 변경
-      - name: Ensure service is running
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            TARGET_COUNT=2
-          else
-            TARGET_COUNT=1
-          fi
-          
-          CURRENT_COUNT=$(aws ecs describe-services \
-            --cluster ${{ secrets.ECS_CLUSTER }} \
-            --services ${{ secrets.ECS_SERVICE }} \
-            --query "services[0].desiredCount" \
-            --output text)
-          
-          if [ "$CURRENT_COUNT" -eq 0 ]; then
-            aws ecs update-service \
-              --cluster ${{ secrets.ECS_CLUSTER }} \
-              --service ${{ secrets.ECS_SERVICE }} \
-              --desired-count $TARGET_COUNT
-          fi
-
-      # 9. ECS Service 업데이트
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
-          service: ${{ secrets.ECS_SERVICE }}
-          cluster: ${{ secrets.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
+#name: CD
+#
+#on:
+#  workflow_dispatch:
+#  push:
+#    # 필요시 dev 추가
+#    branches: [ main, dev ]
+#
+#permissions:
+#  contents: read
+#  id-token: write
+#
+#jobs:
+#  deploy:
+#    runs-on: ubuntu-latest
+#    concurrency:
+#      group: cd-${{ github.workflow }}-${{ github.ref }}
+#      cancel-in-progress: true
+#
+#    steps:
+#      # 1. 소스코드 checkout
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      # 2. AWS 인증
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#          aws-region: ${{ secrets.AWS_REGION }}
+#
+#      # 3. ECR 로그인
+#      - name: Login to Amazon ECR
+#        id: ecr-login
+#        uses: aws-actions/amazon-ecr-login@v2
+#
+#      # 4. Docker 이미지 빌드 + ECR push
+#      - name: Build and push Docker image
+#        id: build-image
+#        env:
+#          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+#          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+#          IMAGE_TAG: 1.0.${{ github.run_number }}.${{ github.run_attempt }}
+#        run: |
+#          IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#
+#          docker build -t $IMAGE_URI .
+#          docker push $IMAGE_URI
+#
+#          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+#          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+#
+#      # 5. 현재 ECS Service가 사용 중인 Task Definition ARN 조회
+#      - name: Get current task definition ARN
+#        id: current-task-def
+#        env:
+#          ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+#          ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+#        run: |
+#          TASK_DEF_ARN=$(aws ecs describe-services \
+#            --cluster $ECS_CLUSTER \
+#            --services $ECS_SERVICE \
+#            --query "services[0].taskDefinition" \
+#            --output text)
+#
+#          echo "task_def_arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT
+#
+#      # 6. 기존 Task Definition JSON 다운로드
+#      - name: Download current task definition
+#        run: |
+#          aws ecs describe-task-definition \
+#            --task-definition ${{ steps.current-task-def.outputs.task_def_arn }} \
+#            --query taskDefinition \
+#            | jq 'del(
+#                .taskDefinitionArn,
+#                .revision,
+#                .status,
+#                .requiresAttributes,
+#                .compatibilities,
+#                .registeredAt,
+#                .registeredBy
+#              )' > task-definition.json
+#
+#      # 7. 새 이미지 URI를 넣은 새 Task Definition JSON 생성
+#      - name: Render new task definition
+#        id: render-task-def
+#        uses: aws-actions/amazon-ecs-render-task-definition@v1
+#        with:
+#          task-definition: task-definition.json
+#          container-name: ${{ secrets.ECS_CONTAINER_NAME }}
+#          image: ${{ steps.build-image.outputs.image_uri }}
+#
+#      # 8. desiredCount가 0일 경우 1로 변경
+#      - name: Ensure service is running
+#        run: |
+#          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+#            TARGET_COUNT=2
+#          else
+#            TARGET_COUNT=1
+#          fi
+#
+#          CURRENT_COUNT=$(aws ecs describe-services \
+#            --cluster ${{ secrets.ECS_CLUSTER }} \
+#            --services ${{ secrets.ECS_SERVICE }} \
+#            --query "services[0].desiredCount" \
+#            --output text)
+#
+#          if [ "$CURRENT_COUNT" -eq 0 ]; then
+#            aws ecs update-service \
+#              --cluster ${{ secrets.ECS_CLUSTER }} \
+#              --service ${{ secrets.ECS_SERVICE }} \
+#              --desired-count $TARGET_COUNT
+#          fi
+#
+#      # 9. ECS Service 업데이트
+#      - name: Deploy to Amazon ECS
+#        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+#        with:
+#          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+#          service: ${{ secrets.ECS_SERVICE }}
+#          cluster: ${{ secrets.ECS_CLUSTER }}
+#          wait-for-service-stability: true
+#

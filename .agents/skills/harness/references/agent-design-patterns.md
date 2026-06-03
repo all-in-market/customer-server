@@ -238,6 +238,8 @@ Minimum extra artifacts:
 - `_workspace/experiments/{run}/results.tsv`
 - `_workspace/experiments/{run}/final-summary.md`
 
+Use the `results.tsv` schema defined in `autonomous-experimentation.md`: `candidate_id`, `metric_value`, `runtime_seconds`, `status`, and `summary`, with status values `keep`, `discard`, `crash`, or `timeout`.
+
 Core rules:
 
 - declare the mutable surface before the first candidate

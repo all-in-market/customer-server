@@ -181,14 +181,16 @@ docker compose -f docker-compose-k6.yml up --abort-on-container-exit
 
 ## Suggested PR order
 
-1. PR 1: PostgreSQL migration verification test
-2. PR 2: stock concurrency fix + concurrency test
-3. PR 3: product list N+1 fix + query count test
-4. PR 4: security hardening for actuator/rate limit assumptions
-5. PR 5: pageable max size + validation consistency
-6. PR 6: README portfolio upgrade and performance evidence
-7. PR 7: S3 upload compensation strategy
-8. PR 8: payment mock/real flow documentation or endpoint split
+Legend: improvement items 1-6 are P1, items 7-9 are P2, and items 10-11 are P3/documentation evidence work.
+
+1. PR 1: PostgreSQL migration verification test — includes item 2.
+2. PR 2: stock concurrency fix + concurrency test — includes item 1.
+3. PR 3: product list N+1 fix + query count test — includes item 3.
+4. PR 4: security hardening for actuator/rate limit assumptions — includes item 6.
+5. PR 5: pageable max size + validation consistency — includes items 4 and 9.
+6. PR 6: README portfolio upgrade and performance evidence — includes items 7, 10, and 11; item 7 may remain documented as a known limitation unless implemented immediately.
+7. PR 7: S3 upload compensation strategy — includes item 5.
+8. PR 8: payment mock/real flow documentation or endpoint split — includes item 8.
 
 ## Default verification commands
 

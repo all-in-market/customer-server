@@ -113,7 +113,7 @@ A useful QA report includes:
 - distinguish confirmed failures from unverified areas
 
 ## Outputs
-- `_workspace/qa_report.md`
+- `_workspace/03_qa_report.md`
 - optional targeted fix list when the repair path is obvious
 
 ## Validation

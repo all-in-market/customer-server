@@ -12,3 +12,4 @@ clean architecture, reliable persistence, secure APIs, testability, performance 
 - For API changes, update related docs or examples.
 - For persistence changes, check transaction boundaries, indexes, N+1 risks, and migration impact.
 - For portfolio documentation, explain problem, cause, solution, result, and lesson learned.
+- Harness skill source of truth: `.agents/skills/harness/SKILL.md`; `.codex/skills/harness/SKILL.md` is only a forwarding stub.

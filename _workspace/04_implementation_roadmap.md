@@ -36,7 +36,10 @@ test -f _workspace/04_implementation_roadmap.md
   - 필요 시 `docs/asciidoc/**`
 - 작업:
   - 프로젝트 목적, 핵심 기술 스택, 아키텍처 경계, 검증 명령을 README 상단에 추가한다.
+  - 주요 API와 실행/테스트 방법을 첫 화면 근처에 둔다.
+  - 핵심 기술 결정 3개를 “문제, 원인, 해결, 결과, 배운 점” 형식으로 추가한다.
   - known limitations에 재고 동시성, PostgreSQL migration 검증, product 검색 LIKE, actuator 접근 정책을 적는다.
+  - 각 limitation에는 대응 PR 또는 개선 계획을 함께 붙인다.
   - 결제 flow가 mock PG 시나리오임을 명시한다.
 - 독립 검증:
 

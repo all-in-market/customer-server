@@ -13,10 +13,20 @@ Do not use it to make code changes. The orchestrator produces review artifacts, 
 
 ## Required inputs
 
-- Repository root: `/Users/sehyun/IdeaProjects/final/all-in-market`
+- Repository root: `$REPO_ROOT` when set; otherwise use the current working directory (`./`) and confirm it is the repository root before reading or writing artifacts.
 - Current user goal or review scope
 - Existing `AGENTS.md` constraints
 - Source, test, migration, documentation, k6, and infra files relevant to the review
+
+## Usage notes
+
+Run this skill from the repository root when possible:
+
+```bash
+cd "$REPO_ROOT"
+```
+
+If `$REPO_ROOT` is not set, treat `./` as the fallback repository root and verify expected paths such as `AGENTS.md`, `build.gradle`, and `src/main/java` exist.
 
 ## Workflow
 

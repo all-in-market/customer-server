@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '/Users/sehyun/IdeaProjects/final/all-in-market/.codex/hooks/service-test-reminder.sh'",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.codex/hooks/service-test-reminder.sh\"",
             "timeout": 10
           }
         ]

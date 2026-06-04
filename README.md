@@ -1,5 +1,91 @@
 # 🖥️ 구매자 / 판매자 서버
 
+## 포트폴리오 요약
+
+`all-in-market`은 구매자/판매자 도메인을 분리한 멀티 벤더 이커머스 백엔드 프로젝트입니다.
+
+### 핵심 기술 스택
+
+| 영역 | 기술 |
+|---|---|
+| Language / Framework | Java 21, Spring Boot 4, Spring MVC, Spring Security |
+| Persistence | Spring Data JPA, Querydsl, PostgreSQL, Flyway |
+| Cache / Lock | Redis, Redisson |
+| Auth / Security | JWT, Refresh Token Rotation, Redis blacklist, Login rate limit |
+| Docs / Test | JUnit 5, Mockito, Spring REST Docs, Asciidoctor |
+| Observability / Infra | Actuator, Micrometer, Prometheus, CloudWatch, Grafana, Terraform, k6 |
+
+### 아키텍처 경계
+
+- `buyer/**`: 구매자 API, 장바구니, 주문, 결제, 환불, 재입고 알림 흐름
+- `seller/**`: 판매자 API, 상품, 대시보드, 통계, 정산, 지급 흐름
+- `domain/**`: JPA 엔티티, Repository, 도메인별 DTO/집계 로직
+- `common/**`: 공통 응답, 예외, 보안, Redis, scheduler, outbox, 설정
+- `docs/asciidoc/**`: Spring REST Docs 기반 API 문서
+- `infra/**`, `infra-grafana/**`, `k6/**`: 배포, 관측성, 부하 테스트 자산
+
+### 주요 API
+
+| 구분  | 대표 API                                                                                                   |
+|-----|----------------------------------------------------------------------------------------------------------|
+| 구매자 | `GET /products`, `POST /carts/items`, `POST /orders`, `POST /payments`, `POST /orders/{orderId}/refunds` |
+| 판매자 | `POST /seller/products`, `GET /seller/dashboard`, `GET /seller/statistics/summary`, `GET /seller/settlements` |
+| 인증  | `POST /auth/login`, `POST /auth/refresh`, `POST /seller/auth/login`, `POST /seller/auth/refresh`         |
+
+### 실행 및 검증
+
+```bash
+# 전체 테스트
+./gradlew test
+
+# REST Docs 생성
+./gradlew asciidoctor
+
+# 애플리케이션 실행
+./gradlew bootRun
+
+# k6 시나리오 실행은 로컬 인프라 준비 후 수행
+docker compose -f docker-compose-k6.yml up --abort-on-container-exit
+```
+
+필수 환경변수 예시는 `DB_PASSWORD`, `JWT_SECRET`, `SELLER_ID`, `SELLER_PASSWORD`, `SERVER_SECRET_KEY`입니다. 로컬 실행 시 PostgreSQL, Redis 등 외부 의존성이 필요합니다.
+
+## 핵심 기술 결정
+
+### 1. 로그인 API 보호: WAF + Redis rate limit
+
+- Problem: 로그인 실패 사유와 반복 요청이 계정 추론, brute force, 서버 부하로 이어질 수 있었습니다.
+- Cause: 인프라 레벨 차단만으로는 계정 단위 공격을 막기 어렵고, 애플리케이션 레벨만으로는 대량 트래픽을 서버가 먼저 받아야 했습니다.
+- Solution: AWS WAF로 대량 요청을 1차 차단하고, Spring `LoginRateLimitFilter`에서 IP+email, email 단위 Redis 카운터를 적용했습니다.
+- Result: 로그인 실패 사유를 통일하고, 8KB 초과 본문 차단과 이메일 해싱 저장으로 공격 표면을 줄였습니다.
+- Lesson Learned: 보안 기능은 “차단 로직”뿐 아니라 proxy IP 신뢰 정책, Redis 장애 시 fail-open/fail-closed 선택, 테스트로 고정된 응답 정책까지 함께 설명해야 합니다.
+
+### 2. 주문/결제 정합성: 상황별 동시성 전략
+
+- Problem: 주문 생성, 재고 차감, 결제 승인, 환불은 중복 요청과 경쟁 상태가 바로 금전/재고 오류로 이어집니다.
+- Cause: 모든 API에 같은 락을 적용하면 성능 비용이 크고, 반대로 애플리케이션 체크만 두면 동시성 조건에서 정합성을 보장하기 어렵습니다.
+- Solution: 결제/환불은 DB 락과 유니크 제약을 활용하고, 재고 차감은 Redisson 분산락을 사용해 상품별 주문 생성을 직렬화하는 방향으로 설계했습니다.
+- Result: 도메인별 충돌 비용에 따라 락 전략을 나눌 수 있었고, 결제 성공 유니크 인덱스와 outbox 저장처럼 DB 제약 기반 방어선을 일부 도입했습니다.
+- Lesson Learned: 재고 차감 경로는 PostgreSQL 기반 동시성 테스트와 DB 차원의 보조 방어선이 아직 필요합니다. 이 항목은 known limitations와 개선 계획에 남겨 두었습니다.
+
+### 3. 문서화 가능한 API 품질: REST Docs + 공통 응답
+
+- Problem: 포트폴리오 API는 코드만으로는 요청/응답, 권한, 실패 케이스를 빠르게 이해하기 어렵습니다.
+- Cause: 수동 API 문서는 코드 변경과 쉽게 어긋나고, 테스트 없는 문서는 신뢰도가 낮습니다.
+- Solution: Controller slice test와 Spring REST Docs를 연결해 주요 buyer/seller API 문서 조각을 생성하고, `ApiResponse`와 `GlobalExceptionHandler`로 응답 형식을 통일했습니다.
+- Result: API 문서는 `./gradlew asciidoctor`로 재생성할 수 있고, controller test가 문서의 기본 검증 역할을 합니다.
+- Lesson Learned: 앞으로는 page size 제한, actuator 접근 정책, mock 결제 플로우 같은 운영 가정도 RestDocs/README에 함께 기록해야 문서가 더 설득력 있어집니다.
+
+## 현재 한계와 개선 계획
+
+| 한계 | 영향 | 개선 계획 |
+|---|---|---|
+| 재고 차감 경로의 DB 행 잠금/원자 업데이트 검증이 부족함 | Redis 락 외 장애/우회 상황에서 초과 판매 방어를 설명하기 어려움 | PostgreSQL 기반 동시성 테스트를 먼저 추가하고, DB pessimistic lock 또는 조건부 원자 업데이트를 검토 |
+| 테스트 프로필이 Flyway를 끄고 H2 `create-drop`을 사용함 | PostgreSQL partial index, `pg_trgm`, 실제 migration 성공 여부가 테스트되지 않음 | Testcontainers PostgreSQL migration test 추가 |
+| 상품 검색이 `%keyword%` LIKE 기반임 | 데이터가 커질수록 full scan 위험이 커짐 | products name/description trigram 또는 full-text index 적용 전후 `EXPLAIN ANALYZE` 문서화 |
+| `/actuator/**`가 public permitAll이고 metrics/prometheus도 노출됨 | 운영 지표 노출 위험이 있음 | health와 prometheus 접근 정책 분리 또는 내부망/ALB 제한 근거 문서화 |
+| `POST /payments`가 mock PG 확인까지 같은 요청에서 수행됨 | 실서비스 결제 생성/승인/webhook 경계와 다름 | README/API 문서에 mock flow임을 명시하고, 이후 confirm/webhook 분리 설계 |
+
 <br>
 
 ---

@@ -116,8 +116,10 @@ class BuyerOrderServiceTest {
             given(product1.getName()).willReturn("상품1");
             given(product2.getName()).willReturn("상품2");
 
-            given(productRepository.findAllByIdInWithSellerWithLock(List.of(productId1, productId2)))
+            given(productRepository.findAllByIdInWithSeller(List.of(productId1, productId2)))
                     .willReturn(List.of(product1, product2));
+            given(productRepository.decreaseStockIfEnough(productId1, 2)).willReturn(1);
+            given(productRepository.decreaseStockIfEnough(productId2, 3)).willReturn(1);
 
             given(address.getRecipient()).willReturn("홍길동");
             given(address.getPhone()).willReturn("010-1111-2222");
@@ -139,14 +141,13 @@ class BuyerOrderServiceTest {
             verify(orderValidator).validateCartItemsOwnedByBuyer(cartItems, buyerId);
             verify(orderValidator).validateProductSellable(anyMap(), eq(cartItems));
 
-            verify(productRepository).findAllByIdInWithSellerWithLock(List.of(productId1, productId2));
+            verify(productRepository).findAllByIdInWithSeller(List.of(productId1, productId2));
+            verify(productRepository).decreaseStockIfEnough(productId1, 2);
+            verify(productRepository).decreaseStockIfEnough(productId2, 3);
 
             verify(orderRepository).save(any(Order.class));
             verify(orderItemRepository).saveAll(anyList());
             verify(cartItemRepository).deleteAll(cartItems);
-
-            verify(product1).decreaseStock(2);
-            verify(product2).decreaseStock(3);
         }
 
         @Test
@@ -214,7 +215,7 @@ class BuyerOrderServiceTest {
              * 실제 쿼리는 deletedAt IS NULL 조건 때문에
              * deletedAt != null 상품을 조회하지 않는다.
              */
-            when(productRepository.findAllByIdInWithSellerWithLock(eq(List.of(productId1))))
+            when(productRepository.findAllByIdInWithSeller(eq(List.of(productId1))))
                     .thenReturn(List.of());
 
             // when & then
@@ -225,7 +226,7 @@ class BuyerOrderServiceTest {
                     .extracting("errorEnum")
                     .isEqualTo(ErrorEnum.INVALID_ORDER_PRODUCT);
 
-            verify(productRepository).findAllByIdInWithSellerWithLock(eq(List.of(productId1)));
+            verify(productRepository).findAllByIdInWithSeller(eq(List.of(productId1)));
         }
     }
 

@@ -2,6 +2,8 @@ package com.example.allinmarket.buyer.order.service;
 
 import com.example.allinmarket.buyer.entity.Buyer;
 import com.example.allinmarket.buyer.repository.BuyerRepository;
+import com.example.allinmarket.common.enums.ErrorEnum;
+import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.security.LoginRateLimitFilter;
 import com.example.allinmarket.domain.address.entity.Address;
 import com.example.allinmarket.domain.address.repository.AddressRepository;
@@ -99,7 +101,7 @@ class BuyerOrderConcurrencyTest {
     }
 
     @Test
-    void concurrentOrdersCanOversellSingleRemainingStockWithoutProductLock() throws Exception {
+    void concurrentOrdersAllowOnlyOneSuccessForSingleRemainingStock() throws Exception {
         Seller seller = sellerRepository.save(Seller.of(
                 "seller-concurrency@test.com",
                 "password",
@@ -130,8 +132,12 @@ class BuyerOrderConcurrencyTest {
             Future<Boolean> firstOrder = executor.submit(createOrderTask(firstBuyer));
             Future<Boolean> secondOrder = executor.submit(createOrderTask(secondBuyer));
 
-            assertThat(firstOrder.get(5, TimeUnit.SECONDS)).isTrue();
-            assertThat(secondOrder.get(5, TimeUnit.SECONDS)).isTrue();
+            List<Boolean> results = List.of(
+                    firstOrder.get(5, TimeUnit.SECONDS),
+                    secondOrder.get(5, TimeUnit.SECONDS)
+            );
+
+            assertThat(results).containsExactlyInAnyOrder(true, false);
         } finally {
             stockReadBarrier.set(null);
             executor.shutdownNow();
@@ -142,19 +148,26 @@ class BuyerOrderConcurrencyTest {
                 .mapToInt(OrderItem::getQuantity)
                 .sum();
 
-        assertThat(orderRepository.count()).isEqualTo(2);
-        assertThat(orderedQuantity).isEqualTo(2);
+        assertThat(orderRepository.count()).isEqualTo(1);
+        assertThat(orderedQuantity).isEqualTo(1);
         assertThat(reloadedProduct.getStock()).isZero();
     }
 
     private Callable<Boolean> createOrderTask(BuyerFixture fixture) {
         return () -> {
-            buyerOrderService.createOrder(
-                    fixture.buyerId(),
-                    List.of(fixture.cartItem()),
-                    fixture.addressId()
-            );
-            return true;
+            try {
+                buyerOrderService.createOrder(
+                        fixture.buyerId(),
+                        List.of(fixture.cartItem()),
+                        fixture.addressId()
+                );
+                return true;
+            } catch (BaseException e) {
+                if (e.getErrorEnum() == ErrorEnum.PRODUCT_OUT_OF_STOCK) {
+                    return false;
+                }
+                throw e;
+            }
         };
     }
 
@@ -192,7 +205,7 @@ class BuyerOrderConcurrencyTest {
     @Aspect
     static class StockReadProbeAspect {
 
-        @Around("execution(* com.example.allinmarket.domain.product.repository.ProductRepository.findAllByIdInWithSellerWithLock(..))")
+        @Around("execution(* com.example.allinmarket.domain.product.repository.ProductRepository.findAllByIdInWithSeller(..))")
         Object waitUntilBothTransactionsReadStock(ProceedingJoinPoint joinPoint) throws Throwable {
             Object result = joinPoint.proceed();
             CyclicBarrier barrier = stockReadBarrier.get();

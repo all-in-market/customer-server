@@ -18,3 +18,42 @@
 vector 검색 기능은 실제 기능이므로 migration 테스트와 운영 DB 모두 pgvector 확장을 지원하는 PostgreSQL 환경을 전제로 해야 한다. 향후 DB 이미지나 RDS/Aurora 구성을 바꿀 때 pgvector 지원 여부를 먼저 확인한다.
 
 **관련 항목:** `TD-001`
+
+## TR-002 / 2026-06-09: k6 scenario-b fails with "No products found" after dummy data seeding
+
+**증상:** 
+`k6/scenario-b.js`를 Docker Compose로 실행하면 setup 단계에서 `No products found. Seed products before running test.` 오류가 발생한다. `application-local.yml`에서 dummy data seeding을 활성화했고 DB에는 상품 데이터가 존재하는데도 k6는 상품이 없다고 판단한다.
+
+**원인:** 
+상품 더미 데이터가 없는 것이 아니라 Redis에 오래된 빈 상품 목록 캐시가 남아 있었다. `BuyerProductService`는 10페이지 미만 상품 목록을 `products:search:{page}:{size}:{sort}` 키로 10분 캐싱한다. k6 setup 요청인 `/products?page=0&size=20`은 `products:search:0:20:createdAt: ASC` 캐시 키와 일치했고, 이 키에 seeding 전 빈 `PageResponse`가 저장되어 있어 DB 조회 대신 빈 응답이 반환됐다.
+
+**조사 과정:** 
+PostgreSQL에서 `products`와 visible products 수를 확인했을 때 각각 `1,000,000`건이 존재했다. k6 컨테이너에서 직접 `/products?page=0&size=20`을 호출하면 `status=200`이지만 `data.content=[]`, `totalElements=0`이 반환됐다. 반면 `/products?page=10&size=20`, `/products?page=0&size=21`, `/products?page=0&size=20&keyword=Shoes`는 상품을 정상 반환했다. Redis에서 `products:search:*` 키를 확인하니 `products:search:0:20:createdAt: ASC`가 존재했다.
+
+**해결:** 
+문제 캐시 키를 삭제했다.
+
+```bash
+docker compose exec -T redis redis-cli DEL 'products:search:0:20:createdAt: ASC'
+```
+
+삭제 후 k6 컨테이너에서 `/products?page=0&size=20`을 다시 호출하자 상품 목록이 정상 반환됐다. 이후 아래 smoke 검증도 통과했다.
+
+```bash
+docker compose -f docker-compose-k6.yml run --rm \
+  -e TEST_TYPE=smoke \
+  -e K6_OUT=influxdb=http://influxdb:8086/k6 \
+  k6 run /k6/scenario-b.js
+```
+
+**재발 방지:** 
+더미 데이터를 재생성하거나 seeding 직후 k6를 실행하기 전 상품 목록 캐시를 비운다. 전체 상품 목록 캐시를 비우려면 아래 명령을 사용한다.
+
+```bash
+docker compose exec -T redis redis-cli --scan --pattern 'products:search:*' \
+  | xargs -r docker compose exec -T redis redis-cli DEL
+```
+
+또한 `scenario-b.js`의 setup 요청이 `page=0&size=20`에 고정되어 있으므로, 동일 오류가 발생하면 먼저 `products:search:0:20:createdAt: ASC` 키를 확인한다.
+
+**관련 항목:** `TD-002`

@@ -61,7 +61,7 @@ public class BuyerOrderService {
         orderValidator.validateCartItemsNotEmpty(cartItems);
         orderValidator.validateCartItemsOwnedByBuyer(cartItems, buyerId);
 
-        List<Product> products = findAndLockProducts(cartItems);
+        List<Product> products = findOrderableProducts(cartItems);
 
         // n+1 쿼리 문제 해결을 위해 생성
         Map<Long, Product> productMap = products.stream()
@@ -100,7 +100,10 @@ public class BuyerOrderService {
 
         for (CartItem cartItem : cartItems) {
             Product product = productMap.get(cartItem.getProduct().getId());
-            product.decreaseStock(cartItem.getQuantity());
+            int updatedRows = productRepository.decreaseStockIfEnough(product.getId(), cartItem.getQuantity());
+            if (updatedRows != 1) {
+                throw new BaseException(ErrorEnum.PRODUCT_OUT_OF_STOCK);
+            }
         }
 
         cartItemRepository.deleteAll(cartItems);
@@ -164,16 +167,16 @@ public class BuyerOrderService {
     }
 
     /**
-     * cartItem에 있는 담긴 상품을 락을 걸고 조회
+     * cartItem에 담긴 주문 가능 상품을 조회
      */
-    private List<Product> findAndLockProducts(List<CartItem> cartItems) {
+    private List<Product> findOrderableProducts(List<CartItem> cartItems) {
         List<Long> productIds = cartItems.stream()
                 .map(cartItem -> cartItem.getProduct().getId())
                 .distinct()
                 .sorted()
                 .toList();
 
-        List<Product> products = productRepository.findAllByIdInWithSellerWithLock(productIds);
+        List<Product> products = productRepository.findAllByIdInWithSeller(productIds);
 
         if(products.size() != productIds.size()) {
             throw new BaseException(ErrorEnum.INVALID_ORDER_PRODUCT);

@@ -1,6 +1,6 @@
 # Troubleshooting Entry Template
 
-Append entries to `docs/troubleshooting.md`.
+한국어로 작성하며, `docs/troubleshooting.md`에 append하여 작성한다.
 
 ## TR-### / YYYY-MM-DD: {title}
 

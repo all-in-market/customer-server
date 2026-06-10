@@ -36,3 +36,21 @@ Flyway migration 검증 테스트의 PostgreSQL Testcontainer 이미지를 일�
 - `src/main/java/com/example/allinmarket/buyer/order/service/BuyerOrderService.java`
 - `src/test/java/com/example/allinmarket/buyer/order/service/BuyerOrderConcurrencyTest.java`
 - `src/test/java/com/example/allinmarket/buyer/order/service/BuyerOrderServiceTest.java`
+
+## TD-003 / 2026-06-10: 상품 목록 N+1 개선은 측정 결과에 따라 skip한다
+
+**결정 내용:** 
+Commit 6에서 추가한 Hibernate statistics 기반 query count 테스트 결과, 현재 상품 목록 조회는 `ProductRepository.findAllVisibleProducts`의 content query와 pageable count query 총 2개 쿼리로 실행된다. `ProductDetailResponse`는 seller/category의 id만 읽기 때문에 lazy proxy가 추가 select로 초기화되지 않는다. 따라서 Commit 7의 production fetch-plan 변경은 현 시점에서 skip한다.
+
+**이유 / 배경:** 
+로드맵은 N+1 개선 전에 먼저 쿼리 수를 측정하도록 정했다. 측정 결과 현재 DTO 매핑에서는 seller/category lazy relation이 N+1을 만들지 않았다. 이 상태에서 `@EntityGraph`, fetch join, projection을 도입하면 실제 문제를 고치는 것이 아니라 불필요한 구조 변경이 될 수 있고, 특히 pageable 목록 조회에서는 count query나 중복 row 문제를 새로 만들 수 있다.
+
+**대안으로 고려했던 것 & 그 이유:** 
+- `@EntityGraph` 또는 fetch join 도입: 현재 non-id relation 필드를 읽지 않아 추가 select가 없으므로 보류한다. Pageable count query와 조합될 때 부작용도 생길 수 있다.
+- DTO projection 도입: 목록 DTO가 seller/category 이름 등 non-id 필드를 노출하게 되면 유효한 선택지지만, 현재 응답 필드에서는 필요성이 측정되지 않았다.
+- 단건/목록 fetch 전략 분리: 현재 목록 쿼리 수가 의도 범위 안에 있으므로 N+1이 재현되는 변경이 생길 때 다시 판단한다.
+
+**영향받는 문서 / 파일:** 
+- `src/test/java/com/example/allinmarket/buyer/product/service/BuyerProductQueryCountTest.java`
+- `_workspace/03_improvement_plan.md`
+- `_workspace/04_implementation_roadmap.md`

@@ -40,14 +40,15 @@
 
 - Related findings: 3
 - Scope: `ProductRepository`, `BuyerProductService`, `ProductDetailResponse`
+- Status: Commit 6에서 Hibernate statistics 기반 query count 테스트를 추가했고, 현재 목록 DTO 매핑은 content query + count query 총 2개 쿼리로 고정된다. `ProductDetailResponse`가 seller/category의 id만 읽는 현재 구조에서는 lazy proxy id 접근이 추가 select를 만들지 않아 N+1이 재현되지 않았다. 따라서 Commit 7의 production fetch-plan 변경은 현 시점에서 skip한다.
 - Work:
-  - 목록 응답에 필요한 sellerId/categoryId를 projection으로 조회하거나 entity graph/fetch plan을 명시한다.
-  - 단건 조회와 목록 조회의 fetch 전략을 분리한다.
-  - query count 테스트 또는 Hibernate statistics 기반 테스트를 추가한다.
+  - query count 테스트 또는 Hibernate statistics 기반 테스트를 추가한다. (완료)
+  - 목록 응답에 seller/category 이름 등 non-id 필드가 추가되어 lazy relation select가 발생하면 projection 또는 entity graph/fetch plan을 재검토한다. (조건부 후속 작업)
+  - 단건 조회와 목록 조회의 fetch 전략 분리는 N+1 재현 시점에 다시 판단한다. (현재 skip)
 - Verification:
 
 ```bash
-./gradlew test --tests '*BuyerProductServiceTest'
+./gradlew test --tests '*BuyerProduct*'
 ./gradlew test
 ```
 
@@ -185,7 +186,7 @@ Legend: improvement items 1-6 are P1, items 7-9 are P2, and items 10-11 are P3/d
 
 1. PR 1: PostgreSQL migration verification test — includes item 2.
 2. PR 2: stock concurrency fix + concurrency test — includes item 1.
-3. PR 3: product list N+1 fix + query count test — includes item 3.
+3. PR 3: product list query count test + N+1 fix decision — includes item 3; Commit 7 production fetch-plan change is skipped because Commit 6 measured 2 statements and no current N+1.
 4. PR 4: security hardening for actuator/rate limit assumptions — includes item 6.
 5. PR 5: pageable max size + validation consistency — includes items 4 and 9.
 6. PR 6: README portfolio upgrade and performance evidence — includes items 7, 10, and 11; item 7 may remain documented as a known limitation unless implemented immediately.

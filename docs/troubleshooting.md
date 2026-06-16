@@ -57,3 +57,32 @@ docker compose exec -T redis redis-cli --scan --pattern 'products:search:*' \
 또한 `scenario-b.js`의 setup 요청이 `page=0&size=20`에 고정되어 있으므로, 동일 오류가 발생하면 먼저 `products:search:0:20:createdAt: ASC` 키를 확인한다.
 
 **관련 항목:** `TD-002`
+
+## TR-003 / 2026-06-10: DataJpaTest fails because Querydsl JPAQueryFactory bean is missing
+
+**증상:** 
+`./gradlew test --tests '*BuyerProduct*'` 실행 시 새 `BuyerProductQueryCountTest`가 ApplicationContext를 로드하지 못하고 실패한다. 실패 로그에는 `No qualifying bean of type 'com.querydsl.jpa.impl.JPAQueryFactory' available`가 표시된다.
+
+**원인:** 
+`@DataJpaTest`는 JPA repository slice를 구성하면서 `CustomSellerDailyStatisticsRepositoryImpl` 같은 custom repository 구현도 함께 생성한다. 해당 구현은 `JPAQueryFactory`를 생성자 주입으로 요구하지만, 새 테스트에서 `QuerydslConfig`를 import하지 않아 `JPAQueryFactory` bean이 존재하지 않았다.
+
+**조사 과정:** 
+테스트 리포트 `build/test-results/test/TEST-com.example.allinmarket.buyer.product.service.BuyerProductQueryCountTest.xml`에서 `UnsatisfiedDependencyException`의 원인이 `JPAQueryFactory` 누락임을 확인했다. 기존 `CustomSellerDailyStatisticsRepositoryImplTest`는 `@Import({QuerydslConfig.class, JpaAuditingConfig.class})`를 사용하고 있어 동일한 JPA slice 테스트 패턴을 참고했다.
+
+**해결:** 
+`BuyerProductQueryCountTest`에 `QuerydslConfig`를 import했다.
+
+```java
+@Import({JpaAuditingConfig.class, QuerydslConfig.class})
+```
+
+수정 후 아래 명령이 통과했다.
+
+```bash
+./gradlew test --tests '*BuyerProduct*'
+```
+
+**재발 방지:** 
+repository slice 테스트에서 custom Querydsl repository가 함께 스캔될 수 있으므로, `@DataJpaTest`가 `JPAQueryFactory`를 요구하는 경우 `QuerydslConfig`를 함께 import한다. auditing 필드가 `nullable=false`인 엔티티를 persist하는 테스트는 `JpaAuditingConfig`도 같이 import한다.
+
+**관련 항목:** `Commit 6`

@@ -131,23 +131,26 @@ test -f _workspace/04_implementation_roadmap.md
 
 ## Commit 7: 상품 목록 N+1 개선
 
-- 목적: 트래픽이 큰 상품 목록 API의 fetch plan을 명확히 한다.
+- 상태: skip
+- 결정: Commit 6 query count 테스트 결과 현재 상품 목록 조회와 `ProductDetailResponse` 매핑은 content query + count query 총 2개 쿼리로 실행된다. seller/category는 id만 읽고 있어 lazy proxy 초기화가 발생하지 않으며, 현재 DTO 기준 N+1이 재현되지 않는다. 따라서 production fetch-plan 변경은 하지 않는다.
+- 목적: 트래픽이 큰 상품 목록 API의 fetch plan을 명확히 한다. 현재는 측정 결과를 근거로 변경하지 않는 결정을 남긴다.
 - 변경 범위:
-  - `ProductRepository`
-  - `BuyerProductService`
-  - `ProductDetailResponse` 필요 시 projection 도입
+  - 운영 코드 변경 없음
+  - `_workspace/03_improvement_plan.md`
+  - `_workspace/04_implementation_roadmap.md`
+  - `docs/technical-decisions.md`
 - 작업:
-  - DTO projection 또는 `@EntityGraph`로 sellerId/categoryId 조회를 안정화한다.
-  - Pageable count query 문제가 생기지 않도록 목록/상세 전략을 분리한다.
+  - Commit 6 측정 결과를 문서화한다.
+  - DTO projection 또는 `@EntityGraph`는 seller/category 이름 같은 non-id 필드가 목록 DTO에 추가되어 추가 select가 발생할 때 재검토한다.
+  - Pageable count query 문제가 생기지 않도록 불필요한 fetch join을 도입하지 않는다.
 - 독립 검증:
 
 ```bash
 ./gradlew test --tests '*BuyerProduct*'
-./gradlew test
 ```
 
 - 완료 기준:
-  - 상품 목록 조회의 쿼리 수가 의도한 범위 안에 있다.
+  - 상품 목록 조회의 쿼리 수가 의도한 범위 안에 있으며, production 변경 skip 사유가 문서에 남는다.
 
 ## Commit 8: Pageable 최대 size 정책 테스트 추가
 

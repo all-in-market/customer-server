@@ -69,3 +69,9 @@ variable "server_secret_key" {
   sensitive = true
 }
 
+variable "product_image_cdn_domain" {
+  description = "Optional custom domain for product image CDN. Example: cdn.hyu1335.cloud"
+  type        = string
+  default     = ""
+}
+

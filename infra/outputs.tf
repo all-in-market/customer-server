@@ -34,6 +34,30 @@ output "github_actions_aws_role_arn" {
   value = aws_iam_role.github_actions.arn
 }
 
+output "product_image_bucket_name" {
+  value = aws_s3_bucket.product_images.bucket
+}
+
+output "product_image_cdn_domain_name" {
+  value = aws_cloudfront_distribution.product_images.domain_name
+}
+
+output "product_image_cdn_url" {
+  value = local.product_image_cdn_custom_domain_enabled ? "https://${var.product_image_cdn_domain}" : "https://${aws_cloudfront_distribution.product_images.domain_name}"
+}
+
+output "waf_web_acl_arn" {
+  value = var.waf_enabled ? aws_wafv2_web_acl.alb[0].arn : null
+}
+
+output "waf_web_acl_name" {
+  value = var.waf_enabled ? aws_wafv2_web_acl.alb[0].name : null
+}
+
+output "waf_log_group_name" {
+  value = var.waf_enabled && var.waf_logging_enabled ? aws_cloudwatch_log_group.waf[0].name : null
+}
+
 # ==========================================
 # Customer
 # ==========================================

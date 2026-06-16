@@ -2,13 +2,18 @@ package com.example.allinmarket.common.security;
 
 import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.response.ApiResponse;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -16,7 +21,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -25,63 +37,129 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LoginRateLimitFilter extends OncePerRequestFilter {
 
-    static final int MAX_FAILURES = 10;
+    static final int MAX_BODY_BYTES = 8_192;
+
+    // IP+이메일: 같은 네트워크에서 특정 계정 반복 공격 방어 (5회 / 5분)
+    static final int MAX_FAILURES_IP_EMAIL = 5;
+
+    // 이메일 전용: 분산 IP를 사용한 특정 계정 공격 방어 (10회 / 5분)
+    static final int MAX_FAILURES_EMAIL = 10;
+
     static final long BLOCK_DURATION_SECONDS = 300;
-    static final String KEY_PREFIX = "login:fail:";
+
+    static final String KEY_PREFIX_IP_EMAIL = "login:fail:ip-email:";
+    static final String KEY_PREFIX_EMAIL = "login:fail:email:";
 
     private static final Set<String> LOGIN_PATHS = Set.of("/auth/login", "/seller/auth/login");
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
 
+    private boolean isLoginRequest(HttpServletRequest request) {
+        return HttpMethod.POST.matches(request.getMethod())
+                && LOGIN_PATHS.contains(request.getRequestURI());
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !HttpMethod.POST.matches(request.getMethod())
-                || !LOGIN_PATHS.contains(request.getRequestURI());
+        return !isLoginRequest(request);
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String ip = extractClientIp(request);
-        String key = KEY_PREFIX + ip;
+        if (!isLoginRequest(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        String countStr = stringRedisTemplate.opsForValue().get(key);
-        if (countStr != null) {
-            int count;
-            try {
-                count = Integer.parseInt(countStr);
-            } catch (NumberFormatException e) {
-                log.warn("[RateLimit] 실패 횟수 파싱 오류 - IP: {}, key: {}, value: '{}'", ip, key, countStr);
-                count = 0;
-            }
-            if (count >= MAX_FAILURES) {
-                log.warn("[RateLimit] 로그인 시도 횟수 초과 - IP: {}", ip);
-                sendRateLimitError(response);
-                return;
-            }
+        CachedBodyRequestWrapper requestWrapper;
+        try {
+            requestWrapper = new CachedBodyRequestWrapper(request);
+        } catch (CachedBodyRequestWrapper.BodyTooLargeException e) {
+            log.warn("[RateLimit] 요청 본문 크기 초과 - IP: {}", extractClientIp(request));
+            response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+            return;
+        }
+        String ip = extractClientIp(request);
+        String email = extractEmail(requestWrapper.getBody());
+
+        String ipEmailKey = (email != null) ? KEY_PREFIX_IP_EMAIL + ip + ":" + sha256(email) : null;
+        String emailKey = (email != null) ? KEY_PREFIX_EMAIL + sha256(email) : null;
+
+        if (ipEmailKey != null && isBlocked(ipEmailKey, MAX_FAILURES_IP_EMAIL)) {
+            log.warn("[RateLimit] IP+이메일 차단 - IP: {}, email: {}", ip, email);
+            sendRateLimitError(response);
+            return;
+        }
+
+        if (emailKey != null && isBlocked(emailKey, MAX_FAILURES_EMAIL)) {
+            log.warn("[RateLimit] 이메일 차단 - email: {}", email);
+            sendRateLimitError(response);
+            return;
         }
 
         ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
-        filterChain.doFilter(request, responseWrapper);
+        filterChain.doFilter(requestWrapper, responseWrapper);
 
         int status = responseWrapper.getStatus();
         if (status == 400) {
-            incrementFailureCount(key, ip);
+            if (ipEmailKey != null) incrementFailureCount(ipEmailKey, MAX_FAILURES_IP_EMAIL);
+            if (emailKey != null) incrementFailureCount(emailKey, MAX_FAILURES_EMAIL);
+            log.warn("[RateLimit] 로그인 실패 - IP: {}, email: {}", ip, email);
         } else if (status < 300) {
-            stringRedisTemplate.delete(key);
+            if (ipEmailKey != null) deleteKey(ipEmailKey);
+            if (emailKey != null) deleteKey(emailKey);
         }
 
         responseWrapper.copyBodyToResponse();
     }
 
-    private void incrementFailureCount(String key, String ip) {
-        Long count = stringRedisTemplate.opsForValue().increment(key);
-        if (count != null && count == 1) {
-            stringRedisTemplate.expire(key, BLOCK_DURATION_SECONDS, TimeUnit.SECONDS);
+    private boolean isBlocked(String key, int maxFailures) {
+        try {
+            String countStr = stringRedisTemplate.opsForValue().get(key);
+            if (countStr == null) return false;
+            return Integer.parseInt(countStr) >= maxFailures;
+        } catch (NumberFormatException e) {
+            log.warn("[RateLimit] 실패 횟수 파싱 오류 - key: {}", key);
+            return false;
+        } catch (DataAccessException e) {
+            log.warn("[RateLimit] Redis 오류로 차단 확인 생략 (fail-open) - key: {}", key, e);
+            return false;
         }
-        log.warn("[RateLimit] 로그인 실패 - IP: {}, 누적 횟수: {}/{}", ip, count, MAX_FAILURES);
+    }
+
+    private void incrementFailureCount(String key, int maxFailures) {
+        try {
+            Long count = stringRedisTemplate.opsForValue().increment(key);
+            if (count != null && count == 1) {
+                stringRedisTemplate.expire(key, BLOCK_DURATION_SECONDS, TimeUnit.SECONDS);
+            }
+            log.warn("[RateLimit] 카운터 증가 - key: {}, 누적: {}/{}", key, count, maxFailures);
+        } catch (DataAccessException e) {
+            log.warn("[RateLimit] Redis 오류로 카운터 증가 생략 (fail-open) - key: {}", key, e);
+        }
+    }
+
+    private void deleteKey(String key) {
+        try {
+            stringRedisTemplate.delete(key);
+        } catch (DataAccessException e) {
+            log.warn("[RateLimit] Redis 오류로 카운터 삭제 생략 (fail-open) - key: {}", key, e);
+        }
+    }
+
+    private String extractEmail(byte[] body) {
+        try {
+            JsonNode node = objectMapper.readTree(body);
+            JsonNode emailNode = node.get("email");
+            if (emailNode != null && emailNode.isTextual()) {
+                String email = emailNode.asText().strip().toLowerCase();
+                return email.isBlank() ? null : email;
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     private String extractClientIp(HttpServletRequest request) {
@@ -100,5 +178,54 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
         response.getWriter().write(objectMapper.writeValueAsString(
                 ApiResponse.fail(ErrorEnum.LOGIN_RATE_LIMITED)
         ));
+    }
+
+    static String sha256(String input) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
+
+    private static class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
+        private final byte[] body;
+
+        static final class BodyTooLargeException extends IOException {
+            BodyTooLargeException(int limit) {
+                super("Login request body exceeds " + limit + " bytes");
+            }
+        }
+
+        CachedBodyRequestWrapper(HttpServletRequest request) throws IOException {
+            super(request);
+            byte[] buffer = request.getInputStream().readNBytes(MAX_BODY_BYTES + 1);
+            if (buffer.length > MAX_BODY_BYTES) {
+                throw new BodyTooLargeException(MAX_BODY_BYTES);
+            }
+            this.body = buffer;
+        }
+
+        byte[] getBody() {
+            return body;
+        }
+
+        @Override
+        public ServletInputStream getInputStream() {
+            ByteArrayInputStream bais = new ByteArrayInputStream(body);
+            return new ServletInputStream() {
+                @Override public int read() { return bais.read(); }
+                @Override public boolean isFinished() { return bais.available() == 0; }
+                @Override public boolean isReady() { return true; }
+                @Override public void setReadListener(ReadListener listener) {}
+            };
+        }
+
+        @Override
+        public BufferedReader getReader() {
+            return new BufferedReader(new InputStreamReader(getInputStream(), StandardCharsets.UTF_8));
+        }
     }
 }

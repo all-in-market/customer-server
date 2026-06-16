@@ -7,12 +7,15 @@ import com.example.allinmarket.domain.category.entity.Category;
 import com.example.allinmarket.domain.category.repository.CategoryRepository;
 import com.example.allinmarket.domain.product.dto.ProductDetailResponse;
 import com.example.allinmarket.domain.product.entity.Product;
+import com.example.allinmarket.domain.product.entity.ProductImage;
+import com.example.allinmarket.domain.product.repository.ProductImageRepository;
 import com.example.allinmarket.domain.product.repository.ProductRepository;
 import com.example.allinmarket.domain.restocksubscription.event.RestockEvent;
 import com.example.allinmarket.seller.entity.Seller;
 import com.example.allinmarket.seller.product.dto.request.SellerProductCreateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductStockUpdateRequest;
 import com.example.allinmarket.seller.product.dto.request.SellerProductUpdateRequest;
+import com.example.allinmarket.seller.product.dto.response.ProductImageDetailResponse;
 import com.example.allinmarket.seller.repository.SellerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -42,8 +46,12 @@ public class SellerProductService {
     private final SellerRepository sellerRepository;
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductImageRepository productImageRepository;
+
     private final RedisTemplate<String, Object> redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
+
+    private final S3UploadService s3UploadService;
 
     @Transactional
     public ProductDetailResponse create(Long sellerId, SellerProductCreateRequest request) {
@@ -214,6 +222,55 @@ public class SellerProductService {
         }
     }
 
+    @Transactional
+    public ProductImageDetailResponse uploadProductImage(
+            Long sellerId,
+            Long productId,
+            MultipartFile image,
+            Integer sortOrder,
+            boolean representative
+    ) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId).orElseThrow(
+                () -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND)
+        );
+
+        validateProductOwner(product, sellerId);
+
+        String imageUrl = s3UploadService.uploadProductImage(image, productId);
+
+        ProductImage productImage = ProductImage.of(
+                product,
+                imageUrl,
+                sortOrder,
+                representative
+        );
+
+        ProductImage savedImage = productImageRepository.save(productImage);
+        evictSellerSearchProductCacheAfterCommit(sellerId);
+
+        return ProductImageDetailResponse.from(savedImage);
+    }
+
+    public List<ProductImageDetailResponse> getProductImages(Long sellerId, Long productId) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+                .orElseThrow(() -> new BaseException(ErrorEnum.PRODUCT_NOT_FOUND));
+
+        validateProductOwner(product, sellerId);
+
+        List<ProductImage> productImages =
+                productImageRepository.findByProductIdOrderByRepresentativeDescSortOrderAsc(product.getId());
+
+        return productImages.stream()
+                .map(ProductImageDetailResponse::from)
+                .toList();
+    }
+
+    private void validateProductOwner(Product product, Long sellerId) {
+        if (!product.getSeller().getId().equals(sellerId)) {
+            throw new BaseException(ErrorEnum.PRODUCT_ACCESS_DENIED);
+        }
+    }
+
     private void evictSearchProductCacheAfterCommit(Long sellerId) {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization(){
                     @Override
@@ -238,4 +295,6 @@ public class SellerProductService {
             throw new BaseException(ErrorEnum.FORBIDDEN);
         }
     }
+
+
 }

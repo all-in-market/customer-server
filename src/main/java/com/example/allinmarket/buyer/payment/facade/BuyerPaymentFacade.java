@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -26,13 +27,15 @@ public class BuyerPaymentFacade {
 
     public PaymentDetailResponse processPayment(Long currentUserId, PaymentCreateRequest request) throws JsonProcessingException {
         PaymentDetailResponse paymentCreateResult = buyerPaymentService.createPayment(currentUserId, request);
+
         // 실제 결제는 FE 에서 결제창을 호출하여 실행
         // 결제 이력 조회. 실연동 시 PortOne이 생성한 impUid를 별도로 받아야 함.
-        PortOnePaymentResponse payment = paymentGateway.getPayment(paymentCreateResult.merchantUid());
+        String impUid = paymentCreateResult.merchantUid() + UUID.randomUUID();
+
+        PortOnePaymentResponse payment = paymentGateway.getPayment(paymentCreateResult.merchantUid(), impUid);
         if (mockLatencyEnabled) {
             simulateExternalLatency();
         }
-
 
         return paymentRetryService.retryConfirmPayment(currentUserId, paymentCreateResult.merchantUid(), payment);
     }

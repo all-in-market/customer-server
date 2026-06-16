@@ -175,6 +175,8 @@ public class BuyerPaymentService {
 
         historyOutBoxService.save(dbPayment);
 
+        dbPayment.saveImpUid(payment.getImpUid());
+
         return PaymentDetailResponse.from(dbPayment);
     }
 

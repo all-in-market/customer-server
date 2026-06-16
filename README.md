@@ -110,6 +110,242 @@ sequenceDiagram
 
         Commerce-->>Buyer: 주문 실패 응답
     end
+## 포트폴리오 요약
+
+`all-in-market`은 구매자/판매자 도메인을 분리한 멀티 벤더 이커머스 백엔드 프로젝트입니다.
+
+### 핵심 기술 스택
+
+| 영역 | 기술 |
+|---|---|
+| Language / Framework | Java 21, Spring Boot 4, Spring MVC, Spring Security |
+| Persistence | Spring Data JPA, Querydsl, PostgreSQL, Flyway |
+| Cache / Lock | Redis, Redisson |
+| Auth / Security | JWT, Refresh Token Rotation, Redis blacklist, Login rate limit |
+| Docs / Test | JUnit 5, Mockito, Spring REST Docs, Asciidoctor |
+| Observability / Infra | Actuator, Micrometer, Prometheus, CloudWatch, Grafana, Terraform, k6 |
+
+### 아키텍처 경계
+
+- `buyer/**`: 구매자 API, 장바구니, 주문, 결제, 환불, 재입고 알림 흐름
+- `seller/**`: 판매자 API, 상품, 대시보드, 통계, 정산, 지급 흐름
+- `domain/**`: JPA 엔티티, Repository, 도메인별 DTO/집계 로직
+- `common/**`: 공통 응답, 예외, 보안, Redis, scheduler, outbox, 설정
+- `docs/asciidoc/**`: Spring REST Docs 기반 API 문서
+- `infra/**`, `infra-grafana/**`, `k6/**`: 배포, 관측성, 부하 테스트 자산
+
+### 주요 API
+
+| 구분  | 대표 API                                                                                                   |
+|-----|----------------------------------------------------------------------------------------------------------|
+| 구매자 | `GET /products`, `POST /carts/items`, `POST /orders`, `POST /payments`, `POST /orders/{orderId}/refunds` |
+| 판매자 | `POST /seller/products`, `GET /seller/dashboard`, `GET /seller/statistics/summary`, `GET /seller/settlements` |
+| 인증  | `POST /auth/login`, `POST /auth/refresh`, `POST /seller/auth/login`, `POST /seller/auth/refresh`         |
+
+### 실행 및 검증
+
+```bash
+# 전체 테스트
+./gradlew test
+
+# REST Docs 생성
+./gradlew asciidoctor
+
+# 애플리케이션 실행
+./gradlew bootRun
+
+# k6 시나리오 실행은 로컬 인프라 준비 후 수행
+docker compose -f docker-compose-k6.yml up --abort-on-container-exit
+```
+</details>
+
+<br>
+
+---
+
+<details>
+<summary><h2>판매 플로우</h2></summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Seller as 판매자
+    participant Commerce as 구매자/판매자 서버
+    participant Delivery as 배송 시스템
+    participant DB as Database
+
+    %% 판매자 로그인
+    Seller->>Commerce: 판매자 로그인 및 상품 등록 요청
+
+    %% 판매자 승인 여부 확인
+    Commerce->>DB: sellerStatus 조회
+
+    alt 판매자 미승인
+        DB-->>Commerce: sellerStatus = PENDING
+        Commerce-->>Seller: 가입 승인 대기 응답
+
+    else 판매자 승인 완료
+        DB-->>Commerce: sellerStatus = APPROVED
+
+        %% 상품 등록
+        Seller->>Commerce: 상품 등록 요청
+
+        Commerce->>DB: 상품 데이터 저장
+        Note right of Commerce: name, price, stock, category 저장
+
+        DB-->>Commerce: productId 생성
+
+        Commerce-->>Seller: 상품 등록 완료 응답
+
+필수 환경변수 예시는 `DB_PASSWORD`, `JWT_SECRET`, `SELLER_ID`, `SELLER_PASSWORD`, `SERVER_SECRET_KEY`입니다. 로컬 실행 시 PostgreSQL, Redis 등 외부 의존성이 필요합니다.
+
+## 핵심 기술 결정
+
+### 1. 로그인 API 보호: WAF + Redis rate limit
+
+- Problem: 로그인 실패 사유와 반복 요청이 계정 추론, brute force, 서버 부하로 이어질 수 있었습니다.
+- Cause: 인프라 레벨 차단만으로는 계정 단위 공격을 막기 어렵고, 애플리케이션 레벨만으로는 대량 트래픽을 서버가 먼저 받아야 했습니다.
+- Solution: AWS WAF로 대량 요청을 1차 차단하고, Spring `LoginRateLimitFilter`에서 IP+email, email 단위 Redis 카운터를 적용했습니다.
+- Result: 로그인 실패 사유를 통일하고, 8KB 초과 본문 차단과 이메일 해싱 저장으로 공격 표면을 줄였습니다.
+- Lesson Learned: 보안 기능은 “차단 로직”뿐 아니라 proxy IP 신뢰 정책, Redis 장애 시 fail-open/fail-closed 선택, 테스트로 고정된 응답 정책까지 함께 설명해야 합니다.
+
+### 2. 주문/결제 정합성: 상황별 동시성 전략
+
+- Problem: 주문 생성, 재고 차감, 결제 승인, 환불은 중복 요청과 경쟁 상태가 바로 금전/재고 오류로 이어집니다.
+- Cause: 모든 API에 같은 락을 적용하면 성능 비용이 크고, 반대로 애플리케이션 체크만 두면 동시성 조건에서 정합성을 보장하기 어렵습니다.
+- Solution: 결제/환불은 DB 락과 유니크 제약을 활용하고, 재고 차감은 Redisson 분산락을 사용해 상품별 주문 생성을 직렬화하는 방향으로 설계했습니다.
+- Result: 도메인별 충돌 비용에 따라 락 전략을 나눌 수 있었고, 결제 성공 유니크 인덱스와 outbox 저장처럼 DB 제약 기반 방어선을 일부 도입했습니다.
+- Lesson Learned: 재고 차감 경로는 PostgreSQL 기반 동시성 테스트와 DB 차원의 보조 방어선이 아직 필요합니다. 이 항목은 known limitations와 개선 계획에 남겨 두었습니다.
+
+### 3. 문서화 가능한 API 품질: REST Docs + 공통 응답
+
+- Problem: 포트폴리오 API는 코드만으로는 요청/응답, 권한, 실패 케이스를 빠르게 이해하기 어렵습니다.
+- Cause: 수동 API 문서는 코드 변경과 쉽게 어긋나고, 테스트 없는 문서는 신뢰도가 낮습니다.
+- Solution: Controller slice test와 Spring REST Docs를 연결해 주요 buyer/seller API 문서 조각을 생성하고, `ApiResponse`와 `GlobalExceptionHandler`로 응답 형식을 통일했습니다.
+- Result: API 문서는 `./gradlew asciidoctor`로 재생성할 수 있고, controller test가 문서의 기본 검증 역할을 합니다.
+- Lesson Learned: 앞으로는 page size 제한, actuator 접근 정책, mock 결제 플로우 같은 운영 가정도 RestDocs/README에 함께 기록해야 문서가 더 설득력 있어집니다.
+
+## 현재 한계와 개선 계획
+
+| 한계 | 영향 | 개선 계획 |
+|---|---|---|
+| 재고 차감 경로의 DB 행 잠금/원자 업데이트 검증이 부족함 | Redis 락 외 장애/우회 상황에서 초과 판매 방어를 설명하기 어려움 | PostgreSQL 기반 동시성 테스트를 먼저 추가하고, DB pessimistic lock 또는 조건부 원자 업데이트를 검토 |
+| 테스트 프로필이 Flyway를 끄고 H2 `create-drop`을 사용함 | PostgreSQL partial index, `pg_trgm`, 실제 migration 성공 여부가 테스트되지 않음 | Testcontainers PostgreSQL migration test 추가 |
+| 상품 검색이 `%keyword%` LIKE 기반임 | 데이터가 커질수록 full scan 위험이 커짐 | products name/description trigram 또는 full-text index 적용 전후 `EXPLAIN ANALYZE` 문서화 |
+| `/actuator/**`가 public permitAll이고 metrics/prometheus도 노출됨 | 운영 지표 노출 위험이 있음 | health와 prometheus 접근 정책 분리 또는 내부망/ALB 제한 근거 문서화 |
+| `POST /payments`가 mock PG 확인까지 같은 요청에서 수행됨 | 실서비스 결제 생성/승인/webhook 경계와 다름 | README/API 문서에 mock flow임을 명시하고, 이후 confirm/webhook 분리 설계 |
+
+<br>
+
+---
+
+# 1. 📌 서버 개요
+
+## 서버 소개
+
+구매자 / 판매자 및 상품, 결제, 주문 등 전반적인 서비스 기능을 담당 하는 서버
+
+<br>
+
+---
+
+# 2. 📡 주요 API
+
+| Method | URI                                | Description     | Role  |
+|--------|------------------------------------|-----------------|-------|
+| GET    | /products                          | 전체 상품 조회 API    | BUYER |
+| POST   | /carts/items                       | 장바구니 상품 추가 API  | BUYER |
+| POST   | /orders                            | 주문 생성 API       | BUYER |
+| POST   | /payments                          | 결제 생성 API       | BUYER |
+| POST   | /orders/{orderId}/refunds          | 환불 신청 API       | BUYER |
+| POST   | /restock-subscriptions             | 재입고 알림 신청 API   | BUYER |
+| DELETE | /restock-subscriptions/{productId} | 재입고 알림 취소 API   | BUYER |
+| PUT    | /restock-notifications/me          | 알림 전체 읽음 처리 API | BUYER |
+
+<br>
+
+| Method | URI                             | Description        | Role   |
+|--------|---------------------------------|--------------------|--------|
+| POST   | /seller/products                | 상품 등록 API          | SELLER |
+| GET    | /seller/dashboard               | 대시보드 조회 API        | SELLER |
+| POST   | /seller/dashboard/refresh       | 대시보드 캐시 삭제 API     | SELLER |
+| GET    | /seller/statistics/daily/{date} | 특정 날짜 통계 자료 조회 API | SELLER |
+| GET    | /seller/statistics/summary      | 특정 기간 통계 자료 조회 API | SELLER |
+| GET    | /seller/settlements             | 정산 전체 조회 API       | SELLER |
+
+<br>
+
+---
+
+# 3. 🔄 서비스 플로우
+
+<details>
+<summary><h2>구매 플로우</h2></summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Buyer as 구매자
+    participant Commerce as 구매자/판매자 서버
+    participant PG as PG 서버
+    participant DB as Database
+
+    %% 구매 시작
+    Buyer->>Commerce: 구매 요청
+
+    %% 로그인
+    Commerce->>Commerce: 구매자 로그인 인증
+
+    %% 상품 조회
+    Buyer->>Commerce: 상품 조회 요청
+    Commerce-->>Buyer: 상품 정보 반환
+
+    %% 장바구니 추가
+    Buyer->>Commerce: 장바구니 추가
+
+    %% 주문 생성
+    Buyer->>Commerce: 주문 생성 요청
+
+    %% 재고 차감
+    Commerce->>DB: 재고 차감
+    Note right of Commerce: 재고 수량 감소
+
+    %% 주문 저장
+    Commerce->>DB: 주문 데이터 저장
+    Note right of Commerce: orderStatus = CREATED
+
+    %% 결제 생성
+    Commerce->>DB: 결제 데이터 저장
+    Note right of Commerce: paymentStatus = PENDING
+
+    %% 결제 요청
+    Buyer->>PG: 결제 요청
+
+    %% 결제 확인
+    PG-->>Commerce: 결제 결과 반환
+
+    alt 결제 성공
+        Commerce->>DB: 주문 상태 변경
+        Commerce->>DB: 결제 상태 변경
+
+        Note right of Commerce: orderStatus = PAID
+        Note right of Commerce: paymentStatus = SUCCESS
+
+        Commerce-->>Buyer: 주문 완료 응답
+
+    else 결제 실패
+        Commerce->>DB: 주문 상태 FAILED 변경
+        Commerce->>DB: 결제 상태 FAILED 변경
+
+        Note right of Commerce: orderStatus = FAILED
+        Note right of Commerce: paymentStatus = FAILED
+
+	DB->>Commerce: 재고 복구 
+
+        Commerce-->>Buyer: 주문 실패 응답
+    end
 ```
 </details>
 
@@ -391,7 +627,7 @@ stateDiagram-v2
 
 ### 배경
 
-현재 시스템은 로그인 실패 시 구체적인 사유(예: 존재하지 않는 계정, 비밀번호 불일치 등)를 노출하고 있어, 공격자가 유효한 계정 정보를 추론할 수 있는 단서를 제공하고 있었습니다. 
+현재 시스템은 로그인 실패 시 구체적인 사유(예: 존재하지 않는 계정, 비밀번호 불일치 등)를 노출하고 있어, 공격자가 유효한 계정 정보를 추론할 수 있는 단서를 제공하고 있었습니다.
 또한, 특정 IP에서의 대규모 트래픽 공격이나 분산 IP를 이용한 무차별 대입 공격(Brute Force Attack)에 대한 방어 체계가 부재하여 인프라 및 애플리케이션 레벨의 보호 대책이 시급했습니다.
 
 ### 기술 선택지
@@ -407,13 +643,13 @@ stateDiagram-v2
 
 ### 선택 이유
 
-- 다중 방어 계층(Defense in Depth) 구축: AWS WAF를 통해 서버 리소스를 소모하기 전 대규모 공격을 일차적으로 걸러내고, 
-애플리케이션 내부 필터에서 비즈니스 로직(계정별 실패 횟수 등)에 기반한 정밀한 차단을 수행하도록 설계했습니다.
+- 다중 방어 계층(Defense in Depth) 구축: AWS WAF를 통해 서버 리소스를 소모하기 전 대규모 공격을 일차적으로 걸러내고,
+  애플리케이션 내부 필터에서 비즈니스 로직(계정별 실패 횟수 등)에 기반한 정밀한 차단을 수행하도록 설계했습니다.
 
 - 계정 정보 유출 방지: 실패 사유를 "로그인 실패"로 통일하여 공격자의 정보 추론을 원천 차단했습니다.
 
-- 보안 가시성 및 유연성: Redis 카운터를 사용하여 동일 공격자가 IP를 변경하며 특정 계정을 공격하거나, 
-한 네트워크 내에서 여러 계정을 공격하는 시나리오를 모두 방어할 수 있습니다.
+- 보안 가시성 및 유연성: Redis 카운터를 사용하여 동일 공격자가 IP를 변경하며 특정 계정을 공격하거나,
+  한 네트워크 내에서 여러 계정을 공격하는 시나리오를 모두 방어할 수 있습니다.
 
 ### 해결 및 결과
 
@@ -629,21 +865,21 @@ e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정�
 
 1. Cache Aside 전략 적용 (인기 상품 조회):
 
-   - 요청 시 캐시를 먼저 확인하고, 미존재 시에만 DB를 조회하는 전략을 통해 인기 상품에 대한 반복적인 DB 접근을 80% 이상 절감했습니다.
+    - 요청 시 캐시를 먼저 확인하고, 미존재 시에만 DB를 조회하는 전략을 통해 인기 상품에 대한 반복적인 DB 접근을 80% 이상 절감했습니다.
 
 2. 실시간 채팅 Unread 관리:
 
-   - 빈번한 수정이 발생하는 읽지 않은 메시지 수를 DB UPDATE 대신 Redis의 INCR 연산으로 처리하여 DB Write 부하를 최소화했습니다.
+    - 빈번한 수정이 발생하는 읽지 않은 메시지 수를 DB UPDATE 대신 Redis의 INCR 연산으로 처리하여 DB Write 부하를 최소화했습니다.
 
 3. 대시보드 사전 집계 캐싱:
 
-   - 매 요청마다 발생하는 무거운 집계 쿼리를 스케줄러 기반의 사전 집계 로직으로 대체하고 결과를 Redis에 캐싱하여, 대시보드 진입 속도를 획기적으로 개선했습니다.
+    - 매 요청마다 발생하는 무거운 집계 쿼리를 스케줄러 기반의 사전 집계 로직으로 대체하고 결과를 Redis에 캐싱하여, 대시보드 진입 속도를 획기적으로 개선했습니다.
 
 4. 결과:
 
-   - 응답 시간 단축: 평균 API 응답 시간을 크게 개선하여 사용자 경험을 향상시켰습니다.
+    - 응답 시간 단축: 평균 API 응답 시간을 크게 개선하여 사용자 경험을 향상시켰습니다.
 
-   - 인프라 안정성: DB 커넥션 점유율을 낮춤으로써 갑작스러운 트래픽 급증에도 시스템 전체가 다운되지 않는 탄력적인 아키텍처를 구축했습니다.
+    - 인프라 안정성: DB 커넥션 점유율을 낮춤으로써 갑작스러운 트래픽 급증에도 시스템 전체가 다운되지 않는 탄력적인 아키텍처를 구축했습니다.
 
 <br>
 
@@ -653,8 +889,8 @@ e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정�
 
 ### 배경
 
-주문 및 결제가 완료되면 판매자의 매출 통계를 관리하는 대시보드 업데이트가 수반되어야 합니다. 
-초기에는 결제 트랜잭션 내에서 대시보드 업데이트 로직을 직접 호출했으나, 통계 처리 로직의 복잡도로 인해 결제 응답 시간이 길어지고, 
+주문 및 결제가 완료되면 판매자의 매출 통계를 관리하는 대시보드 업데이트가 수반되어야 합니다.
+초기에는 결제 트랜잭션 내에서 대시보드 업데이트 로직을 직접 호출했으나, 통계 처리 로직의 복잡도로 인해 결제 응답 시간이 길어지고,
 대시보드 서비스의 장애가 핵심 기능인 결제 성공 여부에 영향을 주는 강한 결합(Strong Coupling) 문제가 발생했습니다.
 
 ### 기술 선택지
@@ -682,17 +918,17 @@ e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정�
 
 2. Polling 스케줄러 구현:
 
-   - 주기적으로 미처리 이벤트를 조회하여 대시보드를 갱신하는 워커를 구현했습니다.
+    - 주기적으로 미처리 이벤트를 조회하여 대시보드를 갱신하는 워커를 구현했습니다.
 
-   - 비관적 락(FOR UPDATE) 기반 조회를 적용하여, 멀티 서버 환경에서도 동일한 이벤트가 중복 처리되지 않도록 안정성을 확보했습니다.
+    - 비관적 락(FOR UPDATE) 기반 조회를 적용하여, 멀티 서버 환경에서도 동일한 이벤트가 중복 처리되지 않도록 안정성을 확보했습니다.
 
 3. 성능 및 안정성 개선: 결제 로직에서 무거운 통계 집계 로직을 제거함으로써 결제 API의 응답 시간을 단축했습니다.
 
 4. 결과:
 
-   - 결함 격리: 대시보드 업데이트 서버에 일시적인 장애가 발생해도 결제 서비스는 정상 작동하며, 장애 복구 시 Outbox에 쌓인 데이터가 순차적으로 처리되어 최종적인 데이터 일관성을 달성했습니다.
+    - 결함 격리: 대시보드 업데이트 서버에 일시적인 장애가 발생해도 결제 서비스는 정상 작동하며, 장애 복구 시 Outbox에 쌓인 데이터가 순차적으로 처리되어 최종적인 데이터 일관성을 달성했습니다.
 
-   - 운영 편의성: 이벤트 처리 상태를 DB에서 한눈에 파악할 수 있어 장애 대응 및 모니터링 효율이 향상되었습니다.
+    - 운영 편의성: 이벤트 처리 상태를 DB에서 한눈에 파악할 수 있어 장애 대응 및 모니터링 효율이 향상되었습니다.
 
 <br>
 
@@ -704,16 +940,16 @@ e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정�
 
 ### 문제
 
-- 현상: updateSellerDashboard 메서드에서 대시보드 생성을 위해 createDashboardIfNotExists를 호출할 때, 
-설정된 Propagation.REQUIRES_NEW 전파 속성이 무시됩니다.
+- 현상: updateSellerDashboard 메서드에서 대시보드 생성을 위해 createDashboardIfNotExists를 호출할 때,
+  설정된 Propagation.REQUIRES_NEW 전파 속성이 무시됩니다.
 
-- 영향: 별도의 독립적인 트랜잭션이 생성되지 않고 상위 메서드의 트랜잭션에 강제 참여하게 되어, 
-상위 로직 실패 시 생성되어야 할 대시보드 데이터까지 함께 롤백되는 정합성 문제가 발생합니다.
+- 영향: 별도의 독립적인 트랜잭션이 생성되지 않고 상위 메서드의 트랜잭션에 강제 참여하게 되어,
+  상위 로직 실패 시 생성되어야 할 대시보드 데이터까지 함께 롤백되는 정합성 문제가 발생합니다.
 
 ### 원인
 
-- 프록시 기반 AOP의 한계: Spring의 @Transactional, @Async 등은 AOP 프록시 메커니즘을 통해 동작합니다. 
-외부에서 빈(Bean)을 호출할 때는 프록시 객체가 요청을 가로채 트랜잭션 로직을 수행하지만, 클래스 내부에서 메서드를 직접 호출(this.method())하면 프록시를 거치지 않고 타겟 객체의 메서드를 직접 호출하게 됩니다.
+- 프록시 기반 AOP의 한계: Spring의 @Transactional, @Async 등은 AOP 프록시 메커니즘을 통해 동작합니다.
+  외부에서 빈(Bean)을 호출할 때는 프록시 객체가 요청을 가로채 트랜잭션 로직을 수행하지만, 클래스 내부에서 메서드를 직접 호출(this.method())하면 프록시를 거치지 않고 타겟 객체의 메서드를 직접 호출하게 됩니다.
 
 - 전파 속성 미적용: 자가 호출 시 프록시가 개입할 수 없으므로 새로운 트랜잭션 매니저 로직이 실행되지 않으며, 결과적으로 어노테이션이 없는 일반 메서드 호출과 동일하게 동작합니다.
 
@@ -725,7 +961,7 @@ e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정�
 
 2. 자기 자신 주입 (Self-Injection): ObjectProvider를 사용하여 자기 자신의 프록시 빈을 주입받은 뒤, this 대신 주입받은 빈을 통해 메서드를 호출합니다.
 
-   - 참고: Spring Boot 2.6 이상에서는 순환 참조를 지양하므로 ObjectProvider 사용이 안전합니다.
+    - 참고: Spring Boot 2.6 이상에서는 순환 참조를 지양하므로 ObjectProvider 사용이 안전합니다.
 
 3. ApplicationContext 활용: ApplicationContext에서 직접 빈을 꺼내어 프록시 객체를 통한 호출을 강제합니다.
 

@@ -1,5 +1,115 @@
 # 🖥️ 구매자 / 판매자 서버
 
+<br>
+
+---
+
+# 1. 📌 서버 개요
+
+## 서버 소개
+
+구매자 / 판매자 및 상품, 결제, 주문 등 전반적인 서비스 기능을 담당 하는 서버
+
+<br>
+
+---
+
+# 2. 📡 주요 API
+
+| Method | URI                                | Description     | Role  |
+|--------|------------------------------------|-----------------|-------|
+| GET    | /products                          | 전체 상품 조회 API    | BUYER |
+| POST   | /carts/items                       | 장바구니 상품 추가 API  | BUYER |
+| POST   | /orders                            | 주문 생성 API       | BUYER |
+| POST   | /payments                          | 결제 생성 API       | BUYER |
+| POST   | /orders/{orderId}/refunds          | 환불 신청 API       | BUYER |
+| POST   | /restock-subscriptions             | 재입고 알림 신청 API   | BUYER |
+| DELETE | /restock-subscriptions/{productId} | 재입고 알림 취소 API   | BUYER |
+| PUT    | /restock-notifications/me          | 알림 전체 읽음 처리 API | BUYER |
+
+<br>
+
+| Method | URI                             | Description        | Role   |
+|--------|---------------------------------|--------------------|--------|
+| POST   | /seller/products                | 상품 등록 API          | SELLER |
+| GET    | /seller/dashboard               | 대시보드 조회 API        | SELLER |
+| POST   | /seller/dashboard/refresh       | 대시보드 캐시 삭제 API     | SELLER |
+| GET    | /seller/statistics/daily/{date} | 특정 날짜 통계 자료 조회 API | SELLER |
+| GET    | /seller/statistics/summary      | 특정 기간 통계 자료 조회 API | SELLER |
+| GET    | /seller/settlements             | 정산 전체 조회 API       | SELLER |
+
+<br>
+
+---
+
+# 3. 🔄 서비스 플로우
+
+<details>
+<summary><h2>구매 플로우</h2></summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Buyer as 구매자
+    participant Commerce as 구매자/판매자 서버
+    participant PG as PG 서버
+    participant DB as Database
+
+    %% 구매 시작
+    Buyer->>Commerce: 구매 요청
+
+    %% 로그인
+    Commerce->>Commerce: 구매자 로그인 인증
+
+    %% 상품 조회
+    Buyer->>Commerce: 상품 조회 요청
+    Commerce-->>Buyer: 상품 정보 반환
+
+    %% 장바구니 추가
+    Buyer->>Commerce: 장바구니 추가
+
+    %% 주문 생성
+    Buyer->>Commerce: 주문 생성 요청
+
+    %% 재고 차감
+    Commerce->>DB: 재고 차감
+    Note right of Commerce: 재고 수량 감소
+
+    %% 주문 저장
+    Commerce->>DB: 주문 데이터 저장
+    Note right of Commerce: orderStatus = CREATED
+
+    %% 결제 생성
+    Commerce->>DB: 결제 데이터 저장
+    Note right of Commerce: paymentStatus = PENDING
+
+    %% 결제 요청
+    Buyer->>PG: 결제 요청
+
+    %% 결제 확인
+    PG-->>Commerce: 결제 결과 반환
+
+    alt 결제 성공
+        Commerce->>DB: 주문 상태 변경
+        Commerce->>DB: 결제 상태 변경
+
+        Note right of Commerce: orderStatus = PAID
+        Note right of Commerce: paymentStatus = SUCCESS
+
+        Commerce-->>Buyer: 주문 완료 응답
+
+    else 결제 실패
+        Commerce->>DB: 주문 상태 FAILED 변경
+        Commerce->>DB: 결제 상태 FAILED 변경
+
+        Note right of Commerce: orderStatus = FAILED
+        Note right of Commerce: paymentStatus = FAILED
+
+	DB->>Commerce: 재고 복구 
+
+        Commerce-->>Buyer: 주문 실패 응답
+    end
 ## 포트폴리오 요약
 
 `all-in-market`은 구매자/판매자 도메인을 분리한 멀티 벤더 이커머스 백엔드 프로젝트입니다.
@@ -47,6 +157,46 @@
 # k6 시나리오 실행은 로컬 인프라 준비 후 수행
 docker compose -f docker-compose-k6.yml up --abort-on-container-exit
 ```
+</details>
+
+<br>
+
+---
+
+<details>
+<summary><h2>판매 플로우</h2></summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant Seller as 판매자
+    participant Commerce as 구매자/판매자 서버
+    participant Delivery as 배송 시스템
+    participant DB as Database
+
+    %% 판매자 로그인
+    Seller->>Commerce: 판매자 로그인 및 상품 등록 요청
+
+    %% 판매자 승인 여부 확인
+    Commerce->>DB: sellerStatus 조회
+
+    alt 판매자 미승인
+        DB-->>Commerce: sellerStatus = PENDING
+        Commerce-->>Seller: 가입 승인 대기 응답
+
+    else 판매자 승인 완료
+        DB-->>Commerce: sellerStatus = APPROVED
+
+        %% 상품 등록
+        Seller->>Commerce: 상품 등록 요청
+
+        Commerce->>DB: 상품 데이터 저장
+        Note right of Commerce: name, price, stock, category 저장
+
+        DB-->>Commerce: productId 생성
+
+        Commerce-->>Seller: 상품 등록 완료 응답
 
 필수 환경변수 예시는 `DB_PASSWORD`, `JWT_SECRET`, `SELLER_ID`, `SELLER_PASSWORD`, `SERVER_SECRET_KEY`입니다. 로컬 실행 시 PostgreSQL, Redis 등 외부 의존성이 필요합니다.
 
@@ -509,17 +659,17 @@ stateDiagram-v2
 
 3. Redis 기반 중첩 차단 로직 구현:
 
-    - IP + 계정: 5분 내 5회 실패 시 5분간 차단 (동일 공격자의 집중 공격 방어)
+   - IP + 계정: 5분 내 5회 실패 시 5분간 차단 (동일 공격자의 집중 공격 방어)
 
-    - 계정 전용: 5분 내 10회 실패 시 5분간 차단 (IP 변조를 통한 분산 공격 방어)
+   - 계정 전용: 5분 내 10회 실패 시 5분간 차단 (IP 변조를 통한 분산 공격 방어)
 
 4. 보안 취약점 보완:
 
-    - X-Forwarded-For 스푸핑 방지: ALB의 동작 방식을 고려하여 헤더의 마지막 IP를 신뢰하도록 로직을 강화했습니다.
+   - X-Forwarded-For 스푸핑 방지: ALB의 동작 방식을 고려하여 헤더의 마지막 IP를 신뢰하도록 로직을 강화했습니다.
 
-    - 대용량 페이로드 차단: 8KB 초과 요청 시 413 에러를 반환하여 메모리 고갈 공격을 방지했습니다.
+   - 대용량 페이로드 차단: 8KB 초과 요청 시 413 에러를 반환하여 메모리 고갈 공격을 방지했습니다.
 
-    - 개인정보 보호: Redis 저장 시 이메일을 SHA-256으로 해싱하여 데이터 유출 시에도 개인정보를 보호했습니다.
+   - 개인정보 보호: Redis 저장 시 이메일을 SHA-256으로 해싱하여 데이터 유출 시에도 개인정보를 보호했습니다.
 
 5. 결과: 무차별 대입 공격에 대한 방어 성공률이 크게 향상되었으며, 비정상적인 로그인 시도로부터 시스템 리소스를 안전하게 보호할 수 있게 되었습니다.
 
@@ -531,8 +681,8 @@ stateDiagram-v2
 
 ### 배경
 
-기존의 단순 JWT 인증 방식은 Access Token의 탈취 위험을 줄이기 위해 만료 시간을 짧게 설정하지만, 이로 인해 사용자가 자주 재로그인해야 하는 불편함(UX 저하)이 발생합니다.
-이를 보완하기 위해 Refresh Token을 사용하지만, 이 역시 탈취될 경우 유효 기간 동안 공격자가 지속적으로 새로운 Access Token을 발급받을 수 있는 '무한 재발급'의 위험을 내포하고 있습니다.
+기존의 단순 JWT 인증 방식은 Access Token의 탈취 위험을 줄이기 위해 만료 시간을 짧게 설정하지만, 이로 인해 사용자가 자주 재로그인해야 하는 불편함(UX 저하)이 발생합니다. 
+이를 보완하기 위해 Refresh Token을 사용하지만, 이 역시 탈취될 경우 유효 기간 동안 공격자가 지속적으로 새로운 Access Token을 발급받을 수 있는 '무한 재발급'의 위험을 내포하고 있습니다. 
 특히 토큰 자체에 정보를 담지 않는 Opaque Token(UUID) 방식을 채택하고 있어, 서버 측에서 토큰의 오용 여부를 정밀하게 제어할 메커니즘이 절실했습니다.
 
 ### 기술 선택지
@@ -560,23 +710,23 @@ stateDiagram-v2
 
 1. RTR 아키텍처 구축:
 
-    - Redis를 저장소로 활용하여 UUID 기반의 불투명 토큰(Opaque Token) 관리.
+   - Redis를 저장소로 활용하여 UUID 기반의 불투명 토큰(Opaque Token) 관리.
 
-    - 토큰 재발급 요청 시 기존 토큰을 즉시 폐기하고 새로운 UUID 토큰을 발급하여 교체.
+   - 토큰 재발급 요청 시 기존 토큰을 즉시 폐기하고 새로운 UUID 토큰을 발급하여 교체.
 
 2. 보안 전송 체계 수립:
 
-    - Refresh Token을 응답 바디가 아닌 HttpOnly, Secure, SameSite=Strict 옵션이 적용된 쿠키로만 전달하여 XSS 및 CSRF 공격을 이중으로 방어했습니다.
+   - Refresh Token을 응답 바디가 아닌 HttpOnly, Secure, SameSite=Strict 옵션이 적용된 쿠키로만 전달하여 XSS 및 CSRF 공격을 이중으로 방어했습니다.
 
 3. Blacklist 시스템 도입:
 
-    - 로그아웃 시 사용 중인 Access Token을 Redis 블랙리스트에 등록하여, 토큰 유효 기간이 남아있더라도 즉시 무효화되도록 구현했습니다.
+   - 로그아웃 시 사용 중인 Access Token을 Redis 블랙리스트에 등록하여, 토큰 유효 기간이 남아있더라도 즉시 무효화되도록 구현했습니다.
 
 4. 결과:
 
-    - 탈취 토큰 재사용 원천 차단: 한 번 사용된 토큰은 폐기되므로 공격자의 재사용이 불가능해졌습니다.
+   - 탈취 토큰 재사용 원천 차단: 한 번 사용된 토큰은 폐기되므로 공격자의 재사용이 불가능해졌습니다.
 
-    - 세션 관리 기능 강화: 멀티 디바이스 로그인 추적 및 로그아웃 시 모든 기기의 연결을 일괄 종료할 수 있는 기능을 확보했습니다.
+   - 세션 관리 기능 강화: 멀티 디바이스 로그인 추적 및 로그아웃 시 모든 기기의 연결을 일괄 종료할 수 있는 기능을 확보했습니다.
 
 <br>
 
@@ -586,8 +736,8 @@ stateDiagram-v2
 
 ### 배경
 
-JWT(JSON Web Token)는 서버의 상태를 유지하지 않는(Stateless) 장점이 있지만, "한 번 발급된 토큰은 만료 전까지 제어가 불가능하다"는 치명적인 단점이 있습니다.
-이로 인해 로그아웃한 사용자가 여전히 시스템에 접근하거나, 탈취된 토큰을 즉시 차단할 수 없는 보안 취약점이 발생합니다.
+JWT(JSON Web Token)는 서버의 상태를 유지하지 않는(Stateless) 장점이 있지만, "한 번 발급된 토큰은 만료 전까지 제어가 불가능하다"는 치명적인 단점이 있습니다. 
+이로 인해 로그아웃한 사용자가 여전히 시스템에 접근하거나, 탈취된 토큰을 즉시 차단할 수 없는 보안 취약점이 발생합니다. 
 또한, 계정 존재 여부를 응답 시간으로 유추하는 타이밍 공격(Timing Attack)이나 무차별 대입 공격(Brute-force)으로부터 시스템을 보호할 정교한 인증 구조가 필요했습니다.
 
 ### 기술 선택지
@@ -621,9 +771,9 @@ JWT(JSON Web Token)는 서버의 상태를 유지하지 않는(Stateless) 장점
 
 4. 결과:
 
-    - 확장성과 보안의 조화: Stateless한 JWT의 확장성을 유지하면서도 Redis를 통해 실시간 제어력을 확보했습니다.
+   - 확장성과 보안의 조화: Stateless한 JWT의 확장성을 유지하면서도 Redis를 통해 실시간 제어력을 확보했습니다.
 
-    - 비즈니스 로직 보호: @PreAuthorize 및 SecurityUtils를 통해 컨트롤러 코드의 오염 없이 안전하게 사용자 권한을 검증할 수 있는 환경을 조성했습니다.
+   - 비즈니스 로직 보호: @PreAuthorize 및 SecurityUtils를 통해 컨트롤러 코드의 오염 없이 안전하게 사용자 권한을 검증할 수 있는 환경을 조성했습니다.
 
 <br>
 
@@ -633,8 +783,8 @@ JWT(JSON Web Token)는 서버의 상태를 유지하지 않는(Stateless) 장점
 
 ### 배경
 
-e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정합성이 극도로 중요한 도메인이 다수 존재합니다.
-특히 사용자의 더블 클릭, 네트워크 재전송, 한정판 상품 출시와 같은 고부하 상황에서 경쟁 상태(Race Condition)가 발생할 경우
+e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정합성이 극도로 중요한 도메인이 다수 존재합니다. 
+특히 사용자의 더블 클릭, 네트워크 재전송, 한정판 상품 출시와 같은 고부하 상황에서 경쟁 상태(Race Condition)가 발생할 경우 
 중복 결제나 재고 초과 판매 등의 심각한 비즈니스 오류로 이어질 위험이 있었습니다.
 
 ### 기술 선택지
@@ -662,21 +812,21 @@ e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정�
 
 1. 결제/환불 생성 (비관적 락):
 
-    - 중복 요청은 멱등 키로 1차 차단하되, 서로 다른 클라이언트에서의 동시 접근 시 정합성이 최우선이므로 Pessimistic Write Lock을 통해 데이터 무결성을 보장했습니다.
+   - 중복 요청은 멱등 키로 1차 차단하되, 서로 다른 클라이언트에서의 동시 접근 시 정합성이 최우선이므로 Pessimistic Write Lock을 통해 데이터 무결성을 보장했습니다.
 
 2. 결제 승인 (낙관적 락):
 
-    - 이미 생성된 데이터의 상태 변경이 주 작업이며 충돌 빈도가 낮으므로, 버전 관리(@Version)를 통해 DB 점유 시간을 최소화하고 시스템 처리량을 높였습니다.
+   - 이미 생성된 데이터의 상태 변경이 주 작업이며 충돌 빈도가 낮으므로, 버전 관리(@Version)를 통해 DB 점유 시간을 최소화하고 시스템 처리량을 높였습니다.
 
 3. 주문 생성/재고 차감 (분산 락):
 
-    - 한정판 상품 구매 등 대규모 트래픽 집중 시 DB 락 경합으로 인한 성능 저하를 방지하기 위해 Redis 분산 락을 선제적으로 적용하여 DB 접근 자체를 제어했습니다.
+   - 한정판 상품 구매 등 대규모 트래픽 집중 시 DB 락 경합으로 인한 성능 저하를 방지하기 위해 Redis 분산 락을 선제적으로 적용하여 DB 접근 자체를 제어했습니다.
 
 4. 결과:
 
-    - 데이터 정합성 확보: 중복 결제 및 초과 판매 이슈를 원천 차단했습니다.
+   - 데이터 정합성 확보: 중복 결제 및 초과 판매 이슈를 원천 차단했습니다.
 
-    - 성능 최적화: 모든 요청에 무거운 락을 거는 대신 상황에 맞는 전략을 적용하여, 고부하 상황에서도 안정적인 응답 시간을 유지했습니다.
+   - 성능 최적화: 모든 요청에 무거운 락을 거는 대신 상황에 맞는 전략을 적용하여, 고부하 상황에서도 안정적인 응답 시간을 유지했습니다.
 
 <br>
 
@@ -686,8 +836,8 @@ e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정�
 
 ### 배경
 
-멀티 벤더 이커머스 플랫폼 특성상 상품 조회, 판매자 대시보드, 실시간 채팅 등 읽기 작업(Read-Heavy)이 전체 트래픽의 대부분을 차지합니다.
-특히 인기 상품에 대한 반복적인 DB 접근과 대시보드의 복잡한 집계 쿼리(SUM, COUNT, GROUP BY)는
+멀티 벤더 이커머스 플랫폼 특성상 상품 조회, 판매자 대시보드, 실시간 채팅 등 읽기 작업(Read-Heavy)이 전체 트래픽의 대부분을 차지합니다. 
+특히 인기 상품에 대한 반복적인 DB 접근과 대시보드의 복잡한 집계 쿼리(SUM, COUNT, GROUP BY)는 
 트래픽 증가 시 DB 부하를 가중시키고 응답 속도를 저하시키는 주요 원인이 되었습니다.
 
 ### 기술 선택지
@@ -833,10 +983,10 @@ e-커머스 플랫폼 특성상 결제, 재고 차감, 환불 등 데이터 정�
 
 - 영향:
 
-    1. Dirty Read 캐싱: DB 커밋이 완료되기 전에 Redis 버전이 먼저 올라가면, 다른 스레드가 새로운 버전 번호로 캐시 조회를 시도합니다.
-       이때 DB에는 아직 커밋되지 않은 상태이므로 구버전 데이터(Old Data)를 읽어와 새 버전 키에 저장하는 정합성 오류가 발생합니다.
+  1. Dirty Read 캐싱: DB 커밋이 완료되기 전에 Redis 버전이 먼저 올라가면, 다른 스레드가 새로운 버전 번호로 캐시 조회를 시도합니다. 
+  이때 DB에는 아직 커밋되지 않은 상태이므로 구버전 데이터(Old Data)를 읽어와 새 버전 키에 저장하는 정합성 오류가 발생합니다.
 
-    2. 불필요한 캐시 미스: 메서드 실행 중 예외가 발생하여 DB는 롤백되었으나, Redis 버전만 증가한 경우 데이터 변화가 없음에도 불구하고 불필요한 캐시 미스가 발생하여 DB 부하를 가중시킵니다.
+  2. 불필요한 캐시 미스: 메서드 실행 중 예외가 발생하여 DB는 롤백되었으나, Redis 버전만 증가한 경우 데이터 변화가 없음에도 불구하고 불필요한 캐시 미스가 발생하여 DB 부하를 가중시킵니다.
 
 ### 원인
 

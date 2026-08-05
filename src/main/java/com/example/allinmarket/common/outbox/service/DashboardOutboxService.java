@@ -4,7 +4,7 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
 import com.example.allinmarket.common.outbox.payload.DashboardUpdatePayload;
-import com.example.allinmarket.domain.sellerdashboard.service.DashboardService;
+import com.example.allinmarket.seller.dashboard.service.DashboardService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

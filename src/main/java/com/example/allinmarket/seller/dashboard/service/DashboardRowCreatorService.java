@@ -1,4 +1,4 @@
-package com.example.allinmarket.domain.sellerdashboard.service;
+package com.example.allinmarket.seller.dashboard.service;
 
 import com.example.allinmarket.domain.sellerdashboard.entity.SellerDashboard;
 import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboardRepository;

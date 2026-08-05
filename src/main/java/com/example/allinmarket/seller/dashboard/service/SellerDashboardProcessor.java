@@ -4,7 +4,6 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
 import com.example.allinmarket.domain.sellerdashboard.repository.SellerDashboardRepository;
-import com.example.allinmarket.domain.sellerdashboard.service.DashboardRowCreatorService;
 import com.example.allinmarket.seller.entity.Seller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

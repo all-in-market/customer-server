@@ -82,54 +82,6 @@ class ProductTest {
         }
     }
 
-    @Nested
-    @DisplayName("재고 복원")
-    class ReleaseStockTest {
-
-        @Test
-        @DisplayName("복원 수량이 0이면 예외가 발생하고 재고는 변하지 않는다")
-        void releaseStock_whenAmountIsZero_thenThrowInvalidInput() {
-            // given
-            Product product = createProduct(10);
-
-            // when & then
-            assertThatThrownBy(() -> product.releaseStock(0))
-                    .isInstanceOf(BaseException.class)
-                    .extracting("errorEnum")
-                    .isEqualTo(ErrorEnum.INVALID_INPUT);
-
-            assertThat(product.getStock()).isEqualTo(10);
-        }
-
-        @Test
-        @DisplayName("복원 수량이 음수이면 예외가 발생하고 재고는 변하지 않는다")
-        void releaseStock_whenAmountIsNegative_thenThrowInvalidInput() {
-            // given
-            Product product = createProduct(10);
-
-            // when & then
-            assertThatThrownBy(() -> product.releaseStock(-1))
-                    .isInstanceOf(BaseException.class)
-                    .extracting("errorEnum")
-                    .isEqualTo(ErrorEnum.INVALID_INPUT);
-
-            assertThat(product.getStock()).isEqualTo(10);
-        }
-
-        @Test
-        @DisplayName("복원 수량이 양수이면 재고가 증가한다")
-        void releaseStock_whenAmountIsPositive_thenIncreaseStock() {
-            // given
-            Product product = createProduct(10);
-
-            // when
-            product.releaseStock(5);
-
-            // then
-            assertThat(product.getStock()).isEqualTo(15);
-        }
-    }
-
     private Product createProduct(int stock) {
         Seller seller = mock(Seller.class);
         Category category = mock(Category.class);

@@ -1,5 +1,6 @@
 package com.example.allinmarket.seller.auth.service;
 
+import com.example.allinmarket.common.auth.consts.AuthConsts;
 import com.example.allinmarket.common.auth.dto.LoginResponse;
 import com.example.allinmarket.common.auth.dto.LoginResult;
 import com.example.allinmarket.common.enums.ErrorEnum;
@@ -90,16 +91,24 @@ public class SellerAuthService {
         String accessToken = jwtProvider.generateToken(seller.getId(), seller.getRole());
         String refreshToken = UUID.randomUUID().toString();
 
-        redisTemplate.opsForValue().set("refresh:" + refreshToken, seller.getId(), 7, TimeUnit.DAYS);
-        redisTemplate.opsForSet().add("user_refreshes:" + seller.getId(), refreshToken);
-        redisTemplate.expire("user_refreshes:" + seller.getId(), 7, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(
+                AuthConsts.refreshKey(UserRole.SELLER, refreshToken), seller.getId(),
+                AuthConsts.REFRESH_TOKEN_TTL_DAYS, TimeUnit.DAYS);
+        redisTemplate.opsForSet().add(AuthConsts.userRefreshesKey(UserRole.SELLER, seller.getId()), refreshToken);
+        redisTemplate.expire(
+                AuthConsts.userRefreshesKey(UserRole.SELLER, seller.getId()),
+                AuthConsts.REFRESH_TOKEN_TTL_DAYS, TimeUnit.DAYS);
 
         return new LoginResult(new LoginResponse(accessToken), refreshToken);
     }
 
     public LoginResult refresh(String refreshToken) {
-        Long userId = (Long) redisTemplate.opsForValue().getAndDelete("refresh:" + refreshToken);
+        Long userId = (Long) redisTemplate.opsForValue()
+                .getAndDelete(AuthConsts.refreshKey(UserRole.SELLER, refreshToken));
         if (userId == null) {
+            // 구 키(refresh:{token})에는 role 구분자가 없어 크로스-롤 발급을 막을 수 없다.
+            // 값을 신뢰하지 않고 지우기만 한 뒤 재로그인을 유도한다. TTL(7일) 경과 후 이 블록을 제거한다.
+            redisTemplate.opsForValue().getAndDelete(AuthConsts.legacyRefreshKey(refreshToken));
             throw new BaseException(ErrorEnum.TOKEN_EXPIRED);
         }
 
@@ -111,26 +120,35 @@ public class SellerAuthService {
         }
 
         String newRefreshToken = UUID.randomUUID().toString();
-        redisTemplate.opsForValue().set("refresh:" + newRefreshToken, userId, 7, TimeUnit.DAYS);
-        redisTemplate.opsForSet().remove("user_refreshes:" + userId, refreshToken);
-        redisTemplate.opsForSet().add("user_refreshes:" + userId, newRefreshToken);
-        redisTemplate.expire("user_refreshes:" + userId, 7, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(
+                AuthConsts.refreshKey(UserRole.SELLER, newRefreshToken), userId,
+                AuthConsts.REFRESH_TOKEN_TTL_DAYS, TimeUnit.DAYS);
+        redisTemplate.opsForSet().remove(AuthConsts.userRefreshesKey(UserRole.SELLER, userId), refreshToken);
+        redisTemplate.opsForSet().add(AuthConsts.userRefreshesKey(UserRole.SELLER, userId), newRefreshToken);
+        redisTemplate.expire(
+                AuthConsts.userRefreshesKey(UserRole.SELLER, userId),
+                AuthConsts.REFRESH_TOKEN_TTL_DAYS, TimeUnit.DAYS);
 
         String newAccessToken = jwtProvider.generateToken(userId, UserRole.SELLER);
         return new LoginResult(new LoginResponse(newAccessToken), newRefreshToken);
     }
 
     public void logout(String accessToken) {
+        if (jwtProvider.getRole(accessToken) != UserRole.SELLER) {
+            throw new BaseException(ErrorEnum.FORBIDDEN);
+        }
+
         Long userId = jwtProvider.getUserId(accessToken);
-        var tokens = redisTemplate.opsForSet().members("user_refreshes:" + userId);
+        var tokens = redisTemplate.opsForSet().members(AuthConsts.userRefreshesKey(UserRole.SELLER, userId));
         if (tokens != null && !tokens.isEmpty()) {
-            tokens.forEach(token -> redisTemplate.delete("refresh:" + token));
-            redisTemplate.delete("user_refreshes:" + userId);
+            tokens.forEach(token ->
+                    redisTemplate.delete(AuthConsts.refreshKey(UserRole.SELLER, (String) token)));
+            redisTemplate.delete(AuthConsts.userRefreshesKey(UserRole.SELLER, userId));
         }
         long remaining = jwtProvider.getRemainingExpiration(accessToken);
         if (remaining > 0) {
             redisTemplate.opsForValue()
-                    .set("blacklist:" + accessToken, "logout", remaining, TimeUnit.MILLISECONDS);
+                    .set(AuthConsts.BLACKLIST_KEY_PREFIX + accessToken, "logout", remaining, TimeUnit.MILLISECONDS);
         }
     }
 }

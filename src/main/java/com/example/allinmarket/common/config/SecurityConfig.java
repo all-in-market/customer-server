@@ -28,7 +28,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/auth/logout").authenticated()
+                        .requestMatchers("/auth/logout").hasRole("BUYER")
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/seller/auth/logout").hasRole("SELLER")
                         .requestMatchers("/seller/auth/**").permitAll()

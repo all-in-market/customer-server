@@ -122,3 +122,120 @@ bootJar {
         into 'static/docs'
     }
 }
+
+// ---------------------------------------------------------------------------
+// PIT 뮤테이션 테스트
+//
+// gradle-pitest-plugin(최신 1.15.0 / 2023-09)은 Gradle 9 지원이 미검증이라
+// PIT CLI를 직접 호출한다. check/build 체인에는 연결하지 않는다.
+//
+// JavaExec을 쓰지 않는 이유: 클래스패스 엔트리가 325개라 Gradle이 Windows에서
+// pathing jar로 우회하는데, 그러면 PIT가 자기 에이전트 클래스
+// (org.pitest.boot.HotSwapAgent)를 리소스로 못 읽어 기동에 실패한다.
+// 대신 java @argfile 로 전체 클래스패스를 직접 넘긴다.
+//
+//   ./gradlew mutationTest                          # DEFAULTS 뮤테이터
+//   ./gradlew mutationTest -PpitMutators=STRONGER   # 더 엄격한 세트
+// ---------------------------------------------------------------------------
+configurations {
+    pitest
+}
+
+dependencies {
+    pitest 'org.pitest:pitest-command-line:1.25.9'
+    pitest 'org.pitest:pitest-junit5-plugin:1.2.3'
+}
+
+// 2026-08-25에 추가/보강된 테스트가 커버하는 프로덕션 클래스 29개.
+// src/test 의 *Test.java 에서 도출했다.
+def pitTargets = [
+        'buyer.auth.service.BuyerAuthService',
+        'buyer.order.facade.BuyerPaymentOrderFacade',
+        'buyer.order.service.OrderValidator',
+        'buyer.order.service.StockReleaseService',
+        'buyer.payment.facade.BuyerPaymentFacade',
+        'buyer.payment.service.PaymentRetryService',
+        'buyer.refund.service.BuyerRefundService',
+        'common.outbox.service.DashboardOutboxService',
+        'common.outbox.service.HistoryOutboxService',
+        'common.scheduler.DashboardOutboxScheduler',
+        'common.scheduler.OrderExpiryScheduler',
+        'domain.cartitem.entity.CartItem',
+        'domain.order.enums.OrderStatus',
+        'domain.payment.enums.PaymentStatus',
+        'domain.payout.entity.Payout',
+        'domain.payout.enums.PayoutStatus',
+        'domain.product.entity.Product',
+        'domain.refund.entity.Refund',
+        'domain.refund.enums.RefundStatus',
+        'domain.sellerdashboard.entity.SellerDashboard',
+        'domain.settlement.entity.Settlement',
+        'domain.transactionhistory.enums.TransactionStatus',
+        'seller.auth.service.SellerAuthService',
+        'seller.dashboard.service.DashboardRowCreatorService',
+        'seller.dashboard.service.SellerDashboardProcessor',
+        'seller.me.service.SellerMeService',
+        'seller.payout.service.SellerPayoutFailHandler',
+        'seller.payout.service.SellerPayoutProcessor',
+        'seller.payout.service.SellerPayoutService',
+].collect { 'com.example.allinmarket.' + it }
+
+def pitMutators = providers.gradleProperty('pitMutators').getOrElse('DEFAULTS')
+def pitReportDir = layout.buildDirectory.dir(
+        pitMutators == 'DEFAULTS' ? 'reports/pitest' : 'reports/pitest-' + pitMutators.toLowerCase())
+
+tasks.register('pitArgFile') {
+    group = 'verification'
+    description = 'PIT CLI 실행용 java @argfile 을 생성한다'
+    dependsOn tasks.named('testClasses')
+
+    def argFile = layout.buildDirectory.file('pit-args.txt')
+    def cp = configurations.pitest + sourceSets.main.runtimeClasspath + sourceSets.test.runtimeClasspath
+    def reportDir = pitReportDir
+    def mutators = pitMutators
+    def srcDir = file('src/main/java')
+    def targets = pitTargets
+
+    inputs.files(cp)
+    outputs.file(argFile)
+
+    doLast {
+        // argfile 안에서 역슬래시는 이스케이프 문자라 슬래시로 바꾼다
+        def slash = { String v -> v.replace(File.separator, '/') }
+        argFile.get().asFile.text = [
+                '-cp "' + slash(cp.asPath) + '"',
+                '-XX:+EnableDynamicAgentLoading',
+                '-Xmx2g',
+                '-Dspring.profiles.active=test',
+                '-Dfile.encoding=UTF-8',
+                'org.pitest.mutationtest.commandline.MutationCoverageReport',
+                '--reportDir "' + slash(reportDir.get().asFile.absolutePath) + '"',
+                '--sourceDirs "' + slash(srcDir.absolutePath) + '"',
+                '--targetClasses ' + targets.join(','),
+                '--targetTests ' + targets.collect { it + 'Test*' }.join(','),
+                '--excludedClasses *.Q*,*Config,*.dto.*',
+                '--excludedTestClasses *ConcurrencyTest,*ApplicationTests,*MigrationTest',
+                '--outputFormats HTML,XML,CSV',
+                '--timestampedReports false',
+                '--mutators ' + mutators,
+                '--threads 4',
+                '--failWhenNoMutations false',
+        ].join(System.lineSeparator()) + System.lineSeparator()
+    }
+}
+
+tasks.register('mutationTest', Exec) {
+    group = 'verification'
+    description = '오늘 추가한 테스트가 커버하는 29개 클래스에 PIT 뮤테이션 테스트를 실행한다'
+    dependsOn tasks.named('pitArgFile')
+
+    def javaHome = javaToolchains.launcherFor(java.toolchain).get()
+            .executablePath.asFile.absolutePath
+    def argFile = layout.buildDirectory.file('pit-args.txt')
+
+    commandLine javaHome, '@' + argFile.get().asFile.absolutePath
+
+    doLast {
+        logger.lifecycle('PIT 리포트: {}', pitReportDir.get().asFile.absolutePath + '/index.html')
+    }
+}

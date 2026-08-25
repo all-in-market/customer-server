@@ -3,6 +3,11 @@ spring:
     redis:
       ssl:
         enabled: false
+
+app:
+  scheduling:
+    enabled: false
+
 dummy:
   enabled: false
   batch-type:

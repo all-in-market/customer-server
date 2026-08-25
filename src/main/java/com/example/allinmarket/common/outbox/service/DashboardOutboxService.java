@@ -4,8 +4,8 @@ import com.example.allinmarket.common.enums.ErrorEnum;
 import com.example.allinmarket.common.exception.BaseException;
 import com.example.allinmarket.common.outbox.entity.DashboardOutbox;
 import com.example.allinmarket.common.outbox.payload.DashboardUpdatePayload;
+import com.example.allinmarket.common.outbox.repository.DashboardOutboxRepository;
 import com.example.allinmarket.seller.dashboard.service.DashboardService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,18 +13,31 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class DashboardOutboxService {
-    private static final int MAX_RETRY = 5;
+
+    private final DashboardOutboxRepository dashboardOutboxRepository;
     private final DashboardService dashboardService;
     private final ObjectMapper objectMapper;
-    private final DashboardOutboxStatusService dashboardOutboxStatusService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void processSingleEvent(DashboardOutbox dashboardOutbox) throws JsonProcessingException {
+    public void processSingleEvent(Long outboxId) {
+        DashboardOutbox dashboardOutbox = dashboardOutboxRepository.findByIdForUpdate(outboxId)
+                .orElse(null);
+
+        if (dashboardOutbox == null) {
+            log.warn("존재하지 않는 Dashboard Outbox 이벤트 eventId = {}", outboxId);
+            return;
+        }
+
+        if (dashboardOutbox.isProcessed()) {
+            log.debug("이미 처리된 Outbox 이벤트 스킵: eventId={}", outboxId);
+            return;
+        }
+
         try {
             switch (dashboardOutbox.getEventType()) {
                 case DASHBOARD_UPDATE -> {
@@ -47,24 +60,11 @@ public class DashboardOutboxService {
                 }
             }
 
-            // 대시보드 업데이트 성공 시 processed = true 설정
-            // 추후 status 값으로 변경 할지는 판단 필요함
-            dashboardOutboxStatusService.markProcessed(dashboardOutbox);
-
+            dashboardOutbox.markProcessed();
+            log.info("Outbox 처리 성공 eventId = {}", dashboardOutbox.getId());
         } catch (Exception e) {
-            log.error("Outbox 처리 실패 eventId = {}", dashboardOutbox.getId(), e);
-
-            int retryCount = dashboardOutboxStatusService.increaseRetry(dashboardOutbox);
-
-            if (retryCount >= MAX_RETRY) {
-                log.error("Outbox 재시도 횟수 초과 eventId = {}", dashboardOutbox.getId());
-
-                dashboardOutboxStatusService.markProcessed(dashboardOutbox);
-
-                return;
-            }
-
-            throw e;
+            dashboardOutbox.increaseRetryCount();
+            log.error("Outbox 처리 실패 eventId = {}, retryCount = {}", dashboardOutbox.getId(), dashboardOutbox.getRetryCount(), e);
         }
     }
 }

@@ -73,6 +73,75 @@ docker compose -f docker-compose-k6.yml up --abort-on-container-exit   # 부하 
 7. **스케줄러는 모든 ECS 인스턴스에서 동시에 돈다**: 새 배치에는 비관적 락이나 유니크 제약으로 중복 처리 방어를 넣는다.
 8. **결제 트랜잭션에 무거운 로직을 붙이지 않는다**: 부수효과는 아웃박스(`dashboard_outbox`, `history_outboxes`)에 적재한다.
 
+### 기능 구현 병렬 워크플로 (계약 우선)
+
+새 기능·엔드포인트를 **프로덕션 코드와 테스트로 함께** 만들 때는 아래 절차를 쓴다.
+`backend-implementer`(`src/main/**` 소유)와 `unit-test-writer`(`src/test/**` 소유)를 **동시에** 돌리되,
+두 에이전트가 같은 시그니처를 쓰도록 **메인 에이전트가 먼저 계약 파일을 확정**한다.
+
+건너뛰는 경우: 기존 코드 소규모 수정, 리팩터링, 테스트만 추가, 문서만 수정 — 공개 시그니처가 새로 생기지 않으면
+계약 단계 없이 에이전트 하나만 쓰거나 직접 처리한다. (그때는 프롬프트에 "계약 단계 없음"이라고 적는다)
+
+**절차**
+
+1. 플랜을 확정한 뒤 **구현 착수 전에** 메인 에이전트가 `_workspace/contract_{기능}.md`를 **직접** 쓴다.
+   서브에이전트에 위임하지 않는다. 계약을 만드는 주체가 곧 두 워커의 종속 관계를 만들기 때문이다.
+2. 같은 계약 파일 경로를 **양쪽 프롬프트에 동일하게** 넣고, **한 메시지 안에서 두 Agent 호출**을 보내 동시 실행한다.
+3. 둘 다 끝나면 메인이 `./gradlew test`를 **한 번** 돌린다. 이것이 결정론적 게이트다.
+   (서브에이전트는 아무도 `test`를 돌리지 않는다 — Gradle 빌드 락 경합)
+4. 실패하면 원인별로 재배분한다.
+   - 프로덕션 코드 결함 → `backend-implementer`
+   - 테스트가 계약을 오독 → `unit-test-writer` **수복 모드**(이번엔 실제 소스 경로를 함께 준다)
+   - 계약 자체가 틀림 → 메인이 계약 파일을 고치고 **델타를 양쪽에 전달**
+5. 통과하면 `_workspace/contract_*.md`를 **삭제하고** 커밋한다. 계약 파일은 커밋 대상이 아니다.
+
+**계약 파일 템플릿**
+
+```markdown
+# 계약: {기능명}
+
+## 범위
+- 페르소나: buyer | seller | public
+- 패키지: com.example.allinmarket.{buyer|seller}.{도메인}
+- 신규 / 기존 수정 구분
+
+## 스키마 변경
+- `V{n}__xxx.sql` — 테이블/컬럼/제약/인덱스. 없으면 "없음"
+
+## 엔티티·리포지토리 (테스트의 모킹 대상)
+- `XxxRepository.findByIdAndBuyerId(Long id, Long buyerId)` → `Optional<Xxx>`
+- `XxxRepository.save(Xxx)` → `Xxx`
+
+## DTO
+- `XxxCreateRequest(@NotBlank @Size(max=255) String name, @NotNull @PositiveOrZero BigDecimal amount)`
+- `XxxDetailResponse(Long id, String name, ...)` — `from(entity)`
+
+## 서비스
+- `com.example.allinmarket.buyer.xxx.service.BuyerXxxService`
+  - `XxxDetailResponse createXxx(XxxCreateRequest request)`
+    - 정상: 저장 후 응답 반환 / 부수효과: `save` 1회
+    - 예외: 대상 없음 → `ErrorEnum.XXX_NOT_FOUND` / 중복 → `ErrorEnum.XXX_CONFLICT`
+  - `List<XxxDetailResponse> getAllXxx()`
+
+## 컨트롤러
+- `POST /xxx` → 201 `SuccessEnum.CREATE_SUCCESS`
+- `GET  /xxx` → 200 `SuccessEnum.READ_SUCCESS`
+
+## ErrorEnum 신규
+- `XXX_NOT_FOUND(HttpStatus.NOT_FOUND, "...")`
+
+## 인가
+- SecurityConfig 규칙 추가 필요 여부 (캐치올 `anyRequest().hasRole("BUYER")` **위에** 놓을 것)
+
+## 계약 밖 (에이전트 자율)
+- 내부 private 메서드, 로깅, 변수명, 테스트 픽스처 구성
+```
+
+**설계 원칙**
+
+- 계약은 "말"이 아니라 **파일**이다. 프롬프트 문장으로만 전달하면 서브에이전트가 조용히 벗어난다.
+- 계약 파일은 **메인 에이전트 단독 소유**. 두 서브에이전트는 읽기 전용이며, 어긋나는 것을 발견해도 고치지 않고 보고만 한다.
+
 ### 테스트
 
 - 단위 테스트는 **서비스 레이어부터** 작성한다.

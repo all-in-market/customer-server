@@ -109,6 +109,14 @@ app:
   init:
     admin:
       enabled: false
+  scheduling:
+    enabled: true
+    outbox:
+      chunk-size: 100
+      max-retry: 5
+    order-expiry:
+      chunk-size: 100
+      max-loops: 10
 
 notification:
   auth:

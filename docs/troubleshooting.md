@@ -86,3 +86,48 @@ docker compose exec -T redis redis-cli --scan --pattern 'products:search:*' \
 repository slice 테스트에서 custom Querydsl repository가 함께 스캔될 수 있으므로, `@DataJpaTest`가 `JPAQueryFactory`를 요구하는 경우 `QuerydslConfig`를 함께 import한다. auditing 필드가 `nullable=false`인 엔티티를 persist하는 테스트는 `JpaAuditingConfig`도 같이 import한다.
 
 **관련 항목:** `Commit 6`
+## TR-004 / 2026-08-25: 아웃박스 스케줄러가 자기 자신이 잡은 락을 기다려 영구 정지한다
+
+**증상:** 
+`DashboardOutboxScheduler`를 활성화하면 첫 주기에서 스레드가 멈춘 채 돌아오지 않는다. 예외도 타임아웃 로그도 남지 않고 `Outbox 처리 성공` 로그가 한 건도 찍히지 않는다. 결제는 정상 성공하는데 판매자 대시보드가 갱신되지 않는다. 스케줄러 풀 크기가 기본값 1이므로 이 스레드가 막히는 순간 **다른 6개 스케줄러(주문 만료·통계·정산·지급 등)도 함께 멈춘다.**
+
+`19c8fb1 feat: 스케줄링 처리 정지`(2026-05-10) 커밋으로 `@EnableScheduling`이 주석 처리된 뒤 3개월 이상 스케줄링 전체가 꺼져 있었다. 이 정지의 실질적 원인이 아래 구조로 추정된다.
+
+**원인:** 
+호출 경로가 자기 자신을 차단한다.
+
+```
+processOutbox()              @Transactional     → findTop100ForUpdate 로 100행에 PESSIMISTIC_WRITE
+  └ processSingleEvent()     REQUIRES_NEW       → 외부 트랜잭션 서스펜드
+      └ markProcessed()      REQUIRES_NEW       → saveAndFlush
+          └ UPDATE dashboard_outbox SET processed = true WHERE id = ?
+              ↑ 외부 트랜잭션이 FOR UPDATE 로 잡고 있는 바로 그 행
+```
+
+내부 트랜잭션은 외부 트랜잭션의 행 잠금을 기다린다. 그런데 외부 트랜잭션은 **서스펜드된 채 애플리케이션 코드에서 내부 트랜잭션의 리턴을 기다린다.** 이 대기 순환은 DB가 아니라 애플리케이션을 경유하므로 **PostgreSQL 데드락 감지기가 잡지 못한다.** `application.yaml`에 `lock_timeout`도 없어 무한 대기가 된다.
+
+부차적으로 `findTop100ForUpdate`는 `retry_count`를 조건에 쓰지 않아(인덱스 `idx_dashboard_outbox_polling`은 `(processed, retry_count, id)`), 첫 100건이 계속 실패하면 영원히 같은 100건만 재조회하는 헤드 블로킹도 있었다.
+
+**조사 과정:** 
+같은 리포의 `HistoryOutboxScheduler`가 동일한 아웃박스 폴링을 하면서도 멈추지 않는다는 점이 실마리였다. 두 경로를 비교하니 `HistoryOutboxScheduler`에는 **스케줄러 레벨 트랜잭션이 없고** `HistoryOutboxService.process(Long id)`가 자신의 `REQUIRES_NEW` 안에서 `findByIdForUpdate`로 직접 잠근다. 즉 락을 잡는 트랜잭션과 UPDATE하는 트랜잭션이 동일하다. 반면 Dashboard 경로는 락을 잡는 트랜잭션(외부)과 UPDATE하는 트랜잭션(내부 REQUIRES_NEW)이 달랐다. **두 아웃박스가 서로 다른 패턴이었던 것이 문제의 뿌리였다.**
+
+`DashboardOutboxStatusService`가 `markProcessed`/`increaseRetry`를 각각 별도 `REQUIRES_NEW`로 감싸고 있어 트랜잭션이 3중으로 중첩되고 있었던 점(Hikari 풀 20에서 건당 커넥션을 2개씩 점유)도 함께 확인했다.
+
+**해결:** 
+`HistoryOutbox` 패턴으로 통일했다(TD-004).
+
+1. `DashboardOutboxScheduler`에서 `@Transactional` 제거, `findUnprocessedIds(maxRetryCount, Pageable)`로 **ID만** 조회.
+2. `processSingleEvent(Long outboxId)`가 자신의 `REQUIRES_NEW` 안에서 `findByIdForUpdate(id)` + `isProcessed()` 멱등 가드를 수행하고, 성공 시 같은 트랜잭션에서 더티체킹으로 마킹.
+3. `DashboardOutboxStatusService` 삭제(중첩 트랜잭션 제거).
+4. 조회 조건에 `retryCount < :maxRetryCount`를 넣어 헤드 블로킹 제거. 재시도 소진 건을 `markProcessed`로 성공 위장하던 유실 로직도 삭제.
+5. `OrderExpiryScheduler`는 진행 0건이면 루프를 중단하고 `max-loops` 상한을 둔다(기존에는 offset 0 고정 재조회 + 예외 전량 삼킴으로 무한 루프 가능).
+6. `@EnableScheduling`을 `SchedulingConfig`로 분리하고 풀 크기를 5로 명시(TD-005).
+
+**재발 방지:** 
+- 아웃박스 폴링은 **"ID만 조회 → 건별 `REQUIRES_NEW` 안에서 잠금·처리·마킹"** 한 가지 패턴만 쓴다. 새 아웃박스를 추가할 때 스케줄러에 `@Transactional`을 붙이지 않는다.
+- 부모 트랜잭션이 잠근 행을 자식 `REQUIRES_NEW`가 건드리는 구조는 DB 데드락 감지에 걸리지 않는다. `REQUIRES_NEW`를 쓸 때는 **부모가 어떤 행을 잠그고 있는지** 먼저 확인한다.
+- 배치 루프에는 항상 반복 상한과 "진행 없으면 중단" 조건을 함께 넣는다. 예외를 삼키는 루프는 그 자체로 무한 루프 후보다.
+- 스케줄러 스레드 풀 크기를 기본값(1)으로 두지 않는다. 하나가 막히면 전부 멈춘다.
+- 회귀 테스트: `DashboardOutboxSchedulerTest`(건별 격리), `DashboardOutboxServiceTest`(재시도 소진 시 `processed`가 true로 바뀌지 않음), `OrderExpirySchedulerTest`(진행 0건이면 조회 1회로 종료).
+
+**관련 항목:** `TD-004`, `TD-005`

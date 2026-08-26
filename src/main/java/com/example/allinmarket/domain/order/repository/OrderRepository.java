@@ -41,7 +41,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     """)
     Optional<Order> findByIdAndBuyerIdWithBuyer(Long orderId, Long currentUserId);
 
-    @Query("SELECT o FROM Order o WHERE o.status = :status AND o.createdAt < :threshold")
+    @Query("SELECT o FROM Order o WHERE o.status = :status AND o.createdAt < :threshold ORDER BY o.id")
     List<Order> findByStatusAndCreatedAtBefore(
             @Param("status") OrderStatus status,
             @Param("threshold") LocalDateTime threshold,

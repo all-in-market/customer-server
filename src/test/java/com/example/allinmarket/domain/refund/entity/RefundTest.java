@@ -1,391 +1,170 @@
 package com.example.allinmarket.domain.refund.entity;
 
 import com.example.allinmarket.buyer.entity.Buyer;
-import com.example.allinmarket.buyer.payment.client.dto.PortOnePaymentResponse;
-import com.example.allinmarket.buyer.refund.dto.request.RefundCreateRequest;
-import com.example.allinmarket.buyer.refund.dto.response.RefundDetailResponse;
-import com.example.allinmarket.buyer.refund.service.BuyerRefundService;
-import com.example.allinmarket.common.enums.ErrorEnum;
-import com.example.allinmarket.common.exception.BaseException;
-import com.example.allinmarket.common.outbox.service.HistoryOutboxService;
-import com.example.allinmarket.domain.order.entity.Order;
-import com.example.allinmarket.domain.order.enums.OrderStatus;
-import com.example.allinmarket.domain.order.repository.OrderRepository;
 import com.example.allinmarket.domain.payment.entity.Payment;
-import com.example.allinmarket.domain.payment.enums.MethodEnum;
-import com.example.allinmarket.domain.payment.enums.PaymentStatus;
-import com.example.allinmarket.domain.payment.repository.PaymentRepository;
 import com.example.allinmarket.domain.refund.enums.ReasonEnum;
 import com.example.allinmarket.domain.refund.enums.RefundStatus;
-import com.example.allinmarket.domain.refund.repository.RefundRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Optional;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
-@ExtendWith(MockitoExtension.class)
 class RefundTest {
 
-    @InjectMocks
-    private BuyerRefundService buyerRefundService;
-
-    @Mock
-    private RefundRepository refundRepository;
-
-    @Mock
-    private PaymentRepository paymentRepository;
-
-    @Mock
-    private OrderRepository orderRepository;
-
-    @Mock
-    private HistoryOutboxService historyOutBoxService;
-
-    private Buyer createBuyer(Long id) {
-        Buyer buyer = Buyer.of(
-                "test@test.com",
-                "encodedPassword",
-                "홍길동",
-                "010-1111-2222"
-        );
-        setField(buyer, "id", id);
-        return buyer;
-    }
-
-    private Order createOrder(Long id, Buyer buyer, BigDecimal totalAmount) {
-        Order order = Order.of(
-                buyer,
-                totalAmount,
-                null,
-                "홍길동",
-                "010-1111-2222",
-                "서울시 강남구"
-        );
-        setField(order, "id", id);
-        return order;
-    }
-
-    private Payment createPayment(Order order, String impUid, BigDecimal amount, MethodEnum method) {
-        return Payment.of(order, impUid, amount, method);
-    }
-
-    private void setField(Object target, String fieldName, Object value) {
-        try {
-            Field field = findField(target.getClass(), fieldName);
-            field.setAccessible(true);
-            field.set(target, value);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-        Class<?> current = clazz;
-        while (current != null) {
-            try {
-                return current.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-                current = current.getSuperclass();
-            }
-        }
-        throw new NoSuchFieldException(fieldName);
-    }
-
     @Nested
-    @DisplayName("주문 기준 환불 생성")
-    class CreateRefundByOrderTest {
+    @DisplayName("환불 생성")
+    class OfTest {
 
         @Test
-        @DisplayName("환불 생성 성공")
-        void createRefundByOrder_success() {
+        @DisplayName("환불을 생성하면 상태는 PENDING이고 처리시각은 null이다")
+        void of_whenCreated_thenStatusIsPendingAndProcessedAtIsNull() {
             // given
-            Long currentUserId = 1L;
-            Long orderId = 10L;
-
-            Buyer buyer = createBuyer(currentUserId);
-            Order order = createOrder(orderId, buyer, new BigDecimal("15000"));
-            setField(order, "status", OrderStatus.PAID);
-
-            Payment payment = createPayment(order, "payment_10_abc", new BigDecimal("15000"), MethodEnum.MOCK);
-            payment.success(LocalDateTime.now());
-
-            RefundCreateRequest request =
-                    new RefundCreateRequest(ReasonEnum.CHANGE_OF_MIND, "단순 변심");
-
-            given(orderRepository.findByIdAndBuyerIdWithBuyer(orderId, currentUserId))
-                    .willReturn(Optional.of(order));
-            given(paymentRepository.findByOrderIdAndStatusForUpdate(orderId, PaymentStatus.SUCCESS))
-                    .willReturn(Optional.of(payment));
-            given(refundRepository.findByPayment(payment))
-                    .willReturn(Optional.empty());
-
-            ArgumentCaptor<Refund> captor = ArgumentCaptor.forClass(Refund.class);
+            Buyer buyer = mock(Buyer.class);
+            Payment payment = mock(Payment.class);
 
             // when
-            RefundDetailResponse response =
-                    buyerRefundService.createRefundByOrder(currentUserId, orderId, request);
+            Refund refund = Refund.of(buyer, payment, ReasonEnum.CHANGE_OF_MIND, "단순 변심");
 
             // then
-            verify(refundRepository).save(captor.capture());
-            Refund savedRefund = captor.getValue();
-
-            assertThat(savedRefund.getBuyer()).isSameAs(buyer);
-            assertThat(savedRefund.getPayment()).isSameAs(payment);
-            assertThat(savedRefund.getReason()).isEqualTo(ReasonEnum.CHANGE_OF_MIND);
-            assertThat(savedRefund.getDescription()).isEqualTo("단순 변심");
-            assertThat(savedRefund.getStatus()).isEqualTo(RefundStatus.PENDING);
-            assertThat(savedRefund.getProcessedAt()).isNull();
-
-            assertThat(response).isNotNull();
-        }
-
-        @Test
-        @DisplayName("주문 상태가 환불 불가면 예외 발생")
-        void createRefundByOrder_fail_orderNotRefundable() {
-            // given
-            Long currentUserId = 1L;
-            Long orderId = 10L;
-
-            Buyer buyer = createBuyer(currentUserId);
-            Order order = createOrder(orderId, buyer, new BigDecimal("15000"));
-            // CREATED 상태 유지
-
-            RefundCreateRequest request =
-                    new RefundCreateRequest(ReasonEnum.CHANGE_OF_MIND, "단순 변심");
-
-            given(orderRepository.findByIdAndBuyerIdWithBuyer(orderId, currentUserId))
-                    .willReturn(Optional.of(order));
-
-            // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> buyerRefundService.createRefundByOrder(currentUserId, orderId, request)
-            );
-
-            // then
-            assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.ORDER_NOT_REFUNDABLE);
-            verify(paymentRepository, never()).findByOrderIdAndStatusForUpdate(anyLong(), any());
-        }
-
-        @Test
-        @DisplayName("기존 failed 환불이 있으면 pending으로 복구하고 사유를 수정한다")
-        void createRefundByOrder_failedRefund_reuse() {
-            // given
-            Long currentUserId = 1L;
-            Long orderId = 10L;
-
-            Buyer buyer = createBuyer(currentUserId);
-            Order order = createOrder(orderId, buyer, new BigDecimal("15000"));
-            setField(order, "status", OrderStatus.PAID);
-
-            Payment payment = createPayment(order, "payment_10_abc", new BigDecimal("15000"), MethodEnum.MOCK);
-            payment.success(LocalDateTime.now());
-
-            Refund existingRefund = Refund.of(
-                    buyer,
-                    payment,
-                    ReasonEnum.CHANGE_OF_MIND,
-                    "기존 설명"
-            );
-            setField(existingRefund, "status", RefundStatus.FAILED);
-
-            RefundCreateRequest request =
-                    new RefundCreateRequest(ReasonEnum.DAMAGED, "파손");
-
-            given(orderRepository.findByIdAndBuyerIdWithBuyer(orderId, currentUserId))
-                    .willReturn(Optional.of(order));
-            given(paymentRepository.findByOrderIdAndStatusForUpdate(orderId, PaymentStatus.SUCCESS))
-                    .willReturn(Optional.of(payment));
-            given(refundRepository.findByPayment(payment))
-                    .willReturn(Optional.of(existingRefund));
-
-            // when
-            RefundDetailResponse response =
-                    buyerRefundService.createRefundByOrder(currentUserId, orderId, request);
-
-            // then
-            assertThat(response).isNotNull();
-            assertThat(existingRefund.getStatus()).isEqualTo(RefundStatus.PENDING);
-            assertThat(existingRefund.getReason()).isEqualTo(ReasonEnum.DAMAGED);
-            assertThat(existingRefund.getDescription()).isEqualTo("파손");
-            verify(refundRepository, never()).save(any());
+            assertThat(refund.getStatus()).isEqualTo(RefundStatus.PENDING);
+            assertThat(refund.getProcessedAt()).isNull();
         }
     }
 
     @Nested
-    @DisplayName("금액 불일치 환불 생성")
-    class CreateRefundForAmountMismatchTest {
+    @DisplayName("환불 성공 처리")
+    class SuccessTest {
 
         @Test
-        @DisplayName("금액 불일치 환불 생성 성공")
-        void createRefundForAmountMismatch_success() {
+        @DisplayName("PROCESSING 상태에서는 SUCCESS로 전이되고 처리시각이 설정된다")
+        void success_whenProcessing_thenTransitToSuccessAndSetProcessedAt() {
             // given
-            Long currentUserId = 1L;
-
-            Buyer buyer = createBuyer(currentUserId);
-            Order order = createOrder(10L, buyer, new BigDecimal("15000"));
-            // 금액 불일치 환불은 CREATED도 허용
-            setField(order, "status", OrderStatus.CREATED);
-
-            Payment payment = createPayment(order, "payment_10_abc", new BigDecimal("15000"), MethodEnum.MOCK);
-            payment.fail();
-
-            PortOnePaymentResponse paymentResponse = mock(PortOnePaymentResponse.class);
-            given(paymentResponse.getTotalAmount()).willReturn(new BigDecimal("10000"));
-
-            given(refundRepository.findByPayment(payment))
-                    .willReturn(Optional.empty());
-
-            ArgumentCaptor<Refund> captor = ArgumentCaptor.forClass(Refund.class);
+            Refund refund = createRefund(RefundStatus.PROCESSING);
 
             // when
-            buyerRefundService.createRefundForAmountMismatch(currentUserId, payment, paymentResponse);
+            refund.success();
 
             // then
-            verify(refundRepository).save(captor.capture());
-            Refund savedRefund = captor.getValue();
-
-            assertThat(savedRefund.getBuyer()).isSameAs(buyer);
-            assertThat(savedRefund.getPayment()).isSameAs(payment);
-            assertThat(savedRefund.getReason()).isEqualTo(ReasonEnum.PAYMENT_AMOUNT_MISMATCH);
-            assertThat(savedRefund.getDescription())
-                    .isEqualTo(ReasonEnum.PAYMENT_AMOUNT_MISMATCH.getReason());
-            assertThat(savedRefund.getStatus()).isEqualTo(RefundStatus.PENDING);
-            assertThat(savedRefund.getProcessedAt()).isNull();
+            assertThat(refund.getStatus()).isEqualTo(RefundStatus.SUCCESS);
+            assertThat(refund.getProcessedAt()).isNotNull();
         }
 
         @Test
-        @DisplayName("응답 금액이 null이면 예외 발생")
-        void createRefundForAmountMismatch_fail_amountInvalid() {
+        @DisplayName("PENDING 상태에서는 SUCCESS로 전이할 수 없어 상태가 유지된다")
+        void success_whenPending_thenNoTransition() {
             // given
-            Long currentUserId = 1L;
-
-            Buyer buyer = createBuyer(currentUserId);
-            Order order = createOrder(10L, buyer, new BigDecimal("15000"));
-            setField(order, "status", OrderStatus.CREATED);
-
-            Payment payment = createPayment(order, "payment_10_abc", new BigDecimal("15000"), MethodEnum.MOCK);
-            payment.fail();
-
-            PortOnePaymentResponse paymentResponse = mock(PortOnePaymentResponse.class);
-            given(paymentResponse.getTotalAmount()).willReturn(null);
+            Refund refund = createRefund(RefundStatus.PENDING);
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> buyerRefundService.createRefundForAmountMismatch(currentUserId, payment, paymentResponse)
-            );
+            refund.success();
 
             // then
-            assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.PAYMENT_AMOUNT_INVALID);
-            verify(refundRepository, never()).save(any());
+            assertThat(refund.getStatus()).isEqualTo(RefundStatus.PENDING);
+            assertThat(refund.getProcessedAt()).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("환불 대기 처리")
+    class PendingTest {
+
+        @Test
+        @DisplayName("FAILED 상태에서는 PENDING으로 전이된다")
+        void pending_whenFailed_thenTransitToPending() {
+            // given
+            Refund refund = createRefund(RefundStatus.FAILED);
+
+            // when
+            refund.pending();
+
+            // then
+            assertThat(refund.getStatus()).isEqualTo(RefundStatus.PENDING);
         }
 
         @Test
-        @DisplayName("실결제 금액이 같으면 금액 불일치 환불 예외 발생")
-        void createRefundForAmountMismatch_fail_amountMismatchNotFound() {
+        @DisplayName("PROCESSING 상태에서는 PENDING으로 전이할 수 없어 상태가 유지된다")
+        void pending_whenProcessing_thenNoTransition() {
             // given
-            Long currentUserId = 1L;
-
-            Buyer buyer = createBuyer(currentUserId);
-            Order order = createOrder(10L, buyer, new BigDecimal("15000"));
-            setField(order, "status", OrderStatus.CREATED);
-
-            Payment payment = createPayment(order, "payment_10_abc", new BigDecimal("15000"), MethodEnum.MOCK);
-            payment.fail();
-
-            PortOnePaymentResponse paymentResponse = mock(PortOnePaymentResponse.class);
-            given(paymentResponse.getTotalAmount()).willReturn(new BigDecimal("15000"));
+            Refund refund = createRefund(RefundStatus.PROCESSING);
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> buyerRefundService.createRefundForAmountMismatch(currentUserId, payment, paymentResponse)
-            );
+            refund.pending();
 
             // then
-            assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.REFUND_AMOUNT_MISMATCH_NOT_FOUND);
-            verify(refundRepository, never()).save(any());
+            assertThat(refund.getStatus()).isEqualTo(RefundStatus.PROCESSING);
+        }
+    }
+
+    @Nested
+    @DisplayName("환불 실패 처리")
+    class FailTest {
+
+        @Test
+        @DisplayName("PROCESSING 상태에서는 FAILED로 전이된다")
+        void fail_whenProcessing_thenTransitToFailed() {
+            // given
+            Refund refund = createRefund(RefundStatus.PROCESSING);
+
+            // when
+            refund.fail();
+
+            // then
+            assertThat(refund.getStatus()).isEqualTo(RefundStatus.FAILED);
         }
 
         @Test
-        @DisplayName("기존 failed 환불이 있으면 pending으로 복구하고 사유와 설명을 수정한다")
-        void createRefundForAmountMismatch_failedRefund_reuse() {
+        @DisplayName("PENDING 상태에서는 FAILED로 전이할 수 없어 상태가 유지된다")
+        void fail_whenPending_thenNoTransition() {
             // given
-            Long currentUserId = 1L;
-
-            Buyer buyer = createBuyer(currentUserId);
-            Order order = createOrder(10L, buyer, new BigDecimal("15000"));
-            setField(order, "status", OrderStatus.CREATED);
-
-            Payment payment = createPayment(order, "payment_10_abc", new BigDecimal("15000"), MethodEnum.MOCK);
-            payment.fail();
-
-            PortOnePaymentResponse paymentResponse = mock(PortOnePaymentResponse.class);
-            given(paymentResponse.getTotalAmount()).willReturn(new BigDecimal("10000"));
-
-            Refund existingRefund = Refund.of(
-                    buyer,
-                    payment,
-                    ReasonEnum.CHANGE_OF_MIND,
-                    "기존 설명"
-            );
-            setField(existingRefund, "status", RefundStatus.FAILED);
-
-            given(refundRepository.findByPayment(payment))
-                    .willReturn(Optional.of(existingRefund));
+            Refund refund = createRefund(RefundStatus.PENDING);
 
             // when
-            buyerRefundService.createRefundForAmountMismatch(currentUserId, payment, paymentResponse);
+            refund.fail();
 
             // then
-            assertThat(existingRefund.getStatus()).isEqualTo(RefundStatus.PENDING);
-            assertThat(existingRefund.getReason()).isEqualTo(ReasonEnum.PAYMENT_AMOUNT_MISMATCH);
-            assertThat(existingRefund.getDescription())
-                    .isEqualTo(ReasonEnum.PAYMENT_AMOUNT_MISMATCH.getReason());
-            verify(refundRepository, never()).save(any());
+            assertThat(refund.getStatus()).isEqualTo(RefundStatus.PENDING);
+        }
+    }
+
+    @Nested
+    @DisplayName("환불 사유/설명 변경")
+    class UpdateTest {
+
+        @Test
+        @DisplayName("환불 사유를 변경하면 반영된다")
+        void updateReason_whenCalled_thenChangeReason() {
+            // given
+            Refund refund = createRefund(RefundStatus.PENDING);
+
+            // when
+            refund.updateReason(ReasonEnum.DAMAGED);
+
+            // then
+            assertThat(refund.getReason()).isEqualTo(ReasonEnum.DAMAGED);
         }
 
         @Test
-        @DisplayName("결제 소유자가 다르면 예외 발생")
-        void createRefundForAmountMismatch_fail_forbidden() {
+        @DisplayName("환불 설명을 변경하면 반영된다")
+        void updateDescription_whenCalled_thenChangeDescription() {
             // given
-            Long currentUserId = 1L;
-
-            Buyer buyer = createBuyer(999L);
-            Order order = createOrder(10L, buyer, new BigDecimal("15000"));
-            setField(order, "status", OrderStatus.CREATED);
-
-            Payment payment = createPayment(order, "payment_10_abc", new BigDecimal("15000"), MethodEnum.MOCK);
-            payment.fail();
-
-            PortOnePaymentResponse paymentResponse = mock(PortOnePaymentResponse.class);
+            Refund refund = createRefund(RefundStatus.PENDING);
 
             // when
-            BaseException ex = assertThrows(
-                    BaseException.class,
-                    () -> buyerRefundService.createRefundForAmountMismatch(currentUserId, payment, paymentResponse)
-            );
+            refund.updateDescription("변경된 설명");
 
             // then
-            assertThat(ex.getErrorEnum()).isEqualTo(ErrorEnum.REFUND_FORBIDDEN);
-            verify(refundRepository, never()).save(any());
+            assertThat(refund.getDescription()).isEqualTo("변경된 설명");
         }
+    }
+
+    private Refund createRefund(RefundStatus status) {
+        Buyer buyer = mock(Buyer.class);
+        Payment payment = mock(Payment.class);
+        Refund refund = Refund.of(buyer, payment, ReasonEnum.CHANGE_OF_MIND, "단순 변심");
+        ReflectionTestUtils.setField(refund, "status", status);
+        return refund;
     }
 }

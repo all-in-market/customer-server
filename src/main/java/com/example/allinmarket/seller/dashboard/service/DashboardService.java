@@ -1,8 +1,7 @@
-package com.example.allinmarket.domain.sellerdashboard.service;
+package com.example.allinmarket.seller.dashboard.service;
 
 import com.example.allinmarket.domain.orderitem.entity.OrderItem;
 import com.example.allinmarket.domain.orderitem.repository.OrderItemRepository;
-import com.example.allinmarket.seller.dashboard.service.SellerDashboardProcessor;
 import com.example.allinmarket.seller.entity.Seller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -27,7 +27,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     """)
     List<Product> findAllByIdInWithSeller(@Param("productIds") List<Long> productIds);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE Product p
         SET p.stock = p.stock - :quantity
@@ -37,6 +37,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
           AND p.deletedAt IS NULL
     """)
     int decreaseStockIfEnough(@Param("productId") Long productId, @Param("quantity") int quantity);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        UPDATE Product p
+        SET p.stock = p.stock + :quantity
+        WHERE p.id = :productId
+    """)
+    int increaseStock(@Param("productId") Long productId, @Param("quantity") int quantity);
 
     @Query("SELECT p FROM Product p WHERE p.id = :productId AND p.status != 'HIDDEN' AND p.deletedAt IS NULL")
     Optional<Product> findVisibleProductById(Long productId);
